@@ -22,6 +22,16 @@ class CheckPrivilege
         // Normalize: replace numeric segments with {id}
         $normalized = preg_replace('#/\d+#', '/{id}', $path);
 
+        // ── Temporary debug line ──────────────────────────────────
+        \Illuminate\Support\Facades\Log::info('CheckPrivilege', [
+            'user_id'    => $user->id,
+            'role_id'    => $user->active_role_id,
+            'method'     => $method,
+            'path'       => $path,
+            'normalized' => $normalized,
+        ]);
+        // ─────────────────────────────────────────────────────────
+
         // Whitelist: routes that don't need privilege check
         $openRoutes = ['/api/me', '/api/logout', '/api/refresh', '/api/change-password', '/api/change-role'];
         if (in_array($normalized, $openRoutes)) {

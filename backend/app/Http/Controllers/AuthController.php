@@ -26,6 +26,26 @@ class AuthController extends Controller
             return response()->json(['message' => 'Account is deactivated'], 403);
         }
 
+        // ── Tenant-aware login guard ──────────────────────────────
+        // If a college subdomain is active, enforce the user belongs to it.
+        // Super admins (college_id = null) may log in from any context.
+        if (app()->bound('current_college') && !$user->isSuperAdmin()) {
+            $college = app('current_college');
+
+            if ((int) $user->college_id !== (int) $college->id) {
+                return response()->json([
+                    'message' => 'This account does not belong to this college.',
+                ], 403);
+            }
+        }
+
+        // If on the main domain, only super admins should log in
+        if (!app()->bound('current_college') && !$user->isSuperAdmin()) {
+            return response()->json([
+                'message' => 'Please log in from your college subdomain.',
+            ], 403);
+        }
+
         // Auto-set active role if not set or invalid
         $activeRoleIds = $user->activeRoles()->pluck('roles.id');
         if (!$user->active_role_id || !$activeRoleIds->contains($user->active_role_id)) {
@@ -35,22 +55,27 @@ class AuthController extends Controller
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => config('jwt.ttl') * 60,
-            'user' => $user->load('activeRole', 'activeRoles'),
+            'access_token'  => $token,
+            'token_type'    => 'bearer',
+            'expires_in'    => config('jwt.ttl') * 60,
+            // 'user'       => $user->load('activeRole', 'activeRoles'),
+            'user'          => $user->load('activeRole', 'activeRoles', 'college'),
+            // Return college context so the frontend can store it
+            'college'       => $user->college,
         ]);
     }
 
     public function me(Request $request)
     {
         $user = $request->user();
-        $user->load('activeRole', 'activeRoles');
+        // $user->load('activeRole', 'activeRoles');
+        $user->load('activeRole', 'activeRoles', 'college');
 
         return response()->json([
             'user' => $user,
             'menu' => $user->getMenuItems(),
             'privileges' => $user->getAllPrivileges()->pluck('slug'),
+            'college'    => $user->college,
         ]);
     }
 
@@ -100,6 +125,18 @@ class AuthController extends Controller
         ]);
 
         $user = $request->user();
+        $role    = \App\Models\Role::find($request->role_id);
+
+        // ── Tenant-scope enforcement ──────────────────────────────
+        // A college-scoped role must belong to the user's college.
+        // Super admins can switch to any platform-scoped role freely.
+        if (!$user->isSuperAdmin()) {
+            if ($role->college_id && (int) $role->college_id !== (int) $user->college_id) {
+                return response()->json([
+                    'message' => 'This role does not belong to your college.',
+                ], 403);
+            }
+        }
 
         // Verify user has this role assigned and active
         $hasRole = $user->activeRoles()
@@ -112,7 +149,8 @@ class AuthController extends Controller
         }
 
         $user->update(['active_role_id' => $request->role_id]);
-        $user->load('activeRole', 'activeRoles');
+        // $user->load('activeRole', 'activeRoles');
+        $user->load('activeRole', 'activeRoles', 'college');
 
         return response()->json([
             'message' => 'Role switched successfully',

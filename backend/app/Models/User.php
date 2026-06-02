@@ -18,6 +18,8 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'is_active',
         'active_role_id',
+        'college_id',   // ← added
+        'user_type',    // ← added
     ];
 
     protected $hidden = [
@@ -32,14 +34,20 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
+    // ── JWT ──────────────────────────────────────────────────────
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
+    // Embed college_id + user_type into every token — no DB hit needed
+    // to know which tenant and role type the bearer belongs to
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'college_id' => $this->college_id,
+            'user_type' => $this->user_type,
+        ];
     }
 
     public function roles()
@@ -60,6 +68,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Role::class, 'active_role_id');
     }
 
+    // ── Privilege helpers (unchanged) ────────────────────────────
     public function hasPrivilege(string $slug): bool
     {
         if (!$this->active_role_id) return false;
@@ -102,4 +111,35 @@ class User extends Authenticatable implements JWTSubject
             ->orderBy('sort_order')
             ->get();
     }
+
+    // public function college()
+    // {
+    //     return $this->belongsTo(\App\Models\College::class);
+    // }
+
+    public function college()
+    {
+        return $this->belongsTo(College::class);
+    }
+
+    public function studentProfile()
+    {
+        return $this->hasOne(StudentProfile::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->user_type === 'super_admin';
+    }
+
+    public function isCollegeAdmin(): bool
+    {
+        return $this->user_type === 'college_admin';
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->user_type === 'student';
+    }
+
 }

@@ -1,11 +1,17 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CollegeAdminController;
+use App\Http\Controllers\CollegeController;
+use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PrivilegeGroupController;
 use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ChallanController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -18,13 +24,40 @@ Route::get('/app-config', function () {
     ]);
 });
 
+// College self-registration — public, main domain
+Route::post('/colleges/register', [CollegeController::class, 'register']);
+
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 });
 
-// Protected
+
+// ── College public endpoint (tenant required, no auth) ─────────
+// e.g. GET uos.localhost/api/college-info → returns college details for the frontend
+// Route::middleware('tenant')->group(function () {
+//     Route::get('/college-info', function () {
+//         $college = app('current_college');
+//         return response()->json([
+//             'id'   => $college->id,
+//             'name' => $college->name,
+//             'slug' => $college->slug,
+//         ]);
+//     });
+// });
+
+// ── Public — tenant required, no auth ────────────────────────
+// Student self-registration — only on a college subdomain
+Route::middleware(['tenant', 'throttle:10,1'])->group(function () {
+    Route::get('/college-info', function () {
+        $c = app('current_college');
+        return response()->json(['id' => $c->id, 'name' => $c->name, 'slug' => $c->slug]);
+    });
+    Route::post('/register', [StudentAuthController::class, 'register']);
+});
+
+// ── Protected — platform level ────────────────────────────────
 Route::middleware(['auth:api', 'privilege'])->group(function () {
 
     // Auth
@@ -47,4 +80,55 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
 
     // Privileges
     Route::apiResource('privileges', PrivilegeController::class)->except(['destroy']);
+
+    // College admin management — super admin only
+    Route::apiResource('college-admins', CollegeAdminController::class)
+         ->except(['show', 'destroy']);
+    
+    // College management (super admin)
+    Route::get('colleges', [CollegeController::class, 'index']);
+    Route::get('colleges/{college}', [CollegeController::class, 'show']);
+    Route::put('colleges/{college}', [CollegeController::class, 'update']);
+    Route::post('colleges/{college}/approve', [CollegeController::class, 'approve']);
+    Route::post('colleges/{college}/reject', [CollegeController::class, 'reject']);
+    Route::post('colleges/{college}/suspend', [CollegeController::class, 'suspend']);
+});
+
+
+// ── Tenant-scoped protected routes ────────────────────────────
+Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(function () {
+
+    // Programs
+    Route::apiResource('programs', ProgramController::class);
+    Route::post('programs/{program}/fee-structures', [ProgramController::class, 'storeFeeStructure']);
+
+    // Applications
+    Route::get('applications/my', [ApplicationController::class, 'myApplications']);
+    Route::post('applications', [ApplicationController::class, 'store']);
+    Route::get('applications', [ApplicationController::class, 'index']);
+    Route::get('applications/{application}', [ApplicationController::class, 'show']);
+    Route::post('applications/{application}/review', [ApplicationController::class, 'markUnderReview']);
+    Route::post('applications/{application}/approve', [ApplicationController::class, 'approve']);
+    Route::post('applications/{application}/reject', [ApplicationController::class, 'reject']);
+    Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
+
+    // Documents
+    Route::get('documents/{document}/download', [ApplicationController::class, 'downloadDocument'])
+         ->name('documents.download');
+
+    // Challans
+    Route::get('challans/my', [ChallanController::class, 'myChallans']);
+    Route::get('challans', [ChallanController::class, 'index']);
+    Route::post('challans', [ChallanController::class, 'store']);
+    Route::get('challans/{challan}', [ChallanController::class, 'show']);
+    Route::post('challans/{challan}/cancel', [ChallanController::class, 'cancel']);
+    Route::post('challans/{challan}/mark-paid', [ChallanController::class, 'markPaid']);
+    Route::post('challans/{challan}/upload-slip', [ChallanController::class, 'uploadSlip']);
+    Route::get('challans/{challan}/pdf', [ChallanController::class, 'pdf']);
+
+    // Payments
+    Route::post('payments/{payment}/verify-slip', [ChallanController::class, 'verifySlip']);
+    Route::get('payments/{payment}/slip', [ChallanController::class, 'downloadSlip']);
+
+    // Step 7: CMS
 });
