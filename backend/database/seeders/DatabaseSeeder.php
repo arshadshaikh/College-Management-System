@@ -13,7 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(AdminSeeder::class);
-        $this->call(CollegeSeeder::class);
+        // $this->call(AdminSeeder::class);
+        // $this->call(CollegeSeeder::class);
+
+        $this->call([
+            SuperAdminSeeder::class,        // super_admin role + user first
+            RoleAndPrivilegeSeeder::class,  // college-admin mgmt privileges + grants
+            CollegeSeeder::class,           // seeds Example College (id 1)
+            CollegePrivilegeSeeder::class,  // college approve/reject/suspend privileges
+            ProgramPrivilegeSeeder::class,  // programs + applications privileges
+            ChallanPrivilegeSeeder::class,  // fee/challan privileges
+            CmsPrivilegeSeeder::class,      // CMS privileges
+        ]);
     }
 }

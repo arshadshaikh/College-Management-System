@@ -100,6 +100,8 @@ class CollegeController extends Controller
             // Auto-initialize CMS, roles, and settings
             $this->initializer->initialize($college);
 
+            \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();

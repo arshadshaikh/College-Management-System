@@ -47,4 +47,9 @@ class Program extends Model
 
         return max(0, $this->total_seats - $taken);
     }
+
+    protected function getAvailableSeatsAttribute(): int
+    {
+        return $this->availableSeats();
+    }
 }

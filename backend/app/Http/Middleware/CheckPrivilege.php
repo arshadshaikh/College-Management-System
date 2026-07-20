@@ -16,6 +16,15 @@ class CheckPrivilege
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
+        // ── Super admin bypass ──────────────────────────────────────
+        // Platform owner has total access; never gated by privilege rows.
+        // Safe because isSuperAdmin() checks user_type === 'super_admin',
+        // which a college admin or student can never hold.
+        if ($user->isSuperAdmin()) {
+            return $next($request);
+        }
+        // ────────────────────────────────────────────────────────────
+
         $method = $request->method();
         $path = '/' . ltrim($request->path(), '/');
 

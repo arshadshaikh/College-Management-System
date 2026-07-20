@@ -42,4 +42,20 @@ trait BelongsToTenant
     {
         return $this->belongsTo(\App\Models\College::class);
     }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        // return $this->where($field ?? $this->getRouteKeyName(), $value)->firstOrFail();
+
+        $query = $this->where($field ?? $this->getRouteKeyName(), $value);
+
+        // Explicitly enforce the tenant boundary on route-model binding.
+        // Do NOT rely on the global scope here — bind queries can bypass it,
+        // which would let one college fetch another college's records by id.
+        if (app()->bound('current_college')) {
+            $query->where($this->getTable() . '.college_id', app('current_college')->id);
+        }
+
+        return $query->firstOrFail();
+    }
 }

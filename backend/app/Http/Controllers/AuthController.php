@@ -16,34 +16,36 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Tenant context resolved by ResolveTenant (global API middleware).
+        // Bound only when a valid subdomain mapped to an approved college.
+        $college = app()->bound('current_college') ? app('current_college') : null;
+
         $user = User::where('cnic_no', $request->cnic_no)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid CNIC or password'], 401);
         }
 
-        if (!$user->is_active) {
-            return response()->json(['message' => 'Account is deactivated'], 403);
-        }
-
-        // ── Tenant-aware login guard ──────────────────────────────
-        // If a college subdomain is active, enforce the user belongs to it.
-        // Super admins (college_id = null) may log in from any context.
-        if (app()->bound('current_college') && !$user->isSuperAdmin()) {
-            $college = app('current_college');
-
-            if ((int) $user->college_id !== (int) $college->id) {
-                return response()->json([
-                    'message' => 'This account does not belong to this college.',
-                ], 403);
+        // ── Tenant-aware gating (Lesson #10) ───────────────────────────────
+        // Super admins may log in from any context. Everyone else is pinned
+        // to their own college. Generic message everywhere → no cross-tenant
+        // account enumeration.
+        if (!$user->isSuperAdmin()) {
+            if ($college) {
+                // On a college subdomain: user must belong to THIS college.
+                if ((int) $user->college_id !== (int) $college->id) {
+                    return response()->json(['message' => 'Invalid CNIC or password'], 401);
+                }
+            } else {
+                // On the main domain: only super admins allowed (handled by the
+                // outer !isSuperAdmin guard — a non-super-admin here is rejected).
+                return response()->json(['message' => 'Invalid CNIC or password'], 401);
             }
         }
+        // ───────────────────────────────────────────────────────────────────
 
-        // If on the main domain, only super admins should log in
-        if (!app()->bound('current_college') && !$user->isSuperAdmin()) {
-            return response()->json([
-                'message' => 'Please log in from your college subdomain.',
-            ], 403);
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Account is deactivated'], 403);
         }
 
         // Auto-set active role if not set or invalid
@@ -55,13 +57,11 @@ class AuthController extends Controller
         $token = JWTAuth::fromUser($user);
 
         return response()->json([
-            'access_token'  => $token,
-            'token_type'    => 'bearer',
-            'expires_in'    => config('jwt.ttl') * 60,
-            // 'user'       => $user->load('activeRole', 'activeRoles'),
-            'user'          => $user->load('activeRole', 'activeRoles', 'college'),
-            // Return college context so the frontend can store it
-            'college'       => $user->college,
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => config('jwt.ttl') * 60,
+            'user'         => $user->load('activeRole', 'activeRoles', 'college'),
+            'college'      => $user->college,
         ]);
     }
 
@@ -158,5 +158,83 @@ class AuthController extends Controller
             'menu' => $user->getMenuItems(),
             'privileges' => $user->getAllPrivileges()->pluck('slug'),
         ]);
+    }
+
+    public function register(Request $request)
+    {
+        // Self-registration is only valid on a college subdomain.
+        // No tenant context → main domain → reject (mirror of the login guard).
+        $college = app()->bound('current_college') ? app('current_college') : null;
+        if (!$college) {
+            return response()->json([
+                'message' => 'Student registration is only available on a college portal.',
+            ], 422);
+        }
+
+        $request->validate([
+            'name'           => 'required|string|max:255',
+            'cnic_no'        => 'required|string|size:13|unique:users,cnic_no',
+            'email'          => 'nullable|email|max:255',
+            'phone'          => 'nullable|string|max:20',
+            'password'       => ['required', 'string', 'confirmed',
+                                \Illuminate\Validation\Rules\Password::min(8)->mixedCase()->numbers()],
+            'father_name'    => 'required|string|max:255',
+            'gender'         => 'nullable|in:male,female,other',
+            'date_of_birth'  => 'nullable|date|before:today',
+        ]);
+
+        // The per-tenant student role MUST exist (seeded by CollegeInitializationService
+        // on approval). Fetch by slug AND college_id — never slug alone (Lesson #2),
+        // or we risk grabbing another college's role or an orphan.
+        $studentRole = \App\Models\Role::where('slug', 'student')
+            ->where('college_id', $college->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$studentRole) {
+            // Fail loudly — a student with no role can log in but do nothing.
+            return response()->json([
+                'message' => 'Registration is temporarily unavailable for this college. Please contact the administration.',
+            ], 503);
+        }
+
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($request, $college, $studentRole) {
+            // 1. Create the user, pinned to this tenant.
+            $user = User::create([
+                'name'       => $request->name,
+                'cnic_no'    => $request->cnic_no,
+                'email'      => $request->email,
+                'phone'      => $request->phone,
+                'password'   => $request->password, // hashed by the model's 'password' => 'hashed' cast
+                'is_active'  => true,
+                'college_id' => $college->id,
+                'user_type'  => 'student',
+            ]);
+
+            // 2. Create the student profile (father_name is the only required extra field).
+            $user->studentProfile()->create([
+                'college_id'  => $college->id,
+                'father_name' => $request->father_name,
+                'gender'        => $request->gender,
+                'date_of_birth' => $request->date_of_birth,
+            ]);
+
+            // 3. Attach the per-tenant student role and make it active.
+            $user->roles()->attach($studentRole->id);
+            $user->update(['active_role_id' => $studentRole->id]);
+
+            return $user;
+        });
+
+        // 4. Issue a JWT so the student is logged in immediately after registering.
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => config('jwt.ttl') * 60,
+            'user'         => $user->load('activeRole', 'activeRoles', 'college', 'studentProfile'),
+            'college'      => $user->college,
+        ], 201);
     }
 }

@@ -62,8 +62,12 @@ class ProgramController extends Controller
     // GET /api/programs/{program}
     public function show(Program $program)
     {
+        // return response()->json(
+        //     $program->load('feeStructures')->append(['available_seats' => $program->availableSeats()])
+        // );
+
         return response()->json(
-            $program->load('feeStructures')->append(['available_seats' => $program->availableSeats()])
+            $program->load('feeStructures')->append('available_seats')
         );
     }
 

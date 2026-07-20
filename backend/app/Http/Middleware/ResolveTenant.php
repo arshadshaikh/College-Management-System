@@ -21,11 +21,23 @@ class ResolveTenant
         }
 
         // Cache the college lookup to avoid a DB hit on every request
-        $college = Cache::remember("tenant:{$slug}", 3600, function () use ($slug) {
-            return College::where('slug', $slug)
-                          ->where('status', 'approved')
-                          ->first();
-        });
+        // $college = Cache::remember("tenant:{$slug}", 3600, function () use ($slug) {
+        //     return College::where('slug', $slug)
+        //                   ->where('status', 'approved')
+        //                   ->first();
+        // });
+
+        $college = Cache::get("tenant:{$slug}");
+
+        if (!$college) {
+            $college = College::where('slug', $slug)
+                      ->where('status', 'approved')
+                      ->first();
+            if ($college) {
+                Cache::put("tenant:{$slug}", $college, 3600);
+            }
+        }
+
 
         if (!$college) {
             return response()->json([
@@ -66,7 +78,7 @@ class ResolveTenant
         $slug = $parts[0];
 
         // Reserved slugs that are never tenant subdomains
-        $reserved = ['www', 'api', 'admin', 'mail', 'ftp', 'localhost'];
+        $reserved = ['www', 'api', 'admin', 'mail', 'ftp', 'app', 'localhost'];
         if (in_array($slug, $reserved)) {
             return null;
         }

@@ -89,16 +89,23 @@ class CollegeAdminController extends Controller
             // 2. Find or create the college_admin role for this college
             $role = Role::where('slug', 'college_admin')
                 ->where('college_id', $college->id)
+                ->where('is_active', true)
                 ->first();
             
+            // if (!$role) {
+            //     $role = Role::create([
+            //         'name'       => 'College Admin',
+            //         'slug'       => 'college_admin',
+            //         'college_id' => $college->id,
+            //         'is_active'  => true,
+            //         'scope'      => 'college',
+            //     ]);
+            // }
+
             if (!$role) {
-                $role = Role::create([
-                    'name'       => 'College Admin',
-                    'slug'       => 'college_admin',
-                    'college_id' => $college->id,
-                    'is_active'  => true,
-                    'scope'      => 'college',
-                ]);
+                return response()->json([
+                    'message' => 'This college has no college_admin role. It may not have been initialized correctly on approval. Please contact platform support.',
+                ], 422);
             }
 
             // 3. Assign role and set as active

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CollegeAdminController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\StudentAuthController;
@@ -12,6 +13,11 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ChallanController;
+use App\Http\Controllers\CmsPageController;
+use App\Http\Controllers\CmsAnnouncementController;
+use App\Http\Controllers\CmsMenuController;
+use App\Http\Controllers\CmsBannerController;
+use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -29,6 +35,7 @@ Route::post('/colleges/register', [CollegeController::class, 'register']);
 
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 });
@@ -81,6 +88,11 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     // Privileges
     Route::apiResource('privileges', PrivilegeController::class)->except(['destroy']);
 
+    // College Admins (super admin manages college admin accounts)
+    Route::get('college-admins',          [CollegeAdminController::class, 'index']);
+    Route::post('college-admins',         [CollegeAdminController::class, 'store']);
+    Route::put('college-admins/{user}',   [CollegeAdminController::class, 'update']);
+
     // College admin management — super admin only
     Route::apiResource('college-admins', CollegeAdminController::class)
          ->except(['show', 'destroy']);
@@ -131,4 +143,41 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::get('payments/{payment}/slip', [ChallanController::class, 'downloadSlip']);
 
     // Step 7: CMS
+    // CMS Pages
+    Route::get('cms/pages',            [CmsPageController::class, 'index']);
+    Route::post('cms/pages',           [CmsPageController::class, 'store']);
+    Route::get('cms/pages/{cmsPage}',  [CmsPageController::class, 'show']);
+    Route::put('cms/pages/{cmsPage}',  [CmsPageController::class, 'update']);
+    Route::delete('cms/pages/{cmsPage}',[CmsPageController::class, 'destroy']);
+
+    // CMS Announcements
+    Route::get('cms/announcements',                        [CmsAnnouncementController::class, 'index']);
+    Route::post('cms/announcements',                       [CmsAnnouncementController::class, 'store']);
+    Route::get('cms/announcements/{cmsAnnouncement}',      [CmsAnnouncementController::class, 'show']);
+    Route::put('cms/announcements/{cmsAnnouncement}',      [CmsAnnouncementController::class, 'update']);
+    Route::delete('cms/announcements/{cmsAnnouncement}',   [CmsAnnouncementController::class, 'destroy']);
+
+    // CMS Menus
+    Route::get('cms/menus',            [CmsMenuController::class, 'index']);
+    Route::post('cms/menus',           [CmsMenuController::class, 'store']);
+    Route::get('cms/menus/{cmsMenu}',  [CmsMenuController::class, 'show']);
+    Route::put('cms/menus/{cmsMenu}',  [CmsMenuController::class, 'update']);
+    Route::delete('cms/menus/{cmsMenu}',[CmsMenuController::class, 'destroy']);
+
+    // CMS Banners
+    Route::get('cms/banners',            [CmsBannerController::class, 'index']);
+    Route::post('cms/banners',           [CmsBannerController::class, 'store']);
+    Route::get('cms/banners/{cmsBanner}',  [CmsBannerController::class, 'show']);
+    Route::put('cms/banners/{cmsBanner}',  [CmsBannerController::class, 'update']);
+    Route::delete('cms/banners/{cmsBanner}',[CmsBannerController::class, 'destroy']);
+
+    // Settings (CMS)
+    Route::get('settings',  [SettingController::class, 'index']);
+    Route::put('settings',  [SettingController::class, 'update']);
+    
+    // Media (CMS)
+    Route::get('cms/media',  [MediaController::class, 'index']);
+    Route::post('cms/media', [MediaController::class, 'store']);
+    Route::get('cms/media/{media}', [MediaController::class, 'show']);
+    Route::delete('cms/media/{media}', [MediaController::class, 'destroy']);
 });

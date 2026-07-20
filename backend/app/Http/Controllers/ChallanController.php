@@ -64,6 +64,12 @@ class ChallanController extends Controller
     // POST /api/challans
     public function store(Request $request)
     {
+        \Log::info('Challan store raw input', [
+            'all'          => $request->all(),
+            'content_type' => $request->header('Content-Type'),
+            'raw_body'     => $request->getContent(),
+        ]);
+
         $request->validate([
             'application_id' => 'required|exists:applications,id',
             'challan_type'   => 'required|in:semester,exam,arrears,other',

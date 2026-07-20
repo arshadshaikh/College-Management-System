@@ -24,6 +24,8 @@ class Payment extends Model
         'slip_verified_at'  => 'datetime',
     ];
 
+    protected $hidden = ['slip_path'];
+
     public function challan()
     {
         return $this->belongsTo(Challan::class);
