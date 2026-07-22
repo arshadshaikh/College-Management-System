@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Document;
 use App\Models\Program;
+use App\Models\AuditLog;
 use App\Services\ChallanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class ApplicationController extends Controller
 
     // ── College admin: list all applications ──────────────────────
     // GET /api/applications
-    public function index(Request $request)
+    public function index_old(Request $request)
     {
         $query = Application::with(['student', 'program', 'documents', 'reviewer']);
 
@@ -51,6 +52,42 @@ class ApplicationController extends Controller
         }
 
         return response()->json($query->latest()->paginate(15));
+    }
+
+    // ── College admin: list all applications ──────────────────────
+    // GET /api/applications
+    public function index(Request $request)
+    {
+        $query = Application::with(['student', 'program', 'documents', 'reviewer']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('program_id')) {
+            $query->where('program_id', $request->program_id);
+        }
+
+        if ($request->filled('search')) {
+            $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            // Grouped so it can't break out of the status/program filters.
+            $query->where(function ($q) use ($s) {
+                $q->where('application_no', 'like', "%{$s}%")
+                  ->orWhereHas('student', fn($sq) => $sq
+                      ->where('name', 'like', "%{$s}%")
+                      ->orWhere('cnic_no', 'like', "%{$s}%"));
+            });
+        }
+
+        $sortable = ['application_no', 'status', 'admission_year', 'created_at', 'reviewed_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+
+        $perPage = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
+
+        // return response()->json($query->orderBy($sortBy, $sortDir)->paginate(15));
     }
 
     // ── Student: start/submit an application ──────────────────────
@@ -202,6 +239,11 @@ class ApplicationController extends Controller
             // Auto-generate admission challan
             $challan = $this->challanService->generateAdmission($application);
 
+            AuditLog::record('application.approved', $application, [
+                'application_no' => $application->application_no,
+                'challan_no'     => $challan->challan_no,
+            ]);
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -235,6 +277,11 @@ class ApplicationController extends Controller
             'rejection_reason' => $request->reason,
             'reviewed_by'      => $request->user()->id,
             'reviewed_at'      => now(),
+        ]);
+
+        AuditLog::record('application.rejected', $application, [
+            'application_no' => $application->application_no,
+            'reason'         => $request->reason,
         ]);
 
         return response()->json([

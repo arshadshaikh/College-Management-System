@@ -18,6 +18,7 @@ use App\Http\Controllers\CmsAnnouncementController;
 use App\Http\Controllers\CmsMenuController;
 use App\Http\Controllers\CmsBannerController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -104,6 +105,9 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     Route::post('colleges/{college}/approve', [CollegeController::class, 'approve']);
     Route::post('colleges/{college}/reject', [CollegeController::class, 'reject']);
     Route::post('colleges/{college}/suspend', [CollegeController::class, 'suspend']);
+
+    // Audit Logs
+    Route::get('audit-logs', [AuditLogController::class, 'index']);
 });
 
 

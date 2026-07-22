@@ -19,7 +19,7 @@ class CmsAnnouncementController extends Controller
         }
 
         return response()->json(
-            $query->latest('published_at')->latest()->get()
+            $query->latest('published_at')->latest()->paginate(15)           
         );
     }
 

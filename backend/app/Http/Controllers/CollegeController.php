@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\College;
+use App\Models\AuditLog;
 use App\Services\CollegeInitializationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,8 @@ class CollegeController extends Controller
             // Auto-initialize CMS, roles, and settings
             $this->initializer->initialize($college);
 
+            AuditLog::record('college.approved', $college, ['slug' => $college->slug]);
+
             \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
 
             DB::commit();
@@ -131,6 +134,8 @@ class CollegeController extends Controller
             'rejection_reason' => $request->reason,
         ]);
 
+        AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
+
         return response()->json([
             'message' => "College '{$college->name}' has been rejected.",
             'college' => $college->fresh(),
@@ -153,6 +158,8 @@ class CollegeController extends Controller
             'status'           => 'suspended',
             'rejection_reason' => $request->reason,
         ]);
+
+        AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
 
         // Clear the tenant cache so the subdomain stops resolving immediately
         \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");

@@ -85,6 +85,8 @@ class CollegeInitializationService
                 'cms.banners.update', 'cms.banners.destroy',
                 // CMS media
                 'cms.media.index', 'cms.media.store', 'cms.media.show', 'cms.media.destroy',
+                // Audit Logs
+                'audit-logs.index',
             ],
             'student' => [
                 'programs.index', 'programs.show',

@@ -26,6 +26,13 @@ class Payment extends Model
 
     protected $hidden = ['slip_path'];
 
+    protected $appends = ['has_slip'];
+
+    public function getHasSlipAttribute(): bool
+    {
+        return !empty($this->slip_path);
+    }
+
     public function challan()
     {
         return $this->belongsTo(Challan::class);

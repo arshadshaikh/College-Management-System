@@ -20,7 +20,7 @@ class CmsMenuController extends Controller
             $query->where('is_active', true);
         }
 
-        return response()->json($query->get());
+        return response()->json($query->paginate(15));
     }
 
     // GET /api/cms/menus/{cmsMenu}

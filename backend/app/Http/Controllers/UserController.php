@@ -11,6 +11,12 @@ class UserController extends Controller
     {
         $query = User::with('activeRoles');
 
+        // Tenant scope: super admin sees all; everyone else only their own college.
+        $user = $request->user();
+        if (!$user->isSuperAdmin()) {
+            $query->where('college_id', $user->college_id);
+        }
+
         if ($request->has('search')) {
             $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {

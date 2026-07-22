@@ -8,9 +8,28 @@ use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
-    public function index()
+    // public function index()
+    // {
+    //     return response()->json(Role::with('privileges')->withCount('users')->latest()->get());
+    // }
+
+    public function index(Request $request)
     {
-        return response()->json(Role::with('privileges')->withCount('users')->latest()->get());
+        $query = Role::with(['privileges', 'college:id,name,slug'])->withCount('users');
+
+        $user = $request->user();
+        if (!$user->isSuperAdmin()) {
+            $query->where('college_id', $user->college_id);
+        }
+
+        // return response()->json($query->latest()->get());
+        // return response()->json($query->latest()->paginate(15));
+
+        $sortable = ['name', 'code', 'degree_level', 'total_seats', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate(15));
     }
 
     public function store(Request $request)

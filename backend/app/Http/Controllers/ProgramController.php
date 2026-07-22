@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FeeStructure;
 use App\Models\Program;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProgramController extends Controller
 {
@@ -24,15 +25,35 @@ class ProgramController extends Controller
             $query->where('degree_level', $request->degree_level);
         }
 
+        // if ($request->filled('search')) {
+        //     $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+        //     $query->where(function ($q) use ($s) {
+        //         $q->where('name', 'like', "%{$s}%")
+        //           ->orWhere('code', 'like', "%{$s}%");
+        //     });
+        // }
+
         if ($request->filled('search')) {
             $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('code', 'like', "%{$s}%");
+                  ->orWhere('code', 'like', "%{$s}%")
+                  ->orWhere('degree_level', 'like', "%{$s}%")
+                  ->orWhere('eligibility_criteria', 'like', "%{$s}%");
             });
         }
 
-        return response()->json($query->latest()->paginate(15));
+        $sortable = ['name', 'code', 'degree_level', 'duration_years', 'total_semesters', 'total_seats', 'is_active', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+
+        $perPage = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
+
+        // return response()->json($query->orderBy($sortBy, $sortDir)->paginate(15));
+
+        // return response()->json($query->latest()->paginate(15));
     }
 
     // POST /api/programs — college admin only
@@ -40,7 +61,12 @@ class ProgramController extends Controller
     {
         $request->validate([
             'name'                => 'required|string|max:255',
-            'code'                => 'nullable|string|max:20',
+            // 'code'                => 'nullable|string|max:20',
+            'code'                => [
+                                    'nullable', 'string', 'max:20',
+                                    Rule::unique('programs', 'code')
+                                        ->where('college_id', app('current_college')->id),
+            ],
             'degree_level'        => 'required|in:certificate,diploma,associate,bachelor,master,phd',
             'duration_years'      => 'required|integer|min:1|max:10',
             'total_semesters'     => 'required|integer|min:1|max:20',
@@ -76,7 +102,13 @@ class ProgramController extends Controller
     {
         $request->validate([
             'name'                => 'sometimes|string|max:255',
-            'code'                => 'nullable|string|max:20',
+            // 'code'                => 'nullable|string|max:20',
+            'code'                => [
+                                    'sometimes', 'nullable', 'string', 'max:20',
+                                    Rule::unique('programs', 'code')
+                                        ->where('college_id', app('current_college')->id)
+                                        ->ignore($program->id),
+            ],
             'degree_level'        => 'sometimes|in:certificate,diploma,associate,bachelor,master,phd',
             'duration_years'      => 'sometimes|integer|min:1|max:10',
             'total_semesters'     => 'sometimes|integer|min:1|max:20',

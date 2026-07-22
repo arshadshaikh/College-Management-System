@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Challan;
 use App\Models\Payment;
+use App\Models\AuditLog;
 use App\Services\ChallanService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -36,7 +37,15 @@ class ChallanController extends Controller
             $query->where('student_id', $request->student_id);
         }
 
-        return response()->json($query->latest()->paginate(15));
+        // return response()->json($query->latest()->paginate(15));
+
+        $sortable = ['challan_no', 'challan_type', 'total_amount', 'status', 'issue_date', 'due_date', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+
+        $perPage = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // ── Student: their own challans ───────────────────────────────
@@ -108,6 +117,10 @@ class ChallanController extends Controller
 
         $challan->update(['status' => 'cancelled']);
 
+        AuditLog::record('challan.cancelled', $challan, [
+            'challan_no' => $challan->challan_no,
+        ]);
+
         return response()->json(['message' => 'Challan cancelled.', 'challan' => $challan->fresh()]);
     }
 
@@ -127,12 +140,22 @@ class ChallanController extends Controller
             'payment_method'    => 'required|in:cash,bank_transfer,online',
             'payment_reference' => 'nullable|string|max:255',
             'bank_name'         => 'nullable|string|max:255',
+            'slip'              => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'paid_at'           => 'required|date',
             'notes'             => 'nullable|string|max:1000',
         ]);
 
         DB::beginTransaction();
         try {
+
+            $slipPath = null;
+            if ($request->hasFile('slip')) {
+                $slipPath = $request->file('slip')->store(
+                "colleges/{$challan->college_id}/slips/{$challan->id}",
+                'private'
+                );
+            }
+
             Payment::create([
                 'challan_id'        => $challan->id,
                 'college_id'        => $challan->college_id,
@@ -141,6 +164,7 @@ class ChallanController extends Controller
                 'payment_method'    => $request->payment_method,
                 'payment_reference' => $request->payment_reference,
                 'bank_name'         => $request->bank_name,
+                'slip_path'         => $slipPath,
                 'paid_at'           => $request->paid_at,
                 'notes'             => $request->notes,
                 'recorded_by'       => $request->user()->id,
@@ -150,6 +174,12 @@ class ChallanController extends Controller
             ]);
 
             $challan->update(['status' => 'paid']);
+
+            AuditLog::record('challan.marked_paid', $challan, [
+                'challan_no'     => $challan->challan_no,
+                'amount'         => $challan->total_amount,
+                'payment_method' => $request->payment_method,
+            ]);
 
             DB::commit();
         } catch (\Throwable $e) {
@@ -241,6 +271,11 @@ class ChallanController extends Controller
             if ($request->approved) {
                 $payment->challan->update(['status' => 'paid']);
             }
+
+            AuditLog::record('payment.slip_verified', $payment, [
+                'approved'   => $request->boolean('approved'),
+                'challan_no' => $payment->challan->challan_no,
+            ]);
 
             DB::commit();
         } catch (\Throwable $e) {

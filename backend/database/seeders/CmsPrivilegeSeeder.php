@@ -52,6 +52,8 @@ class CmsPrivilegeSeeder extends Seeder
             ['slug' => 'cms.media.store',   'name' => 'Upload media', 'route' => '/api/cms/media',        'method' => 'POST'],
             ['slug' => 'cms.media.show',    'name' => 'View media',   'route' => '/api/cms/media/{id}',   'method' => 'GET'],
             ['slug' => 'cms.media.destroy', 'name' => 'Delete media', 'route' => '/api/cms/media/{id}',   'method' => 'DELETE'],
+
+            ['slug' => 'audit-logs.index', 'name' => 'View audit logs', 'route' => '/api/audit-logs', 'method' => 'GET'],
         ];
 
         $superAdminRoleId = DB::table('roles')->where('slug','super_admin')->whereNull('college_id')->value('id');

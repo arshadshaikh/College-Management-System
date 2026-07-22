@@ -20,7 +20,7 @@ class CmsPageController extends Controller
         }
 
         return response()->json(
-            $query->orderBy('sort_order')->get()
+            $query->orderBy('sort_order')->paginate(15)
         );
     }
 

@@ -9,7 +9,8 @@ export default function RoleList() {
   const navigate = useNavigate();
 
   const fetchRoles = () => {
-    api.get('/roles').then(({ data }) => { setRoles(data); setLoading(false); });
+    // api.get('/roles').then(({ data }) => { setRoles(data); setLoading(false); });
+    api.get('/roles').then(({ data }) => { setRoles(data.data ?? data); setLoading(false); });
   };
 
   useEffect(() => { fetchRoles(); }, []);
@@ -40,6 +41,7 @@ export default function RoleList() {
               <tr>
                 <th className="text-left px-6 py-3 font-medium text-gray-500">Name</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-500">Slug</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-500">College</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-500 hidden md:table-cell">Description</th>
                 <th className="text-center px-6 py-3 font-medium text-gray-500">Privileges</th>
                 <th className="text-center px-6 py-3 font-medium text-gray-500">Status</th>
@@ -55,6 +57,7 @@ export default function RoleList() {
                 <tr key={role.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{role.name}</td>
                   <td className="px-6 py-4 text-gray-600 font-mono text-xs">{role.slug}</td>
+                  <td className="px-6 py-4 text-gray-600 font-mono text-xs">{role.college?.name ?? 'Platform'}</td>
                   <td className="px-6 py-4 text-gray-600 hidden md:table-cell">{role.description || '-'}</td>
                   <td className="px-6 py-4 text-center">
                     <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">

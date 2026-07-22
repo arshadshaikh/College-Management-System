@@ -18,6 +18,15 @@ import ChangePassword from './pages/ChangePassword';
 import ChangeRole from './pages/ChangeRole';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ProgramList from './pages/ProgramList';
+import ProgramForm from './pages/ProgramForm';
+import ApplicationList from './pages/ApplicationList';
+import ApplicationDetail from './pages/ApplicationDetail';
+import ChallanList from './pages/ChallanList';
+import ChallanDetail from './pages/ChallanDetail';
+import MyApplications from './pages/student/MyApplications';
+import MyChallans from './pages/student/MyChallans';
+import ApplyForm from './pages/student/ApplyForm';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -54,7 +63,25 @@ export default function App() {
         {/* Privilege Management */}
         <Route path="privileges" element={<PrivilegeRoute slug="privilege-list"><PrivilegeList /></PrivilegeRoute>} />
         <Route path="privileges/create" element={<PrivilegeRoute slug="create-privilege"><PrivilegeCreate /></PrivilegeRoute>} />
-        <Route path="privileges/:id/edit" element={<PrivilegeRoute slug="create-privilege"><PrivilegeEdit /></PrivilegeRoute>} />
+        <Route path="privileges/:id/edit" element={<PrivilegeRoute slug="update-privilege"><PrivilegeEdit /></PrivilegeRoute>} />
+
+        {/* Programs */}
+        <Route path="programs" element={<PrivilegeRoute slug="programs.index"><ProgramList /></PrivilegeRoute>} />
+        <Route path="programs/create"   element={<PrivilegeRoute slug="programs.store"><ProgramForm /></PrivilegeRoute>} />
+        <Route path="programs/:id/edit" element={<PrivilegeRoute slug="programs.update"><ProgramForm /></PrivilegeRoute>} />
+
+        {/* Applications */}
+        <Route path="applications" element={<PrivilegeRoute slug="applications.index"><ApplicationList /></PrivilegeRoute>} />
+        <Route path="applications/:id" element={<PrivilegeRoute slug="applications.show"><ApplicationDetail /></PrivilegeRoute>} />
+
+        {/* Challans */}
+        <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
+        <Route path="challans/:id" element={<PrivilegeRoute slug="challans.show"><ChallanDetail /></PrivilegeRoute>} />
+
+        {/* Student Routes */}
+        <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
+        <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
+        <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

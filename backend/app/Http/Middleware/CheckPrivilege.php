@@ -32,13 +32,13 @@ class CheckPrivilege
         $normalized = preg_replace('#/\d+#', '/{id}', $path);
 
         // ── Temporary debug line ──────────────────────────────────
-        \Illuminate\Support\Facades\Log::info('CheckPrivilege', [
-            'user_id'    => $user->id,
-            'role_id'    => $user->active_role_id,
-            'method'     => $method,
-            'path'       => $path,
-            'normalized' => $normalized,
-        ]);
+        // \Illuminate\Support\Facades\Log::info('CheckPrivilege', [
+        //     'user_id'    => $user->id,
+        //     'role_id'    => $user->active_role_id,
+        //     'method'     => $method,
+        //     'path'       => $path,
+        //     'normalized' => $normalized,
+        // ]);
         // ─────────────────────────────────────────────────────────
 
         // Whitelist: routes that don't need privilege check

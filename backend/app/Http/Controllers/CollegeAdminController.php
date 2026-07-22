@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\College;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -101,6 +102,11 @@ class CollegeAdminController extends Controller
             //         'scope'      => 'college',
             //     ]);
             // }
+
+            AuditLog::record('college_admin.created', $user, [
+                'cnic_no'    => $user->cnic_no,
+                'college_id' => $college->id,
+            ]);
 
             if (!$role) {
                 return response()->json([
