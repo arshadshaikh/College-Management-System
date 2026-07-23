@@ -180,6 +180,7 @@ class CollegeInitializationService
             ['key' => 'contact_email',  'value' => $college->email, 'group' => 'contact'],
             ['key' => 'contact_phone',  'value' => $college->phone, 'group' => 'contact'],
             ['key' => 'admission_open', 'value' => 'false',         'group' => 'admission'],
+            ['key' => 'allow_multiple_admissions', 'value' => 'false', 'group' => 'admissions'],
         ];
 
         foreach ($settings as $s) {

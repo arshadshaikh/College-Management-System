@@ -30,6 +30,7 @@ class SettingController extends Controller
             'settings.contact_email' => 'nullable|email|max:255',
             'settings.contact_phone' => 'nullable|string|max:50',
             'settings.admission_open'=> 'nullable|in:true,false',
+            'settings.allow_multiple_admissions' => 'nullable|in:true,false',
             // 'logo' is intentionally NOT handled here — it's a file upload,
             // done via a separate endpoint with the public disk.
         ]);

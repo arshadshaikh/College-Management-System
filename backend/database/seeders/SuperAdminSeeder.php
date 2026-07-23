@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Role;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
 
 class SuperAdminSeeder extends Seeder
@@ -36,6 +37,15 @@ class SuperAdminSeeder extends Seeder
         if ($admin->active_role_id !== $role->id) {
             $admin->update(['active_role_id' => $role->id]);
         }
+
+        // ── Platform-level policy settings (college_id = NULL) ──────
+        // 'college_choice' delegates the decision to each college's own
+        // 'allow_multiple_admissions' setting. Set 'deny' or 'allow' here
+        // to enforce platform-wide instead.
+        DB::table('settings')->updateOrInsert(
+            ['college_id' => null, 'key' => 'multiple_admissions_policy'],
+            ['value' => 'college_choice', 'group' => 'admissions', 'updated_at' => now(), 'created_at' => now()]
+        );
 
         $this->command->info('SuperAdminSeeder done.');
     }

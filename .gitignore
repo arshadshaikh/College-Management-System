@@ -1,3 +1,11 @@
 .DS_Store
 Thumbs.db
 *.log
+backend/vendor/
+backend/.env
+backend/storage/logs/
+backend/storage/app/private/
+backend/storage/app/public/
+backend/bootstrap/cache/
+frontend/node_modules/
+frontend/dist/

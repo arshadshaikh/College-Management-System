@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\Program;
 use App\Models\AuditLog;
 use App\Services\ChallanService;
+use App\Services\PolicyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -228,6 +229,19 @@ class ApplicationController extends Controller
         //     'reviewed_at' => now(),
         // ]);
 
+        if (!PolicyService::allows('multiple_admissions_policy', 'allow_multiple_admissions', $application->college_id)) {
+           $alreadyAdmitted = Application::where('student_id', $application->student_id)
+            ->where('id', '!=', $application->id)
+            ->whereIn('status', ['approved', 'shortlisted'])
+            ->exists();
+
+            if ($alreadyAdmitted) {
+                return response()->json([
+                    'message' => 'This student already has an admitted application. Multiple admissions are not permitted under current policy.',
+                ], 422);
+            }
+        }
+
         DB::beginTransaction();
         try {
             $application->update([
@@ -326,5 +340,22 @@ class ApplicationController extends Controller
             $path,
             $document->original_name
         );
+    }
+
+    private function multipleAdmissionsAllowed(int $collegeId): bool
+    {
+        $platform = \DB::table('settings')
+            ->whereNull('college_id')
+            ->where('key', 'multiple_admissions_policy')
+            ->value('value') ?? 'college_choice';
+
+        if ($platform === 'allow') return true;
+        if ($platform === 'deny')  return false;
+
+        // college_choice → the college's own setting decides (default: deny)
+        return \DB::table('settings')
+            ->where('college_id', $collegeId)
+            ->where('key', 'allow_multiple_admissions')
+            ->value('value') === 'true';
     }
 }
