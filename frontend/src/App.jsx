@@ -22,6 +22,8 @@ import ProgramList from './pages/ProgramList';
 import ProgramForm from './pages/ProgramForm';
 import ApplicationList from './pages/ApplicationList';
 import ApplicationDetail from './pages/ApplicationDetail';
+import CollegeList from './pages/CollegeList';
+import CollegeDetail from './pages/CollegeDetail';
 import ChallanList from './pages/ChallanList';
 import ChallanDetail from './pages/ChallanDetail';
 import MyApplications from './pages/student/MyApplications';
@@ -64,6 +66,10 @@ export default function App() {
         <Route path="privileges" element={<PrivilegeRoute slug="privilege-list"><PrivilegeList /></PrivilegeRoute>} />
         <Route path="privileges/create" element={<PrivilegeRoute slug="create-privilege"><PrivilegeCreate /></PrivilegeRoute>} />
         <Route path="privileges/:id/edit" element={<PrivilegeRoute slug="update-privilege"><PrivilegeEdit /></PrivilegeRoute>} />
+
+        {/* Colleges (super admin) */}
+        <Route path="colleges" element={<PrivilegeRoute slug="colleges.index"><CollegeList /></PrivilegeRoute>} />
+        <Route path="colleges/:id" element={<PrivilegeRoute slug="colleges.show"><CollegeDetail /></PrivilegeRoute>} />
 
         {/* Programs */}
         <Route path="programs" element={<PrivilegeRoute slug="programs.index"><ProgramList /></PrivilegeRoute>} />

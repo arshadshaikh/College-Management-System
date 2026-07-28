@@ -68,11 +68,18 @@ class CollegeController extends Controller
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
                   ->orWhere('slug', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
+                  ->orWhere('email', 'like', "%{$s}%")
+                  ->orWhere('city', 'like', "%{$s}%");
             });
         }
 
-        return response()->json($query->latest()->paginate(15));
+        $sortable = ['name', 'slug', 'city', 'status', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+
+        $perPage = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // ── Super admin: view single college ──────────────────────────
