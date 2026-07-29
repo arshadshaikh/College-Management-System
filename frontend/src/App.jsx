@@ -30,6 +30,7 @@ import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
+import CollegeRegister from './pages/CollegeRegister';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -47,6 +48,8 @@ export default function App() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to="/" replace /> : <ResetPassword />} />
+
+      <Route path="/register-college" element={<CollegeRegister />} />
 
       <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
