@@ -92,6 +92,8 @@ class CollegeInitializationService
                 'programs.index', 'programs.show',
                 'applications.my', 'applications.store', 'applications.withdraw',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
+                'challans.my-show', 
+                // 'payments.verify-slip',
                 'payments.slip',
                 // CMS pages (students/public see only published)
                 'cms.pages.index', 'cms.pages.show',

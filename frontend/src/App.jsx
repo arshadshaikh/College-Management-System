@@ -29,6 +29,7 @@ import ChallanDetail from './pages/ChallanDetail';
 import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
+import MyChallanDetail from './pages/student/MyChallanDetail';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -87,7 +88,11 @@ export default function App() {
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
+        <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
+  
+
+        
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

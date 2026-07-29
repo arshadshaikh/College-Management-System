@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import HistoryTimeline from '../components/HistoryTimeline';
 
 const STATUS_STYLES = {
   pending:   'bg-amber-50 text-amber-700',
@@ -64,10 +65,12 @@ export default function CollegeDetail() {
     );
   }
 
-  const canApprove = ['pending', 'rejected', 'suspended'].includes(college.status) && hasPrv('colleges.approve');
+  const canApprove = ['pending', 'rejected'].includes(college.status) && hasPrv('colleges.approve');
+  // const canApprove = college.status === 'pending' && hasPrv('colleges.approve');
   const canReject  = college.status === 'pending' && hasPrv('colleges.reject');
   const canSuspend = college.status === 'approved' && hasPrv('colleges.suspend');
-  const hasActions = canApprove || canReject || canSuspend;
+  const canReinstate = college.status === 'suspended' && hasPrv('colleges.reinstate');
+  const hasActions = canApprove || canReject || canSuspend || canReinstate;
 
   return (
     <div className="space-y-6">
@@ -133,9 +136,24 @@ export default function CollegeDetail() {
                 <button
                   disabled={busy}
                   onClick={() => act('approve', {}, `College '${college.name}' approved and initialized successfully.`)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                  Approve
+                </button>
+              )}
+              {canReinstate && (
+                <button disabled={busy}
+                  onClick={() => act('reinstate', {}, `College '${college.name}' reinstated.`)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                  Reinstate
+                </button>
+              )}
+              {college.status === 'suspended' && (
+                <button
+                  disabled={busy}
+                  onClick={() => act('reinstate', {}, `College '${college.name}' reinstated.`)}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
                 >
-                  {college.status === 'suspended' ? 'Reinstate' : 'Approve'}
+                Reinstate
                 </button>
               )}
               {canReject && (
@@ -195,6 +213,13 @@ export default function CollegeDetail() {
           )}
         </div>
       )}
+
+      {/* Status History — add here, last card */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="font-semibold text-gray-900 mb-4">Status History</h2>
+        <HistoryTimeline auditableType="App\Models\College" auditableId={college.id} />
+      </div>
+      
     </div>
   );
 }

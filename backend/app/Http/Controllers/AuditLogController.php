@@ -31,6 +31,10 @@ class AuditLogController extends Controller
             $query->where('auditable_type', $request->auditable_type);
         }
 
+        if ($request->filled('auditable_id')) {
+            $query->where('auditable_id', $request->auditable_id);
+        }
+
         return response()->json($query->latest()->paginate(25));
     }
 }

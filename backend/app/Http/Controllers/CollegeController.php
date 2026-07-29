@@ -96,6 +96,8 @@ class CollegeController extends Controller
             return response()->json(['message' => 'College is already approved.'], 422);
         }
 
+        $from = $college->status;
+
         DB::beginTransaction();
         try {
             $college->update([
@@ -108,7 +110,8 @@ class CollegeController extends Controller
             // Auto-initialize CMS, roles, and settings
             $this->initializer->initialize($college);
 
-            AuditLog::record('college.approved', $college, ['slug' => $college->slug]);
+            //AuditLog::record('college.approved', $college, ['slug' => $college->slug]);
+            AuditLog::record('college.approved', $college, ['from' => $from, 'to' => 'approved', 'slug' => $college->slug]);
 
             \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
 
@@ -136,12 +139,15 @@ class CollegeController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
+        $from = $college->status;
+
         $college->update([
             'status'           => 'rejected',
             'rejection_reason' => $request->reason,
         ]);
 
-        AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
+        // AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
+        AuditLog::record('college.rejected', $college, ['from' => $from, 'to' => 'rejected', 'reason' => $request->reason]);
 
         return response()->json([
             'message' => "College '{$college->name}' has been rejected.",
@@ -161,12 +167,15 @@ class CollegeController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
+        $from = $college->status;
+
         $college->update([
             'status'           => 'suspended',
             'rejection_reason' => $request->reason,
         ]);
 
-        AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
+        // AuditLog::record('college.suspended', $college, ['reason' => $request->reason]);
+        AuditLog::record('college.suspended', $college, ['from' => $from, 'to' => 'suspended', 'reason' => $request->reason]);
 
         // Clear the tenant cache so the subdomain stops resolving immediately
         \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
@@ -197,5 +206,34 @@ class CollegeController extends Controller
         \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
 
         return response()->json($college->fresh());
+    }
+
+    // ── Super admin: reinstate a suspended college ────────────────
+    // POST /api/colleges/{college}/reinstate
+    public function reinstate(Request $request, College $college)
+    {
+        if ($college->status !== 'suspended') {
+            return response()->json(['message' => 'Only suspended colleges can be reinstated.'], 422);
+        }
+
+        $from = $college->status;
+
+        // Flip status back only. Roles/pages/settings already exist from the
+        // original approval — do NOT re-initialize, and preserve approved_at.
+        $college->update([
+            'status'           => 'approved',
+            'rejection_reason' => null,
+        ]);
+
+        // AuditLog::record('college.reinstated', $college, ['slug' => $college->slug]);
+        AuditLog::record('college.reinstated', $college, ['from' => $from, 'to' => 'approved']);
+
+        // Subdomain must resolve again immediately.
+        \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
+
+        return response()->json([
+            'message' => "College '{$college->name}' has been reinstated.",
+            'college' => $college->fresh(),
+        ]);
     }
 }

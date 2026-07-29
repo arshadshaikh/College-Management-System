@@ -315,4 +315,17 @@ class ChallanController extends Controller
 
         return $pdf->download("challan-{$challan->challan_no}.pdf");
     }
+
+    // GET /api/my-challans/{challan} — student views their OWN challan only.
+    public function myShow(Request $request, Challan $challan)
+    {
+        // BelongsToTenant already scoped $challan to the college. Now enforce ownership.
+        if ($challan->student_id !== $request->user()->id) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        return response()->json(
+            $challan->load(['application.program', 'payments'])
+        );
+    }
 }

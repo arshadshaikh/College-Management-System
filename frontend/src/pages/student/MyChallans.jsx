@@ -1,9 +1,14 @@
 import DataTable from '../../components/DataTable';
+import { Link } from 'react-router-dom';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',
   overdue: 'bg-red-50 text-red-700', cancelled: 'bg-gray-100 text-gray-600',
 };
+
+const actions = (row) => (
+  <Link to={`/my-challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
+);
 
 export default function MyChallans() {
   const columns = [
@@ -17,5 +22,5 @@ export default function MyChallans() {
       )},
   ];
 
-  return <DataTable title="My Challans" endpoint="/challans/my" columns={columns} showIndex={false} />;
+  return <DataTable title="My Challans" endpoint="/challans/my" columns={columns} showIndex={false} actions={actions} />;
 }

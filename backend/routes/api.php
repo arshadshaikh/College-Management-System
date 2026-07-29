@@ -105,6 +105,7 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     Route::post('colleges/{college}/approve', [CollegeController::class, 'approve']);
     Route::post('colleges/{college}/reject', [CollegeController::class, 'reject']);
     Route::post('colleges/{college}/suspend', [CollegeController::class, 'suspend']);
+    Route::post('colleges/{college}/reinstate', [CollegeController::class, 'reinstate']);
 
     // Audit Logs
     Route::get('audit-logs', [AuditLogController::class, 'index']);
@@ -184,4 +185,7 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('cms/media', [MediaController::class, 'store']);
     Route::get('cms/media/{media}', [MediaController::class, 'show']);
     Route::delete('cms/media/{media}', [MediaController::class, 'destroy']);
+
+    // Student: view single challan
+    Route::get('my-challans/{challan}', [ChallanController::class, 'myShow']);
 });
