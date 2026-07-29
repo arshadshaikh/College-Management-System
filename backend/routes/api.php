@@ -18,6 +18,7 @@ use App\Http\Controllers\CmsAnnouncementController;
 use App\Http\Controllers\CmsMenuController;
 use App\Http\Controllers\CmsBannerController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,7 @@ Route::get('/app-config', function () {
 
 // College self-registration — public, main domain
 Route::post('/colleges/register', [CollegeController::class, 'register']);
+Route::get('public/required-documents', [RequiredDocumentTypeController::class, 'publicIndex']);
 
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -106,6 +108,12 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     Route::post('colleges/{college}/reject', [CollegeController::class, 'reject']);
     Route::post('colleges/{college}/suspend', [CollegeController::class, 'suspend']);
     Route::post('colleges/{college}/reinstate', [CollegeController::class, 'reinstate']);
+
+    // Required Document Types
+    Route::get('required-document-types',    [RequiredDocumentTypeController::class, 'index']);
+    Route::post('required-document-types',   [RequiredDocumentTypeController::class, 'store']);
+    Route::put('required-document-types/{requiredDocumentType}',    [RequiredDocumentTypeController::class, 'update']);
+    Route::delete('required-document-types/{requiredDocumentType}', [RequiredDocumentTypeController::class, 'destroy']);
 
     // Audit Logs
     Route::get('audit-logs', [AuditLogController::class, 'index']);

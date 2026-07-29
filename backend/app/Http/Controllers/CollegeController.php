@@ -36,21 +36,58 @@ class CollegeController extends Controller
             'province' => 'nullable|string|max:100',
         ]);
 
-        $college = College::create([
-            'name'     => $request->name,
-            'slug'     => Str::lower($request->slug),
-            'email'    => $request->email,
-            'phone'    => $request->phone,
-            'address'  => $request->address,
-            'city'     => $request->city,
-            'province' => $request->province,
-            'status'   => 'pending',
-        ]);
+        // Pull the required document config and validate uploads against it.
+        $types = \App\Models\RequiredDocumentType::where('scope', 'college_registration')
+            ->where('is_active', true)->get();
+        
+        $rules = [];
+        foreach ($types as $t) {
+            $field = "doc_{$t->slug}";
+            $rules[$field] = ($t->is_mandatory ? 'required' : 'nullable')
+                . '|file|mimes:jpg,jpeg,png,pdf|max:4096';
+        }
+        $request->validate($rules);
+
+        $college = DB::transaction(function () use ($request, $types) {
+
+            $college = College::create([
+                'name'=>$request->name,'slug'=>$request->slug,'email'=>$request->email,
+                'phone'=>$request->phone,'city'=>$request->city,'province'=>$request->province,
+                'address'  => $request->address, 'status'=>'pending',
+            ]);
+
+            foreach ($types as $t) {
+                $field = "doc_{$t->slug}";
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store("colleges/{$college->id}/registration", 'private');
+                    \App\Models\CollegeDocument::create([
+                        'college_id'=>$college->id,'document_slug'=>$t->slug,'document_name'=>$t->name,
+                        'original_name'=>$request->file($field)->getClientOriginalName(),
+                        'stored_path'=>$path,'mime_type'=>$request->file($field)->getMimeType(),
+                        'file_size'=>$request->file($field)->getSize(),
+                    ]);
+                }
+            }
+
+            return $college;
+        });
+
+        // $college = College::create([
+        //     'name'     => $request->name,
+        //     'slug'     => Str::lower($request->slug),
+        //     'email'    => $request->email,
+        //     'phone'    => $request->phone,
+        //     'address'  => $request->address,
+        //     'city'     => $request->city,
+        //     'province' => $request->province,
+        //     'status'   => 'pending',
+        // ]);
 
         return response()->json([
             'message' => 'Registration submitted. You will be notified once approved.',
             'college' => $college,
         ], 201);
+        
     }
 
     // ── Super admin: list colleges with filters ───────────────────
