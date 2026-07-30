@@ -6,7 +6,7 @@ import api from '../api';
 export default function CollegeRegister() {
   const navigate = useNavigate();
   const [docTypes, setDocTypes] = useState([]);
-  const [form, setForm] = useState({ name: '', slug: '', email: '', phone: '', city: '', province: '' });
+  const [form, setForm] = useState({ name: '', slug: '', email: '', phone: '', address: '', city: '', province: '' });
   const [files, setFiles] = useState({});
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -96,6 +96,11 @@ export default function CollegeRegister() {
             <label className="block text-sm font-medium text-gray-700 mb-1">College Name <span className="text-red-500">*</span></label>
             <input type="text" value={form.name} onChange={set('name')} className={inputCls(errors.name)} />
             {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input type="text" value={form.address} onChange={set('address')} className={inputCls(errors.address)} />
+            {errors.address && <p className="text-xs text-red-600 mt-1">{errors.address[0]}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
