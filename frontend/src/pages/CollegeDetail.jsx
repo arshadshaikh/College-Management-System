@@ -52,6 +52,20 @@ export default function CollegeDetail() {
     }
   };
 
+  const downloadDoc = async (doc) => {
+    try {
+      const res = await api.get(`/college-documents/${doc.id}/download`, { responseType: 'arraybuffer' });
+      const type = res.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([res.data], { type });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.original_name || 'document';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch { toast.error('Could not download document.'); }
+  };
+
   if (loading) {
     return <div className="py-20 text-center text-gray-400">Loading…</div>;
   }
@@ -124,6 +138,29 @@ export default function CollegeDetail() {
           <p className="text-sm text-red-700 mt-1">{college.rejection_reason}</p>
         </div>
       )}
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="font-semibold text-gray-900 mb-4">Registration Documents</h2>
+        {college.documents?.length ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {college.documents.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3">  
+                <div className="min-w-0">
+                  <div className="font-medium text-sm text-gray-900">{doc.document_name}</div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {doc.original_name} · {(doc.file_size / 1024).toFixed(0)} KB
+                  </div>
+                </div>
+                <button onClick={() => downloadDoc(doc)} className="ml-4 shrink-0 text-sm text-indigo-600 hover:underline">
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No documents were uploaded with this registration.</p>
+        )}
+      </div>
 
       {/* Actions */}
       {hasActions && (

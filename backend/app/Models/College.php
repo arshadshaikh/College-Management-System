@@ -42,4 +42,9 @@ class College extends Model
     {
         return $this->status === 'approved';
     }
+
+    public function documents()
+    {
+        return $this->hasMany(CollegeDocument::class);
+    }
 }

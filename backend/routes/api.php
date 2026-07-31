@@ -96,6 +96,9 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     Route::post('college-admins',         [CollegeAdminController::class, 'store']);
     Route::put('college-admins/{user}',   [CollegeAdminController::class, 'update']);
 
+    // Super admin: download college document
+    Route::get('college-documents/{collegeDocument}/download', [CollegeController::class, 'downloadDocument']);
+
     // College admin management — super admin only
     Route::apiResource('college-admins', CollegeAdminController::class)
          ->except(['show', 'destroy']);

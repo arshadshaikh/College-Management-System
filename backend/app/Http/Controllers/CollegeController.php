@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\College;
+use App\Models\CollegeDocument;
 use App\Models\AuditLog;
 use App\Services\CollegeInitializationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+
 
 class CollegeController extends Controller
 {
@@ -37,14 +40,36 @@ class CollegeController extends Controller
         ]);
 
         // Pull the required document config and validate uploads against it.
+        // $types = \App\Models\RequiredDocumentType::where('scope', 'college_registration')
+        //   ->where('is_active', true)->get();
+        
         $types = \App\Models\RequiredDocumentType::where('scope', 'college_registration')
             ->where('is_active', true)->get();
-        
+
         $rules = [];
         foreach ($types as $t) {
             $field = "doc_{$t->slug}";
-            $rules[$field] = ($t->is_mandatory ? 'required' : 'nullable')
-                . '|file|mimes:jpg,jpeg,png,pdf|max:4096';
+            // $rules[$field] = ($t->is_mandatory ? 'required' : 'nullable')
+            //    . '|file|mimes:jpg,jpeg,png,pdf|max:4096';
+
+            $parts = [$t->is_mandatory ? 'required' : 'nullable', 'file'];
+
+            // Real MIME-type validation (content-based, not extension).
+            if ($t->allowed_mime_types) {
+                $parts[] = 'mimetypes:' . $t->allowed_mime_types;   // content-based MIME check
+            }
+
+            // Max file size (validator wants KB).
+            $parts[] = 'max:' . ($t->max_size_kb ?: 4096);
+
+            // Max image dimensions — only when set. Laravel's `dimensions` rule
+            // is skipped automatically for non-images, so it's safe on pdf-allowed types.
+            if ($t->max_dimension) {
+                $parts[] = "dimensions:max_width={$t->max_dimension},max_height={$t->max_dimension}";
+            }
+
+            $rules[$field] = implode('|', $parts);
+
         }
         $request->validate($rules);
 
@@ -122,7 +147,8 @@ class CollegeController extends Controller
     // ── Super admin: view single college ──────────────────────────
     public function show(College $college)
     {
-        return response()->json($college->load('users'));
+        // return response()->json($college->load('users'));
+        return response()->json($college->load('documents', 'users'));
     }
 
     // ── Super admin: approve a college ────────────────────────────
@@ -272,5 +298,18 @@ class CollegeController extends Controller
             'message' => "College '{$college->name}' has been reinstated.",
             'college' => $college->fresh(),
         ]);
+    }
+
+    // GET /api/college-documents/{collegeDocument}/download — super admin only
+    public function downloadDocument(CollegeDocument $collegeDocument)
+    {
+        if (!Storage::disk('private')->exists($collegeDocument->stored_path)) {
+            return response()->json(['message' => 'File not found.'], 404);
+        }
+
+        return Storage::disk('private')->download(
+            $collegeDocument->stored_path,
+            $collegeDocument->original_name
+        );
     }
 }

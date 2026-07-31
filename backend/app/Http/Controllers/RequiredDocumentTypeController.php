@@ -19,13 +19,18 @@ class RequiredDocumentTypeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'scope'        => 'required|string|max:50',
-            'name'         => 'required|string|max:255',
-            'is_mandatory' => 'boolean',
-            'is_active'    => 'boolean',
-            'sort_order'   => 'nullable|integer|min:0',
+            'scope'              => 'required|string|max:50',
+            'name'               => 'required|string|max:255',
+            'is_mandatory'       => 'boolean',
+            'is_active'          => 'boolean',
+            'sort_order'         => 'nullable|integer|min:0',
+            'allowed_mime_types' => 'required|string|max:500',   // e.g. "image/jpeg,image/png,application/pdf"
+            'max_size_kb'        => 'nullable|integer|min:1|max:20480',
+            'max_dimension'      => 'nullable|integer|min:1|max:10000',
         ]);
+
         $data['slug'] = Str::slug($data['name'], '_');
+        $data['max_size_kb'] = $data['max_size_kb'] ?? 4096;
 
         // Slug must be unique within the scope.
         $request->merge(['slug' => $data['slug']]);
@@ -43,7 +48,11 @@ class RequiredDocumentTypeController extends Controller
             'is_mandatory' => 'boolean',
             'is_active'    => 'boolean',
             'sort_order'   => 'nullable|integer|min:0',
+            'allowed_mime_types' => 'sometimes|string|max:500',
+            'max_size_kb'        => 'nullable|integer|min:1|max:20480',
+            'max_dimension'      => 'nullable|integer|min:1|max:10000',
         ]);
+        
         // Slug is stable once created — editing the name doesn't re-slug,
         // so existing uploaded documents keep matching their type.
         $requiredDocumentType->update($data);
