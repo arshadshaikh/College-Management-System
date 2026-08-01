@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import DataTable from '../components/DataTable';
+import DataTable from '../../components/DataTable';
 
 const STATUSES = ['', 'unpaid', 'paid', 'overdue', 'cancelled'];
 const TYPES    = ['', 'admission', 'semester', 'exam', 'arrears', 'other'];

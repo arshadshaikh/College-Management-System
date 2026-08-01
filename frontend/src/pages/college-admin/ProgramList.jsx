@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import DataTable from '../components/DataTable';
-import { useAuth } from '../context/AuthContext';
+import DataTable from '../../components/DataTable';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ProgramList() {
   const { hasPrv } = useAuth();

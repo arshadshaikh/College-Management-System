@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
+import api from '../../api';
 
 const DEGREE_LEVELS = ['certificate', 'diploma', 'associate', 'bachelor', 'master', 'phd'];
 

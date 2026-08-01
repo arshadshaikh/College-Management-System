@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
-import { useAuth } from '../context/AuthContext';
+import api from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',

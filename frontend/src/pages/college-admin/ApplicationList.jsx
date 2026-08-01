@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import DataTable from '../components/DataTable';
-import { APPLICATION_STATUSES, statusColor, statusLabel, filterOptions } from '../config/statuses';
+import DataTable from '../../components/DataTable';
+import { APPLICATION_STATUSES, statusColor, statusLabel, filterOptions } from '../../config/statuses';
 
 export default function ApplicationList() {
   const [status, setStatus] = useState('');
