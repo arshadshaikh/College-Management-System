@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import DataTable from '../components/DataTable';
+import DataTable from '../../components/DataTable';
 
 export default function AuditLogList() {
   const [action, setAction] = useState('');

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
-import DataTable from '../components/DataTable';
-import { useAuth } from '../context/AuthContext';
-import { DOCUMENT_SCOPES, DEFAULT_SCOPE } from '../config/documentScopes';
+import api from '../../api';
+import DataTable from '../../components/DataTable';
+import { useAuth } from '../../context/AuthContext';
+import { DOCUMENT_SCOPES, DEFAULT_SCOPE } from '../../config/documentScopes';
 
 export default function DocumentTypeList() {
   const { hasPrv } = useAuth();

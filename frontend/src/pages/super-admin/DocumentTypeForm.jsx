@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
-import { DOCUMENT_SCOPES, DEFAULT_SCOPE } from '../config/documentScopes';
+import api from '../../api';
+import { DOCUMENT_SCOPES, DEFAULT_SCOPE } from '../../config/documentScopes';
 
 const MIME_OPTIONS = [
   { value: 'image/jpeg',      label: 'JPG image' },

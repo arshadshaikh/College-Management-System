@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import DataTable from '../components/DataTable';
+import DataTable from '../../components/DataTable';
 
 const STATUSES = ['', 'pending', 'approved', 'rejected', 'suspended'];
 

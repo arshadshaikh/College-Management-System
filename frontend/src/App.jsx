@@ -22,8 +22,8 @@ import ProgramList from './pages/ProgramList';
 import ProgramForm from './pages/ProgramForm';
 import ApplicationList from './pages/ApplicationList';
 import ApplicationDetail from './pages/ApplicationDetail';
-import CollegeList from './pages/CollegeList';
-import CollegeDetail from './pages/CollegeDetail';
+import CollegeList from './pages/super-admin/CollegeList';
+import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/ChallanList';
 import ChallanDetail from './pages/ChallanDetail';
 import MyApplications from './pages/student/MyApplications';
@@ -31,11 +31,11 @@ import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
 import CollegeRegister from './pages/CollegeRegister';
-import DocumentTypeList from './pages/DocumentTypeList';
-import DocumentTypeForm from './pages/DocumentTypeForm';
-import CollegeAdminList from './pages/CollegeAdminList';
-import CollegeAdminForm from './pages/CollegeAdminForm';
-import AuditLogList from './pages/AuditLogList';
+import DocumentTypeList from './pages/super-admin/DocumentTypeList';
+import DocumentTypeForm from './pages/super-admin/DocumentTypeForm';
+import CollegeAdminList from './pages/super-admin/CollegeAdminList';
+import CollegeAdminForm from './pages/super-admin/CollegeAdminForm';
+import AuditLogList from './pages/super-admin/AuditLogList';
 
 export default function App() {
   const { user, loading } = useAuth();

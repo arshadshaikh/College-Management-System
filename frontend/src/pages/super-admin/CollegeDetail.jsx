@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
-import { useAuth } from '../context/AuthContext';
-import HistoryTimeline from '../components/HistoryTimeline';
+import api from '../../api';
+import { useAuth } from '../../context/AuthContext';
+import HistoryTimeline from '../../components/HistoryTimeline';
 
 const STATUS_STYLES = {
   pending:   'bg-amber-50 text-amber-700',

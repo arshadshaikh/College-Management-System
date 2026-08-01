@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api';
-import DataTable from '../components/DataTable';
-import { useAuth } from '../context/AuthContext';
+import api from '../../api';
+import DataTable from '../../components/DataTable';
+import { useAuth } from '../../context/AuthContext';
 
 export default function CollegeAdminList() {
   const { hasPrv } = useAuth();
