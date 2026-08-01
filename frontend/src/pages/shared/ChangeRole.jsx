@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
-import api from '../api';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../api';
 
 export default function ChangeRole() {
   const { user, fetchUser } = useAuth();

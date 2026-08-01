@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useAppConfig } from '../context/AppConfigContext';
-import AppIcon from '../components/AppIcon';
+import { useAuth } from '../../context/AuthContext';
+import { useAppConfig } from '../../context/AppConfigContext';
+import AppIcon from '../../components/AppIcon';
 
 export default function Login() {
   const [cnic, setCnic] = useState('');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
+import api from '../../api';
 
 export default function ChangePassword() {
   const [form, setForm] = useState({ current_password: '', password: '', password_confirmation: '' });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../api';
+import api from '../../api';
 
 export default function CollegeRegister() {
   const navigate = useNavigate();
