@@ -35,6 +35,7 @@ import DocumentTypeList from './pages/DocumentTypeList';
 import DocumentTypeForm from './pages/DocumentTypeForm';
 import CollegeAdminList from './pages/CollegeAdminList';
 import CollegeAdminForm from './pages/CollegeAdminForm';
+import AuditLogList from './pages/AuditLogList';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -88,6 +89,10 @@ export default function App() {
         <Route path="document-types" element={<PrivilegeRoute slug="doc-types.index"><DocumentTypeList /></PrivilegeRoute>} />
         <Route path="document-types/create" element={<PrivilegeRoute slug="doc-types.store"><DocumentTypeForm /></PrivilegeRoute>} />
         <Route path="document-types/:id/edit" element={<PrivilegeRoute slug="doc-types.update"><DocumentTypeForm /></PrivilegeRoute>} />
+
+        {/* Audit Logs */}
+        <Route path="audit-logs" element={<PrivilegeRoute slug="audit-logs.index"><AuditLogList /></PrivilegeRoute>} />
+        
 
         {/* Programs */}
         <Route path="programs" element={<PrivilegeRoute slug="programs.index"><ProgramList /></PrivilegeRoute>} />
