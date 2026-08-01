@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DataTable from '../components/DataTable';
-
-const STATUSES = ['', 'submitted', 'under_review', 'shortlisted', 'approved', 'rejected', 'withdrawn'];
-
-const STATUS_STYLES = {
-  submitted:    'bg-blue-50 text-blue-700',
-  under_review: 'bg-amber-50 text-amber-700',
-  shortlisted:  'bg-purple-50 text-purple-700',
-  approved:     'bg-green-50 text-green-700',
-  rejected:     'bg-red-50 text-red-700',
-  withdrawn:    'bg-gray-100 text-gray-600',
-};
+import { APPLICATION_STATUSES, statusColor, statusLabel, filterOptions } from '../config/statuses';
 
 export default function ApplicationList() {
   const [status, setStatus] = useState('');
@@ -30,12 +20,10 @@ export default function ApplicationList() {
     { key: 'admission_year', label: 'Year', sortable: true },
     { key: 'status', label: 'Status', sortable: true,
       render: (r) => (
-        <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-          STATUS_STYLES[r.status] ?? 'bg-gray-100 text-gray-600'
-        }`}>
-          {r.status.replace('_', ' ')}
+        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColor(APPLICATION_STATUSES, r.status)}`}>
+          {statusLabel(APPLICATION_STATUSES, r.status)}
         </span>
-      )},
+    )},
     { key: 'created_at', label: 'Submitted', sortable: true,
       render: (r) => new Date(r.created_at).toLocaleDateString() },
   ];
@@ -60,10 +48,8 @@ export default function ApplicationList() {
           onChange={(e) => setStatus(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s === '' ? 'All statuses' : s.replace('_', ' ')}
-            </option>
+          {filterOptions(APPLICATION_STATUSES).map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
       }

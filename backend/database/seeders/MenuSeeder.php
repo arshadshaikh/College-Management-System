@@ -24,6 +24,7 @@ class MenuSeeder extends Seeder
                 ['slug'=>'menu.roles',      'name'=>'Role Management',      'route'=>'/roles',      'icon'=>'fa-shield'],
                 ['slug'=>'menu.privileges', 'name'=>'Privilege Management', 'route'=>'/privileges', 'icon'=>'fa-key'],
             ]],
+            ['slug'=>'menu.doc-types', 'name'=>'Document Types', 'route'=>'/document-types', 'icon'=>'fa-file-alt', 'roles'=>['super_admin']],
 
             // ── College admin ────────────────────────────────────
             ['slug'=>'menu.programs',     'name'=>'Programs',     'route'=>'/programs',     'icon'=>'fa-graduation-cap', 'roles'=>['college_admin']],
@@ -130,13 +131,13 @@ class MenuSeeder extends Seeder
         $roleId = DB::table('roles')->where('slug','super_admin')->whereNull('college_id')->value('id');
         if (!$roleId) return;
 
-        foreach (DB::table('privileges')->pluck('id') as $privId) {
-            $exists = DB::table('privilege_role')
-                ->where('role_id',$roleId)->where('privilege_id',$privId)->exists();
-            if (!$exists) {
-                DB::table('privilege_role')->insert([
-                    'role_id'=>$roleId, 'privilege_id'=>$privId, 'created_at'=>$now,
-                ]);
+        // Only FUNCTIONAL privileges (real api_route). Navigation rows are granted
+        // explicitly per role above — never bulk-granted here, or menus leak across roles.
+        $privIds = DB::table('privileges')->whereNotNull('api_route')->pluck('id');
+
+        foreach ($privIds as $privId) {
+            if (!DB::table('privilege_role')->where('role_id',$roleId)->where('privilege_id',$privId)->exists()) {
+                DB::table('privilege_role')->insert(['role_id'=>$roleId,'privilege_id'=>$privId,'created_at'=>$now]);
             }
         }
     }
