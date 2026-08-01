@@ -34,7 +34,14 @@ class CollegeAdminController extends Controller
             });
         }
 
-        return response()->json($query->latest()->paginate(15));
+        $sortable = ['name', 'cnic_no', 'email', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage  = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
+
+        // return response()->json($query->latest()->paginate(15));
     }
 
     /**
@@ -155,6 +162,7 @@ class CollegeAdminController extends Controller
         ]);
 
         $data = $request->only(['name', 'email', 'phone', 'is_active']);
+
         if ($request->filled('password')) {
             $data['password'] = $request->password;
         }
@@ -162,5 +170,24 @@ class CollegeAdminController extends Controller
         $user->update($data);
 
         return response()->json($user->load('college', 'activeRoles'));
+    }
+
+    // PATCH /api/college-admins/{user}/toggle-active
+    public function toggleActive(Request $request, User $user)
+    {
+        if ($user->user_type !== 'college_admin') {
+            return response()->json(['message' => 'Not a college admin.'], 404);
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        AuditLog::record($user->is_active ? 'college_admin.reactivated' : 'college_admin.deactivated', $user, [
+            'cnic_no' => $user->cnic_no,
+        ]);
+
+        return response()->json([
+            'message' => $user->is_active ? 'Admin reactivated.' : 'Admin deactivated.',
+            'user'    => $user->fresh(),
+        ]);
     }
 }

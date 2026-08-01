@@ -102,6 +102,7 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     // College admin management — super admin only
     Route::apiResource('college-admins', CollegeAdminController::class)
          ->except(['show', 'destroy']);
+    Route::patch('college-admins/{user}/toggle-active', [CollegeAdminController::class, 'toggleActive']);
     
     // College management (super admin)
     Route::get('colleges', [CollegeController::class, 'index']);

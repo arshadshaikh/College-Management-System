@@ -33,6 +33,8 @@ import MyChallanDetail from './pages/student/MyChallanDetail';
 import CollegeRegister from './pages/CollegeRegister';
 import DocumentTypeList from './pages/DocumentTypeList';
 import DocumentTypeForm from './pages/DocumentTypeForm';
+import CollegeAdminList from './pages/CollegeAdminList';
+import CollegeAdminForm from './pages/CollegeAdminForm';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -76,6 +78,11 @@ export default function App() {
         {/* Colleges (super admin) */}
         <Route path="colleges" element={<PrivilegeRoute slug="colleges.index"><CollegeList /></PrivilegeRoute>} />
         <Route path="colleges/:id" element={<PrivilegeRoute slug="colleges.show"><CollegeDetail /></PrivilegeRoute>} />
+
+        {/* College Admins */}
+        <Route path="college-admins" element={<PrivilegeRoute slug="college-admins.index"><CollegeAdminList /></PrivilegeRoute>} />
+        <Route path="college-admins/create" element={<PrivilegeRoute slug="college-admins.store"><CollegeAdminForm /></PrivilegeRoute>} />
+        <Route path="college-admins/:id/edit" element={<PrivilegeRoute slug="college-admins.update"><CollegeAdminForm /></PrivilegeRoute>} />
 
         {/* Document Types */}
         <Route path="document-types" element={<PrivilegeRoute slug="doc-types.index"><DocumentTypeList /></PrivilegeRoute>} />
