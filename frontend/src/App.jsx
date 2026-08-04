@@ -26,6 +26,7 @@ import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
 import ChallanDetail from './pages/college-admin/ChallanDetail';
+import Settings from './pages/college-admin/Settings';
 import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
@@ -106,6 +107,9 @@ export default function App() {
         {/* Challans */}
         <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
         <Route path="challans/:id" element={<PrivilegeRoute slug="challans.show"><ChallanDetail /></PrivilegeRoute>} />
+
+        {/* College Settings */}
+        <Route path="cms/settings" element={<PrivilegeRoute slug="settings.index"><Settings /></PrivilegeRoute>} />
 
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
