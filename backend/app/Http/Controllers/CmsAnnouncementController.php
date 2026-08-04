@@ -18,9 +18,16 @@ class CmsAnnouncementController extends Controller
             $query->where('is_published', true);
         }
 
-        return response()->json(
-            $query->latest('published_at')->latest()->paginate(15)           
-        );
+        // return response()->json(
+        //     $query->latest('published_at')->latest()->paginate(15)           
+        // );
+
+        $sortable = ['title', 'is_published', 'published_at', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'published_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage  = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // GET /api/cms/announcements/{cmsAnnouncement}

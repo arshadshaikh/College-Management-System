@@ -19,9 +19,16 @@ class CmsPageController extends Controller
             $query->where('is_published', true);
         }
 
-        return response()->json(
-            $query->orderBy('sort_order')->paginate(15)
-        );
+        // return response()->json(
+        //     $query->orderBy('sort_order')->paginate(15)
+        // );
+
+        $sortable = ['title', 'slug', 'sort_order', 'is_published', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'sort_order';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage  = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // GET /api/cms/pages/{cmsPage}

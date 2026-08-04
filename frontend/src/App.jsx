@@ -27,6 +27,10 @@ import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
 import ChallanDetail from './pages/college-admin/ChallanDetail';
 import Settings from './pages/college-admin/Settings';
+import CmsPageList from './pages/college-admin/CmsPageList';
+import CmsPageForm from './pages/college-admin/CmsPageForm';
+import CmsAnnouncementList from './pages/college-admin/CmsAnnouncementList';
+import CmsAnnouncementForm from './pages/college-admin/CmsAnnouncementForm';
 import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
@@ -110,6 +114,16 @@ export default function App() {
 
         {/* College Settings */}
         <Route path="cms/settings" element={<PrivilegeRoute slug="settings.index"><Settings /></PrivilegeRoute>} />
+
+        {/* CMS Pages */}
+        <Route path="cms/pages" element={<PrivilegeRoute slug="cms.pages.index"><CmsPageList /></PrivilegeRoute>} />
+        <Route path="cms/pages/create" element={<PrivilegeRoute slug="cms.pages.store"><CmsPageForm /></PrivilegeRoute>} />
+        <Route path="cms/pages/:id/edit" element={<PrivilegeRoute slug="cms.pages.update"><CmsPageForm /></PrivilegeRoute>} />
+
+        {/* CMS Announcements */}
+        <Route path="cms/announcements" element={<PrivilegeRoute slug="cms.announcements.index"><CmsAnnouncementList /></PrivilegeRoute>} />
+        <Route path="cms/announcements/create" element={<PrivilegeRoute slug="cms.announcements.store"><CmsAnnouncementForm /></PrivilegeRoute>} />
+        <Route path="cms/announcements/:id/edit" element={<PrivilegeRoute slug="cms.announcements.update"><CmsAnnouncementForm /></PrivilegeRoute>} />
 
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
