@@ -18,7 +18,14 @@ class CmsBannerController extends Controller
             $query->where('is_active', true);
         }
 
-        return response()->json($query->paginate(15));
+        // return response()->json($query->paginate(15));
+
+        $sortable = ['title', 'sort_order', 'is_active', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'sort_order';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage  = min(max((int) ($request->per_page ?? 15), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // GET /api/cms/banners/{cmsBanner}

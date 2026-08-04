@@ -31,6 +31,11 @@ import CmsPageList from './pages/college-admin/CmsPageList';
 import CmsPageForm from './pages/college-admin/CmsPageForm';
 import CmsAnnouncementList from './pages/college-admin/CmsAnnouncementList';
 import CmsAnnouncementForm from './pages/college-admin/CmsAnnouncementForm';
+import CmsMenuList from './pages/college-admin/CmsMenuList';
+import CmsMenuForm from './pages/college-admin/CmsMenuForm';
+import CmsBannerList from './pages/college-admin/CmsBannerList';
+import CmsBannerForm from './pages/college-admin/CmsBannerForm';
+import MediaLibrary from './pages/college-admin/MediaLibrary';
 import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
@@ -124,6 +129,19 @@ export default function App() {
         <Route path="cms/announcements" element={<PrivilegeRoute slug="cms.announcements.index"><CmsAnnouncementList /></PrivilegeRoute>} />
         <Route path="cms/announcements/create" element={<PrivilegeRoute slug="cms.announcements.store"><CmsAnnouncementForm /></PrivilegeRoute>} />
         <Route path="cms/announcements/:id/edit" element={<PrivilegeRoute slug="cms.announcements.update"><CmsAnnouncementForm /></PrivilegeRoute>} />
+
+        {/* CMS Menus */}
+        <Route path="cms/menus" element={<PrivilegeRoute slug="cms.menus.index"><CmsMenuList /></PrivilegeRoute>} />
+        <Route path="cms/menus/create" element={<PrivilegeRoute slug="cms.menus.store"><CmsMenuForm /></PrivilegeRoute>} />
+        <Route path="cms/menus/:id/edit" element={<PrivilegeRoute slug="cms.menus.update"><CmsMenuForm /></PrivilegeRoute>} />
+
+        {/* CMS Banners */}
+        <Route path="cms/banners" element={<PrivilegeRoute slug="cms.banners.index"><CmsBannerList /></PrivilegeRoute>} />
+        <Route path="cms/banners/create" element={<PrivilegeRoute slug="cms.banners.store"><CmsBannerForm /></PrivilegeRoute>} />
+        <Route path="cms/banners/:id/edit" element={<PrivilegeRoute slug="cms.banners.update"><CmsBannerForm /></PrivilegeRoute>} />
+
+        {/* Media Library */}
+        <Route path="cms/media" element={<PrivilegeRoute slug="cms.media.index"><MediaLibrary /></PrivilegeRoute>} />
 
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />

@@ -12,7 +12,7 @@ class CmsMenuController extends Controller
     public function index(Request $request)
     {
         $query = CmsMenu::with('children')
-            ->whereNull('parent_id')   // top-level only; children come via the relation
+            ->whereNull('parent_id')    // top-level only; children come via the relation
             ->orderBy('sort_order');
 
         $user = $request->user();
@@ -20,7 +20,7 @@ class CmsMenuController extends Controller
             $query->where('is_active', true);
         }
 
-        return response()->json($query->paginate(15));
+        return response()->json($query->get());   // full tree, not paginated
     }
 
     // GET /api/cms/menus/{cmsMenu}

@@ -17,7 +17,14 @@ class MediaController extends Controller
             $query->where('media_type', $request->media_type);
         }
 
-        return response()->json($query->latest()->paginate(20));
+        // return response()->json($query->latest()->paginate(20));
+
+        $sortable = ['original_name', 'media_type', 'file_size', 'created_at'];
+        $sortBy   = in_array($request->sort_by, $sortable) ? $request->sort_by : 'created_at';
+        $sortDir  = $request->sort_dir === 'asc' ? 'asc' : 'desc';
+        $perPage  = min(max((int) ($request->per_page ?? 20), 1), 1000);
+
+        return response()->json($query->orderBy($sortBy, $sortDir)->paginate($perPage));
     }
 
     // POST /api/cms/media — upload a file (college admin only).
@@ -36,9 +43,29 @@ class MediaController extends Controller
         $path = $file->store("colleges/{$college->id}/media", 'public');
 
         // Determine media_type from mime.
+        // $mime = $file->getMimeType();
+        // $mediaType = str_starts_with($mime, 'image/') ? 'image'
+        //     : ($mime === 'application/pdf' ? 'document' : 'file');
+
+
         $mime = $file->getMimeType();
-        $mediaType = str_starts_with($mime, 'image/') ? 'image'
-            : ($mime === 'application/pdf' ? 'document' : 'file');
+
+        if (str_starts_with($mime, 'image/')) {
+            $mediaType = 'image';
+        } elseif (str_starts_with($mime, 'video/')) {
+            $mediaType = 'video';
+        } elseif (in_array($mime, [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain',
+        ])) {
+            $mediaType = 'document';
+        } else {
+            $mediaType = 'other';   // enum's catch-all — NOT 'file'
+        }
 
         // Capture image dimensions if it's an image.
         $width = $height = null;
