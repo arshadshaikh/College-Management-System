@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import { MEDIA_ACCEPT } from '../../config/media';
 
 export default function MediaLibrary() {
   const { hasPrv } = useAuth();
@@ -11,6 +12,7 @@ export default function MediaLibrary() {
   const [typeFilter, setTypeFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [view, setView] = useState('grid');   // 'grid' | 'list'
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,10 +84,18 @@ export default function MediaLibrary() {
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+            <button type="button" onClick={() => setView('grid')}
+              className={`px-3 py-2 text-sm ${view === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              title="Grid view">▦</button>
+            <button type="button" onClick={() => setView('list')}
+              className={`px-3 py-2 text-sm ${view === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              title="List view">☰</button>
+          </div>
           {hasPrv('cms.media.store') && (
             <label className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 cursor-pointer">
               {uploading ? 'Uploading…' : '+ Upload File'}
-              <input type="file" accept="image/*,application/pdf,.doc,.docx" onChange={upload} disabled={uploading} className="hidden" />
+              <input type="file" accept={MEDIA_ACCEPT} onChange={upload} disabled={uploading} className="hidden" />
             </label>
           )}
         </div>
@@ -95,7 +105,8 @@ export default function MediaLibrary() {
         <div className="py-20 text-center text-gray-400">Loading…</div>
       ) : items.length === 0 ? (
         <div className="py-20 text-center text-gray-400">No files yet. Upload your first.</div>
-      ) : (
+      ) : view === 'grid' ? (
+        // ── your existing grid, unchanged ──
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((m) => (
             <div key={m.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -116,6 +127,32 @@ export default function MediaLibrary() {
                     <button onClick={() => remove(m)} className="text-red-600 hover:underline">Delete</button>
                   )}
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        // ── list view ──
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          {items.map((m) => (
+            <div key={m.id} className="flex items-center gap-4 px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
+              <div className="h-10 w-10 shrink-0 flex items-center justify-center bg-gray-50 rounded">
+                {m.media_type === 'image'
+                ? <img src={m.public_url} alt={m.alt_text || m.original_name} className="h-full w-full object-cover rounded" />
+                : <span className="text-lg">📄</span>}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-gray-900 truncate" title={m.original_name}>{m.original_name}</div>
+                <div className="text-xs text-gray-500">
+                  <span className="capitalize">{m.media_type}</span> · {(m.file_size / 1024).toFixed(0)} KB
+                    {m.width ? ` · ${m.width}×${m.height}` : ''}
+                </div>
+              </div>
+              <div className="flex gap-3 text-xs shrink-0">
+                <button onClick={() => copyUrl(m.public_url)} className="text-indigo-600 hover:underline">Copy URL</button>
+                {hasPrv('cms.media.destroy') && (
+                <button onClick={() => remove(m)} className="text-red-600 hover:underline">Delete</button>
+                )}
               </div>
             </div>
           ))}
