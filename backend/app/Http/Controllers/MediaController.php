@@ -32,8 +32,32 @@ class MediaController extends Controller
     {
         $college = app('current_college');
 
+        // $request->validate([
+        //     'file'     => 'required|file|mimes:jpg,jpeg,png,webp,gif,pdf,doc,docx|max:8192',
+        //     'alt_text' => 'nullable|string|max:255',
+        // ]);
+
+        // $request->validate([
+        //     'file'     => 'required|file|mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,application/pdf|max:8192',
+        //     'alt_text' => 'nullable|string|max:255',
+        // ]);
+
+        // $request->validate([
+        //     'file' => 'required|file|mimetypes:' . implode(',', [
+        //         'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+        //         'video/mp4',
+        //         'application/pdf',
+        //         'application/msword',
+        //         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        //         'application/vnd.ms-excel',
+        //         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        //     ]) . '|max:8192',
+        //     'alt_text' => 'nullable|string|max:255',
+        // ]);
+
         $request->validate([
-            'file'     => 'required|file|mimes:jpg,jpeg,png,webp,gif,pdf,doc,docx|max:8192',
+            'file'     => 'required|file|mimetypes:' . implode(',', config('media.allowed_mime_types'))
+                  . '|max:' . config('media.max_size_kb'),
             'alt_text' => 'nullable|string|max:255',
         ]);
 
