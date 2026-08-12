@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import CommandPalette from '../components/CommandPalette';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 
@@ -22,7 +21,6 @@ export default function DashboardLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         <Topbar onMenuToggle={() => setSidebarOpen(true)} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} />
-        <CommandPalette />
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Outlet />
         </main>
