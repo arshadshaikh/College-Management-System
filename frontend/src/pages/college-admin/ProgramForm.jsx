@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const DEGREE_LEVELS = ['certificate', 'diploma', 'associate', 'bachelor', 'master', 'phd'];
 
@@ -125,7 +126,7 @@ export default function ProgramForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update Program' : 'Create Program'}
           </button>
-          <Link to="/programs" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/programs`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

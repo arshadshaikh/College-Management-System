@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const EMPTY = { title: '', body: '', is_published: true };
 
@@ -45,7 +46,7 @@ export default function CmsAnnouncementForm() {
         await api.post('/cms/announcements', form);
         toast.success('Announcement created.');
       }
-      navigate('/cms/announcements');
+      navigate(`${PORTAL}/cms/announcements`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -66,7 +67,7 @@ export default function CmsAnnouncementForm() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link to="/cms/announcements" className="text-sm text-gray-500 hover:underline">← Announcements</Link>
+        <Link to={`${PORTAL}/cms/announcements`} className="text-sm text-gray-500 hover:underline">← Announcements</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">{isEdit ? 'Edit' : 'New'} Announcement</h1>
       </div>
 
@@ -94,7 +95,7 @@ export default function CmsAnnouncementForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
           </button>
-          <Link to="/cms/announcements" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/cms/announcements`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

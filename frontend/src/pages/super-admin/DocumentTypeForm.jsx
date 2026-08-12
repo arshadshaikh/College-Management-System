@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import { DOCUMENT_SCOPES, DEFAULT_SCOPE } from '../../config/documentScopes';
 
 const MIME_OPTIONS = [
@@ -90,7 +91,7 @@ export default function DocumentTypeForm() {
         await api.post('/required-document-types', payload);
         toast.success('Document type created.');
       }
-      navigate('/document-types');
+      navigate(`${PORTAL}/document-types`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -113,7 +114,7 @@ export default function DocumentTypeForm() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link to="/document-types" className="text-sm text-gray-500 hover:underline">← Document Types</Link>
+        <Link to={`${PORTAL}/document-types`} className="text-sm text-gray-500 hover:underline">← Document Types</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">{isEdit ? 'Edit' : 'Add'} Document Type</h1>
       </div>
 
@@ -187,7 +188,7 @@ export default function DocumentTypeForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
           </button>
-          <Link to="/document-types" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/document-types`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

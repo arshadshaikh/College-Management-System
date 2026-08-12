@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 export default function ChangePassword() {
   const [form, setForm] = useState({ current_password: '', password: '', password_confirmation: '' });
@@ -20,7 +21,8 @@ export default function ChangePassword() {
     try {
       await api.post('/change-password', form);
       toast.success('Password changed successfully');
-      navigate('/');
+      // navigate('/');
+      navigate(PORTAL);
     } catch (err) {
       if (err.response?.status === 422) {
         if (err.response.data.errors) {

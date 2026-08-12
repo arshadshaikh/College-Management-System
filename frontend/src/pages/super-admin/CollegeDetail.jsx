@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
 import HistoryTimeline from '../../components/HistoryTimeline';
 
@@ -74,7 +75,7 @@ export default function CollegeDetail() {
     return (
       <div className="py-20 text-center">
         <p className="text-gray-500 mb-4">College not found.</p>
-        <Link to="/colleges" className="text-indigo-600 hover:underline">Back to colleges</Link>
+        <Link to={`${PORTAL}/colleges`} className="text-indigo-600 hover:underline">Back to colleges</Link>
       </div>
     );
   }
@@ -91,7 +92,7 @@ export default function CollegeDetail() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <Link to="/colleges" className="text-sm text-gray-500 hover:underline">← Colleges</Link>
+          <Link to={`${PORTAL}/colleges`} className="text-sm text-gray-500 hover:underline">← Colleges</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{college.name}</h1>
           <p className="text-sm text-gray-500">{college.slug}</p>
         </div>

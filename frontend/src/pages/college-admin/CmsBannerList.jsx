@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../context/AuthContext';
 
@@ -42,7 +43,7 @@ export default function CmsBannerList() {
   const actions = (row) => (
     <>
       {hasPrv('cms.banners.update') && (
-        <Link to={`/cms/banners/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+        <Link to={`${PORTAL}/cms/banners/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
       )}
       {hasPrv('cms.banners.destroy') && (
         <button onClick={() => remove(row)} className="text-red-600 hover:underline">Delete</button>
@@ -60,7 +61,7 @@ export default function CmsBannerList() {
       showIndex={false}
       headerActions={
         hasPrv('cms.banners.store') && (
-          <Link to="/cms/banners/create"
+          <Link to={`${PORTAL}/cms/banners/create`}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
             + New Banner
           </Link>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
+import { PORTAL } from '../config/app';
 
 export default function PrivilegeList() {
   const [groups, setGroups] = useState([]);
@@ -30,7 +31,7 @@ export default function PrivilegeList() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Privileges</h1>
-        <button onClick={() => navigate('/privileges/create')}
+        <button onClick={() => navigate(`${PORTAL}/privileges/create`)}
           className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
           Create Privilege
@@ -92,7 +93,8 @@ export default function PrivilegeList() {
                       </td>
                       <td className="px-6 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => navigate(`/privileges/${prv.id}/edit`)}
+                          <button 
+                            onClick={() => navigate(`${PORTAL}/privileges/${prv.id}/edit`)}
                             className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded transition">
                             Edit
                           </button>

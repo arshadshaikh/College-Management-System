@@ -8,6 +8,13 @@ import { useAppConfig } from '../context/AppConfigContext';
 /* ---------- helper: get children array (supports all key names from backend) ---------- */
 const getChildren = (item) => item.menu_children || item.children_recursive || item.children || [];
 
+/* Prefix menu routes with the portal base. DB stores "/programs";
+   the app serves it at "/portal/programs". */
+const portalPath = (route) => {
+  if (!route || route === '#') return '#';
+  return route.startsWith('/portal') ? route : `/portal${route.startsWith('/') ? '' : '/'}${route}`;
+};
+
 /* ---------- Expanded (non-collapsed) recursive menu item ---------- */
 function ExpandedMenuItem({ item, depth = 0, expanded, toggle, onClose }) {
   const children = getChildren(item).filter(c => c.show_in_menu);
@@ -44,7 +51,7 @@ function ExpandedMenuItem({ item, depth = 0, expanded, toggle, onClose }) {
 
   return (
     <NavLink
-      to={item.frontend_route || '#'}
+      to={portalPath(item.frontend_route)}
       onClick={onClose}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition ${
@@ -72,7 +79,7 @@ function FlyoutMenu({ items, onClose }) {
         return (
           <NavLink
             key={child.id}
-            to={child.frontend_route || '#'}
+            to={portalPath(child.frontend_route)}
             onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap transition ${
@@ -164,7 +171,7 @@ function CollapsedMenuItem({ item, onClose }) {
 
   return (
     <NavLink
-      to={item.frontend_route || '#'}
+      to={portalPath(item.frontend_route)}
       onClick={onClose}
       title={item.name}
       className={({ isActive }) =>

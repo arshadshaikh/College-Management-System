@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import Toggle from '../../components/Toggle';
 
 export default function CmsBannerForm() {
@@ -77,7 +78,7 @@ export default function CmsBannerForm() {
         await api.post('/cms/banners', fd);
         toast.success('Banner created.');
       }
-      navigate('/cms/banners');
+      navigate(`${PORTAL}/cms/banners`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -98,7 +99,7 @@ export default function CmsBannerForm() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link to="/cms/banners" className="text-sm text-gray-500 hover:underline">← Banners</Link>
+        <Link to={`${PORTAL}/cms/banners`} className="text-sm text-gray-500 hover:underline">← Banners</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">{isEdit ? 'Edit' : 'New'} Banner</h1>
       </div>
 
@@ -152,7 +153,7 @@ export default function CmsBannerForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
           </button>
-          <Link to="/cms/banners" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/cms/banners`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

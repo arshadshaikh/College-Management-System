@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PORTAL } from '../../config/app';
 import { Link } from 'react-router-dom';
 import DataTable from '../../components/DataTable';
 
@@ -34,7 +35,7 @@ export default function CollegeList() {
   ];
 
   const actions = (row) => (
-    <Link to={`/colleges/${row.id}`} className="text-indigo-600 hover:underline">
+    <Link to={`${PORTAL}/colleges/${row.id}`} className="text-indigo-600 hover:underline">
       View
     </Link>
   );

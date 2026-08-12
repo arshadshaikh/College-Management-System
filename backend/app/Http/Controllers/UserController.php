@@ -66,6 +66,19 @@ class UserController extends Controller
             $data['password'] = $request->password;
         }
 
+        // Guard 1: can't deactivate yourself.
+        if ($user->id === $request->user()->id && $request->has('is_active') && !$request->boolean('is_active')) {
+            return response()->json(['message' => 'You cannot deactivate your own account.'], 422);
+        }
+
+        // Guard 2: can't deactivate the last active super admin.
+        if ($request->has('is_active') && !$request->boolean('is_active') && $user->user_type === 'super_admin') {
+            $activeSupers = User::where('user_type', 'super_admin')->where('is_active', true)->count();
+            if ($activeSupers <= 1) {
+                return response()->json(['message' => 'Cannot deactivate the last active super admin.'], 422);
+            }
+        }
+
         $user->update($data);
 
         return response()->json($user->load('activeRoles'));

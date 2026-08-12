@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 
 const STATUS_STYLES = {
@@ -29,7 +30,7 @@ export default function MyApplications() {
       columns={columns}
       showIndex={false}
       headerActions={
-        <Link to="/apply" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+        <Link to={`${PORTAL}/apply`} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
           + New Application
         </Link>
       }

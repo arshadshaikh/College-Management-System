@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',
@@ -67,7 +68,7 @@ export default function MyChallanDetail() {
   if (!challan) return (
     <div className="py-20 text-center">
       <p className="text-gray-500 mb-4">Challan not found.</p>
-      <Link to="/my-challans" className="text-indigo-600 hover:underline">Back to my challans</Link>
+      <Link to={`${PORTAL}/my-challans`} className="text-indigo-600 hover:underline">Back to my challans</Link>
     </div>
   );
 
@@ -79,7 +80,7 @@ export default function MyChallanDetail() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-start justify-between">
         <div>
-          <Link to="/my-challans" className="text-sm text-gray-500 hover:underline">← My Challans</Link>
+          <Link to={`${PORTAL}/my-challans`} className="text-sm text-gray-500 hover:underline">← My Challans</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{challan.challan_no}</h1>
         </div>
         <div className="flex items-center gap-3">

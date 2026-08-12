@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../context/AuthContext';
+import { PORTAL } from '../../config/app';
 
 export default function ProgramList() {
   const { hasPrv } = useAuth();
@@ -34,9 +35,9 @@ export default function ProgramList() {
   const actions = (row) => (
     <>
       {hasPrv('programs.update') && (
-        <Link to={`/programs/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+        <Link to={`${PORTAL}/programs/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
       )}
-      <Link to={`/programs/${row.id}`} className="text-gray-600 hover:underline">View</Link>
+      <Link to={`${PORTAL}/programs/${row.id}`} className="text-gray-600 hover:underline">View</Link>
     </>
   );
 
@@ -50,7 +51,7 @@ export default function ProgramList() {
         refreshKey={refreshKey}
         headerActions={
           hasPrv('programs.store') && (
-            <Link to="/programs/create"
+            <Link to={`${PORTAL}/programs/create`}
               className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
               + Create Program
             </Link>

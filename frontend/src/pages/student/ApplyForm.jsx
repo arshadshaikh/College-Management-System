@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const DOCS = [
   { key: 'doc_cnic',   label: 'CNIC (B-Form)' },
@@ -62,7 +63,7 @@ export default function ApplyForm() {
 
       const { data } = await api.post('/applications', fd);
       toast.success(`Application ${data.application?.application_no} submitted.`);
-      navigate('/my-applications');
+      navigate(`${PORTAL}/my-applications`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -83,7 +84,7 @@ export default function ApplyForm() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link to="/my-applications" className="text-sm text-gray-500 hover:underline">← My Applications</Link>
+        <Link to={`${PORTAL}/my-applications`} className="text-sm text-gray-500 hover:underline">← My Applications</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Apply for Admission</h1>
       </div>
 
@@ -134,7 +135,7 @@ export default function ApplyForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Submitting…' : 'Submit Application'}
           </button>
-          <Link to="/my-applications" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/my-applications`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
+import { PORTAL } from '../config/app';
 
 export default function PrivilegeEdit() {
   const { id } = useParams();
@@ -78,7 +79,8 @@ export default function PrivilegeEdit() {
     try {
       await api.put(`/privileges/${id}`, payload);
       toast.success('Privilege updated successfully');
-      navigate('/privileges');
+      // navigate('/privileges');
+      navigate(`${PORTAL}/privileges`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors || {});
@@ -96,7 +98,7 @@ export default function PrivilegeEdit() {
   return (
     <div>
       <div className="flex items-center gap-4 mb-8">
-        <button type="button" onClick={() => navigate('/privileges')} className="p-2 -ml-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
+        <button type="button" onClick={() => navigate(`${PORTAL}/privileges`)} className="p-2 -ml-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         </button>
         <div>
@@ -256,7 +258,7 @@ export default function PrivilegeEdit() {
             className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-indigo-800 disabled:from-indigo-400 disabled:to-indigo-400 shadow-sm shadow-indigo-200 transition">
             {loading ? 'Saving...' : 'Update Privilege'}
           </button>
-          <button type="button" onClick={() => navigate('/privileges')}
+          <button type="button" onClick={() => navigate(`${PORTAL}/privileges`)}
             className="px-8 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
             Cancel
           </button>

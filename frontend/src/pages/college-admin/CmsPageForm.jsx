@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const EMPTY = {
   title: '', slug: '', content: '',
@@ -53,7 +54,7 @@ export default function CmsPageForm() {
         await api.post('/cms/pages', form);
         toast.success('Page created.');
       }
-      navigate('/cms/pages');
+      navigate(`${PORTAL}/cms/pages`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -74,7 +75,7 @@ export default function CmsPageForm() {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link to="/cms/pages" className="text-sm text-gray-500 hover:underline">← Pages</Link>
+        <Link to={`${PORTAL}/cms/pages`} className="text-sm text-gray-500 hover:underline">← Pages</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">{isEdit ? 'Edit' : 'New'} Page</h1>
       </div>
 
@@ -127,7 +128,7 @@ export default function CmsPageForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update Page' : 'Create Page'}
           </button>
-          <Link to="/cms/pages" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/cms/pages`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

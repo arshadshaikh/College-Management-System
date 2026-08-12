@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
 
 export default function CmsMenuList() {
@@ -46,7 +47,7 @@ export default function CmsMenuList() {
         </div>
         <div className="flex gap-3 text-sm">
           {hasPrv('cms.menus.update') && (
-            <Link to={`/cms/menus/${item.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+            <Link to={`${PORTAL}/cms/menus/${item.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
           )}
           {hasPrv('cms.menus.destroy') && (
             <button onClick={() => remove(item)} className="text-red-600 hover:underline">Delete</button>
@@ -62,7 +63,7 @@ export default function CmsMenuList() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Menus</h1>
         {hasPrv('cms.menus.store') && (
-          <Link to="/cms/menus/create"
+          <Link to={`${PORTAL}/cms/menus/create`} 
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
             + New Menu Item
           </Link>

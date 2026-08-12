@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
+import { PORTAL } from '../config/app';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserList() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export default function UserList() {
             Search
           </button>
           </form>
-          <button onClick={() => navigate('/users/create')}
+          <button onClick={() => navigate(`${PORTAL}/users/create`)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Create User
@@ -102,16 +105,18 @@ export default function UserList() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => navigate(`/users/${u.id}/edit`)}
+                      <button onClick={() => navigate(`${PORTAL}/users/${u.id}/edit`)}
                         className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded transition">
                         Edit
                       </button>
+                      {u.id !== currentUser?.id && (
                       <button onClick={() => toggleActive(u)}
                         className={`px-2.5 py-1 text-xs font-medium rounded transition ${
-                          u.is_active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
-                        }`}>
+                        u.is_active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'
+                      }`}>
                         {u.is_active ? 'Deactivate' : 'Activate'}
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 
 const STATUSES = ['', 'unpaid', 'paid', 'overdue', 'cancelled'];
@@ -43,7 +44,7 @@ export default function ChallanList() {
   ];
 
   const actions = (row) => (
-    <Link to={`/challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
+    <Link to={`${PORTAL}/challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
   );
 
   const selectCls = "px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";

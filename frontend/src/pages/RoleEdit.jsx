@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
+import { PORTAL } from '../config/app';
 
 export default function RoleEdit() {
   const { id } = useParams();
@@ -53,7 +54,8 @@ export default function RoleEdit() {
       await api.put(`/roles/${id}`, form);
       await api.post(`/roles/${id}/assign-privileges`, { privilege_ids: selectedPrivileges });
       toast.success('Role updated successfully');
-      navigate('/roles');
+      // navigate('/roles');
+      navigate(`${PORTAL}/roles`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors || {});
@@ -71,7 +73,7 @@ export default function RoleEdit() {
   return (
     <div>
       <div className="flex items-center gap-4 mb-8">
-        <button type="button" onClick={() => navigate('/roles')} className="p-2 -ml-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
+        <button type="button" onClick={() => navigate(`${PORTAL}/roles`)} className="p-2 -ml-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         </button>
         <div>
@@ -157,7 +159,7 @@ export default function RoleEdit() {
             className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-indigo-800 disabled:from-indigo-400 disabled:to-indigo-400 shadow-sm shadow-indigo-200 transition">
             {loading ? 'Saving...' : 'Update Role'}
           </button>
-          <button type="button" onClick={() => navigate('/roles')}
+          <button type="button" onClick={() => navigate(`${PORTAL}/roles`)}
             className="px-8 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
             Cancel
           </button>

@@ -1,5 +1,6 @@
 import DataTable from '../../components/DataTable';
 import { Link } from 'react-router-dom';
+import { PORTAL } from '../../config/app';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',
@@ -7,7 +8,7 @@ const STATUS_STYLES = {
 };
 
 const actions = (row) => (
-  <Link to={`/my-challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
+  <Link to={`${PORTAL}/challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
 );
 
 export default function MyChallans() {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 const EMPTY = { college_id: '', name: '', cnic_no: '', email: '', phone: '', password: '', is_active: true };
 
@@ -65,7 +66,7 @@ export default function CollegeAdminForm() {
         await api.post('/college-admins', form);
         toast.success('College admin created.');
       }
-      navigate('/college-admins');
+      navigate(`${PORTAL}/college-admins`);
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
@@ -87,7 +88,7 @@ export default function CollegeAdminForm() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link to="/college-admins" className="text-sm text-gray-500 hover:underline">← College Admins</Link>
+        <Link to={`${PORTAL}/college-admins`} className="text-sm text-gray-500 hover:underline">← College Admins</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">{isEdit ? 'Edit' : 'Add'} College Admin</h1>
       </div>
 
@@ -152,7 +153,7 @@ export default function CollegeAdminForm() {
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
             {saving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
           </button>
-          <Link to="/college-admins" className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
+          <Link to={`${PORTAL}/college-admins`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
     </div>

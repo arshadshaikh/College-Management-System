@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../context/AuthContext';
 
@@ -40,7 +41,7 @@ export default function CmsPageList() {
   const actions = (row) => (
     <>
       {hasPrv('cms.pages.update') && (
-        <Link to={`/cms/pages/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+        <Link to={`${PORTAL}/cms/pages/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
       )}
       {hasPrv('cms.pages.destroy') && (
         <button onClick={() => remove(row)} className="text-red-600 hover:underline">Delete</button>
@@ -57,7 +58,7 @@ export default function CmsPageList() {
       refreshKey={refreshKey}
       headerActions={
         hasPrv('cms.pages.store') && (
-          <Link to="/cms/pages/create"
+          <Link to={`${PORTAL}/cms/pages/create`}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
             + New Page
           </Link>

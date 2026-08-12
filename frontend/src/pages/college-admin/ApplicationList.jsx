@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DataTable from '../../components/DataTable';
+import { PORTAL } from '../../config/app';
 import { APPLICATION_STATUSES, statusColor, statusLabel, filterOptions } from '../../config/statuses';
 
 export default function ApplicationList() {
@@ -29,7 +30,7 @@ export default function ApplicationList() {
   ];
 
   const actions = (row) => (
-    <Link to={`/applications/${row.id}`} className="text-indigo-600 hover:underline">
+    <Link to={`${PORTAL}/applications/${row.id}`} className="text-indigo-600 hover:underline">
       Review
     </Link>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 
 export default function ChangeRole() {
   const { user, fetchUser } = useAuth();
@@ -27,7 +28,8 @@ export default function ChangeRole() {
       await api.post('/change-role', { role_id: selectedRole });
       toast.success('Role switched successfully');
       await fetchUser();
-      navigate('/');
+      // navigate('/');
+      navigate(PORTAL);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to switch role');
     } finally {

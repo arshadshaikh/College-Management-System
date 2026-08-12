@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../context/AuthContext';
 
@@ -34,7 +35,7 @@ export default function CmsAnnouncementList() {
   const actions = (row) => (
     <>
       {hasPrv('cms.announcements.update') && (
-        <Link to={`/cms/announcements/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+        <Link to={`${PORTAL}/cms/announcements/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
       )}
       {hasPrv('cms.announcements.destroy') && (
         <button onClick={() => remove(row)} className="text-red-600 hover:underline">Delete</button>
@@ -51,7 +52,7 @@ export default function CmsAnnouncementList() {
       refreshKey={refreshKey}
       headerActions={
         hasPrv('cms.announcements.store') && (
-          <Link to="/cms/announcements/create"
+          <Link to={`${PORTAL}/cms/announcements/create`}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
             + New Announcement
           </Link>

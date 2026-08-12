@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
 
 const STATUS_STYLES = {
@@ -114,7 +115,7 @@ export default function ApplicationDetail() {
     return (
       <div className="py-20 text-center">
         <p className="text-gray-500 mb-4">Application not found.</p>
-        <Link to="/applications" className="text-indigo-600 hover:underline">Back to applications</Link>
+        <Link to={`${PORTAL}/applications`} className="text-indigo-600 hover:underline">Back to applications</Link>
       </div>
     );
   }
@@ -126,7 +127,7 @@ export default function ApplicationDetail() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <Link to="/applications" className="text-sm text-gray-500 hover:underline">← Applications</Link>
+          <Link to={`${PORTAL}/applications`} className="text-sm text-gray-500 hover:underline">← Applications</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{app.application_no}</h1>
         </div>
         <span className={`px-3 py-1.5 rounded-full text-sm font-medium capitalize ${

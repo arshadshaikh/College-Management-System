@@ -20,6 +20,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import ProgramList from './pages/college-admin/ProgramList';
 import ProgramForm from './pages/college-admin/ProgramForm';
+import ProgramDetail from './pages/college-admin/ProgramDetail';
 import ApplicationList from './pages/college-admin/ApplicationList';
 import ApplicationDetail from './pages/college-admin/ApplicationDetail';
 import CollegeList from './pages/super-admin/CollegeList';
@@ -60,13 +61,13 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
-      <Route path="/reset-password" element={user ? <Navigate to="/" replace /> : <ResetPassword />} />
+      <Route path="/login" element={user ? <Navigate to="/portal" replace /> : <Login />} />
+      <Route path="/forgot-password" element={user ? <Navigate to="/portal" replace /> : <ForgotPassword />} />
+      <Route path="/reset-password" element={user ? <Navigate to="/portal" replace /> : <ResetPassword />} />
 
       <Route path="/register-college" element={<CollegeRegister />} />
 
-      <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+      <Route path="/portal" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="change-role" element={<ChangeRole />} />
@@ -106,7 +107,8 @@ export default function App() {
 
         {/* Programs */}
         <Route path="programs" element={<PrivilegeRoute slug="programs.index"><ProgramList /></PrivilegeRoute>} />
-        <Route path="programs/create"   element={<PrivilegeRoute slug="programs.store"><ProgramForm /></PrivilegeRoute>} />
+        <Route path="programs/create" element={<PrivilegeRoute slug="programs.store"><ProgramForm /></PrivilegeRoute>} />
+        <Route path="programs/:id" element={<PrivilegeRoute slug="programs.show"><ProgramDetail /></PrivilegeRoute>} />
         <Route path="programs/:id/edit" element={<PrivilegeRoute slug="programs.update"><ProgramForm /></PrivilegeRoute>} />
 
         {/* Applications */}
@@ -146,14 +148,17 @@ export default function App() {
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
-        <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
+        <Route path="challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
   
 
         
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to="/portal" replace />} />
+
+      <Route path="*" element={<Navigate to="/portal" replace />} />
+
     </Routes>
   );
 }

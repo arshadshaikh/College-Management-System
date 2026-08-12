@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api';
+import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 import { useAuth } from '../../context/AuthContext';
 
@@ -40,7 +41,7 @@ export default function CollegeAdminList() {
   const actions = (row) => (
     <>
       {hasPrv('college-admins.update') && (
-        <Link to={`/college-admins/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
+        <Link to={`${PORTAL}/college-admins/${row.id}/edit`} className="text-indigo-600 hover:underline">Edit</Link>
       )}
       {hasPrv('college-admins.toggle-active') && (
         <button onClick={() => toggleActive(row)}
@@ -79,8 +80,7 @@ export default function CollegeAdminList() {
             {colleges.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           {hasPrv('college-admins.store') && (
-            <Link to="/college-admins/create"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+            <Link to={`${PORTAL}/college-admins/create`} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
               + Add Admin
             </Link>
           )}
