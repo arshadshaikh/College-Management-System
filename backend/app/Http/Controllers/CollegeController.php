@@ -312,4 +312,19 @@ class CollegeController extends Controller
             $collegeDocument->original_name
         );
     }
+
+    // GET /api/public/colleges — approved colleges for the platform directory (no auth, main domain)
+    public function publicIndex(Request $request)
+    {
+        $query = College::where('status', 'approved');
+
+        if ($request->filled('search')) {
+            $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $query->where('name', 'like', "%{$s}%");
+        }
+
+        return response()->json(
+            $query->orderBy('name')->get(['id', 'name', 'slug', 'city', 'province'])
+        );
+    }
 }

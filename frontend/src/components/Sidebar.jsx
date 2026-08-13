@@ -235,7 +235,7 @@ export default function Sidebar({ menu, open, collapsed, onClose, onCollapse }) 
         <nav className="flex-1 mt-4 px-3 space-y-1 overflow-y-auto overflow-x-hidden">
           {/* Dashboard link */}
           <NavLink
-            to="/"
+            to="/portal"
             end
             onClick={onClose}
             title="Dashboard"

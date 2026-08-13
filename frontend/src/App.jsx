@@ -3,6 +3,10 @@ import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PrivilegeRoute from './components/PrivilegeRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import { IS_MAIN_DOMAIN } from './config/tenant';
+import PlatformLayout from './pages/platform/PlatformLayout';
+import PlatformHome from './pages/platform/PlatformHome';
+import PlatformColleges from './pages/platform/PlatformColleges';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/shared/Dashboard';
 import UserList from './pages/UserList';
@@ -159,10 +163,17 @@ export default function App() {
         
       </Route>
 
-      <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
-        <Route index element={<PublicHome />} />
-        <Route path=":slug" element={<PublicPage />} />
-      </Route>
+      {IS_MAIN_DOMAIN ? (
+        <Route path="/" element={<PlatformLayout />}>
+          <Route index element={<PlatformHome />} />
+          <Route path="colleges" element={<PlatformColleges />} />
+        </Route>
+      ) : (
+        <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
+          <Route index element={<PublicHome />} />
+          <Route path=":slug" element={<PublicPage />} />
+        </Route>
+      )}
 
       <Route path="*" element={<Navigate to="/" replace />} />
 

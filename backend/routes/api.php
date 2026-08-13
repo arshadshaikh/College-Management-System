@@ -35,6 +35,7 @@ Route::get('/app-config', function () {
 // College self-registration — public, main domain
 Route::post('/colleges/register', [CollegeController::class, 'register']);
 Route::get('public/required-documents', [RequiredDocumentTypeController::class, 'publicIndex']);
+Route::get('public/colleges', [CollegeController::class, 'publicIndex']);
 
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
