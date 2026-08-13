@@ -114,4 +114,11 @@ class CmsBannerController extends Controller
         $cmsBanner->delete();
         return response()->json(['message' => 'Banner deleted.']);
     }
+
+    public function publicIndex()
+    {
+        return response()->json(
+            CmsBanner::where('is_active', true)->orderBy('sort_order')->get()
+        );
+    }
 }

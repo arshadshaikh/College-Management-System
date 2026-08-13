@@ -87,4 +87,13 @@ class CmsMenuController extends Controller
         $cmsMenu->delete();
         return response()->json(['message' => 'Menu item deleted.']);
     }
+
+    public function publicIndex()
+    {
+        return response()->json(
+            CmsMenu::with(['children' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
+                ->whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get()
+        );
+    }
+
 }

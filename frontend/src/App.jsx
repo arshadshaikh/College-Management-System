@@ -47,6 +47,10 @@ import DocumentTypeForm from './pages/super-admin/DocumentTypeForm';
 import CollegeAdminList from './pages/super-admin/CollegeAdminList';
 import CollegeAdminForm from './pages/super-admin/CollegeAdminForm';
 import AuditLogList from './pages/super-admin/AuditLogList';
+import { PublicSiteProvider } from './context/PublicSiteContext';
+import PublicLayout from './pages/public/PublicLayout';
+import PublicHome from './pages/public/PublicHome';
+import PublicPage from './pages/public/PublicPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -148,16 +152,19 @@ export default function App() {
         {/* Student Routes */}
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
-        <Route path="challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
+        <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
   
 
         
       </Route>
 
-      <Route path="/" element={<Navigate to="/portal" replace />} />
+      <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
+        <Route index element={<PublicHome />} />
+        <Route path=":slug" element={<PublicPage />} />
+      </Route>
 
-      <Route path="*" element={<Navigate to="/portal" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
 
     </Routes>
   );

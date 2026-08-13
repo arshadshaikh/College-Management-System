@@ -98,4 +98,17 @@ class CmsPageController extends Controller
         $cmsPage->delete();   // soft delete
         return response()->json(['message' => 'Page deleted.']);
     }
+
+    public function publicIndex()
+    {
+        return response()->json(
+            CmsPage::where('is_published', true)->orderBy('sort_order')->get(['title','slug','sort_order'])
+        );
+    }
+
+    public function publicShow($slug)
+    {
+        $page = CmsPage::where('slug', $slug)->where('is_published', true)->firstOrFail();
+        return response()->json($page);
+    }
 }

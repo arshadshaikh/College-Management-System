@@ -86,4 +86,12 @@ class CmsAnnouncementController extends Controller
         $cmsAnnouncement->delete();   // soft delete
         return response()->json(['message' => 'Announcement deleted.']);
     }
+
+    public function publicIndex()
+    {
+        return response()->json(
+            CmsAnnouncement::where('is_published', true)->orderByDesc('published_at')->get()
+        );
+    }
+
 }

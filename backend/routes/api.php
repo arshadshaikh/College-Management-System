@@ -67,6 +67,18 @@ Route::middleware(['tenant', 'throttle:10,1'])->group(function () {
     Route::post('/register', [StudentAuthController::class, 'register']);
 });
 
+
+// ── Public college website — tenant required, no auth, read-only ──────
+// Serves the public-facing site content for a college subdomain.
+Route::middleware(['tenant', 'throttle:60,1'])->group(function () {
+    Route::get('public/settings',           [SettingController::class, 'publicIndex']);
+    Route::get('public/pages',              [CmsPageController::class, 'publicIndex']);
+    Route::get('public/pages/{slug}',       [CmsPageController::class, 'publicShow']);
+    Route::get('public/announcements',      [CmsAnnouncementController::class, 'publicIndex']);
+    Route::get('public/menus',              [CmsMenuController::class, 'publicIndex']);
+    Route::get('public/banners',            [CmsBannerController::class, 'publicIndex']);
+});
+
 // ── Protected — platform level ────────────────────────────────
 Route::middleware(['auth:api', 'privilege'])->group(function () {
 
