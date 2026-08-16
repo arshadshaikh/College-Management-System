@@ -67,12 +67,23 @@ export default function App() {
     );
   }
 
+  // const rootRoutes = IS_MAIN_DOMAIN ? (
+  //   <Route path="/" element={<PlatformLayout />}>
+  //     <Route index element={<PlatformHome />} />
+  //     <Route path="colleges" element={<PlatformColleges />} />
+  //   </Route>
+  // ) : (
+  //   <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
+  //     <Route index element={<PublicHome />} />
+  //     <Route path=":slug" element={<PublicPage />} />
+  //   </Route>
+  // );
+
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/portal" replace /> : <Login />} />
       <Route path="/forgot-password" element={user ? <Navigate to="/portal" replace /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to="/portal" replace /> : <ResetPassword />} />
-
       <Route path="/register-college" element={<CollegeRegister />} />
 
       <Route path="/portal" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -158,22 +169,21 @@ export default function App() {
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
         <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
-  
-
         
       </Route>
 
-      {IS_MAIN_DOMAIN ? (
-        <Route path="/" element={<PlatformLayout />}>
-          <Route index element={<PlatformHome />} />
-          <Route path="colleges" element={<PlatformColleges />} />
-        </Route>
-      ) : (
-        <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
-          <Route index element={<PublicHome />} />
-          <Route path=":slug" element={<PublicPage />} />
-        </Route>
-      )}
+      {/* Root: platform site on main domain, college site on subdomain */}
+      <Route
+        path="/"
+        element={IS_MAIN_DOMAIN
+          ? <PlatformLayout />
+          : <PublicSiteProvider><PublicLayout /></PublicSiteProvider>}
+      >
+        <Route index element={IS_MAIN_DOMAIN ? <PlatformHome /> : <PublicHome />} />
+        {IS_MAIN_DOMAIN
+          ? <Route path="colleges" element={<PlatformColleges />} />
+          : <Route path=":slug" element={<PublicPage />} />}
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
 

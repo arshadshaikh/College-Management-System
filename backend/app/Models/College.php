@@ -12,12 +12,13 @@ class College extends Model
 
     protected $fillable = [
         'name', 'slug', 'email', 'phone',
-        'address', 'city', 'province',
+        'address', 'city', 'province', 'is_platform',
         'status', 'rejection_reason',
         'approved_at', 'approved_by',
     ];
 
     protected $casts = [
+        'is_platform' => 'boolean',
         'approved_at' => 'datetime',
     ];
 

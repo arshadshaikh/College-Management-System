@@ -25,7 +25,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(cnic, password);
-      navigate('/');
+      // navigate('/');
+      navigate('/portal');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {

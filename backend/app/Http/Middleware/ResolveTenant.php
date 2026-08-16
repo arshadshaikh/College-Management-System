@@ -16,7 +16,26 @@ class ResolveTenant
         $slug = $this->extractSlug($host);
 
         // No subdomain → this is the main domain (super admin / onboarding area)
+        // if (!$slug) {
+        //     return $next($request);
+        // }
+        // No subdomain → main domain → resolve to the PLATFORM tenant
         if (!$slug) {
+            $platform = Cache::get('tenant:__platform__');
+
+            if (!$platform) {
+                $platform = College::where('is_platform', true)->first();
+                if ($platform) {
+                    Cache::put('tenant:__platform__', $platform, 3600);
+                }
+            }
+
+            if ($platform) {
+                app()->instance('current_college', $platform);
+                $request->merge(['_college_id' => $platform->id]);
+                view()->share('currentCollege', $platform);
+            }
+
             return $next($request);
         }
 

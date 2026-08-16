@@ -316,7 +316,8 @@ class CollegeController extends Controller
     // GET /api/public/colleges — approved colleges for the platform directory (no auth, main domain)
     public function publicIndex(Request $request)
     {
-        $query = College::where('status', 'approved');
+        // $query = College::where('status', 'approved');
+        $query = College::where('status', 'approved')->where('is_platform', false);
 
         if ($request->filled('search')) {
             $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
