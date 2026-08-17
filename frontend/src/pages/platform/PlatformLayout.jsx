@@ -1,6 +1,14 @@
+import { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import api from '../../api';
+
 
 export default function PlatformLayout() {
+  const [pages, setPages] = useState([]);
+  useEffect(() => {
+    api.get('/public/pages').then(({ data }) => setPages(data)).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-gray-200">
@@ -9,6 +17,10 @@ export default function PlatformLayout() {
             <span className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">C</span>
             <span className="font-bold text-gray-900">College Admissions Platform</span>
           </Link>
+          {pages.filter((p) => p.slug !== 'home').map((p) => (
+            <Link key={p.slug} to={`/${p.slug}`} className="text-gray-700 hover:text-gray-900">{p.title}</Link>
+          ))}
+          
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/colleges" className="text-gray-700 hover:text-gray-900">Colleges</Link>
             <Link to="/register-college" className="text-gray-700 hover:text-gray-900">Register College</Link>

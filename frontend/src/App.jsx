@@ -173,7 +173,7 @@ export default function App() {
       </Route>
 
       {/* Root: platform site on main domain, college site on subdomain */}
-      <Route
+      {/* <Route
         path="/"
         element={IS_MAIN_DOMAIN
           ? <PlatformLayout />
@@ -183,6 +183,12 @@ export default function App() {
         {IS_MAIN_DOMAIN
           ? <Route path="colleges" element={<PlatformColleges />} />
           : <Route path=":slug" element={<PublicPage />} />}
+      </Route> */}
+
+      <Route path="/" element={<PlatformLayout />}>
+        <Route index element={<PlatformHome />} />
+        <Route path="colleges" element={<PlatformColleges />} />
+        <Route path=":slug" element={<PublicPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
