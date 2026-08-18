@@ -57,6 +57,57 @@ class CollegeInitializationService
     {
         // Privilege slugs each role slug should hold.
         // Keep this list in sync with the *PrivilegeSeeder classes.
+        // $map = [
+        //     'college_admin' => [
+        //         // Programs & fee structures
+        //         'programs.index', 'programs.store', 'programs.show',
+        //         'programs.update', 'programs.destroy', 'programs.fee-structures',
+        //         // Applications (admin side)
+        //         'applications.index', 'applications.show', 'applications.review',
+        //         'applications.approve', 'applications.reject', 'documents.download',
+        //         // Challans (admin side)
+        //         'challans.index', 'challans.store', 'challans.show', 'challans.cancel',
+        //         'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
+        //         // CMS
+        //         'settings.index', 'settings.update',
+        //         // CMS pages
+        //         'cms.pages.index', 'cms.pages.store', 'cms.pages.show',
+        //         'cms.pages.update', 'cms.pages.destroy',
+        //         // CMS announcements
+        //         // college_admin: add all five
+        //         'cms.announcements.index', 'cms.announcements.store', 'cms.announcements.show',
+        //         'cms.announcements.update', 'cms.announcements.destroy',
+        //         // CMS menus
+        //         'cms.menus.index', 'cms.menus.store', 'cms.menus.show',
+        //         'cms.menus.update', 'cms.menus.destroy',
+        //         // CMS banners
+        //         'cms.banners.index', 'cms.banners.store', 'cms.banners.show',
+        //         'cms.banners.update', 'cms.banners.destroy',
+        //         // CMS media
+        //         'cms.media.index', 'cms.media.store', 'cms.media.show', 'cms.media.destroy',
+        //         // Audit Logs
+        //         'audit-logs.index',
+        //     ],
+        //     'student' => [
+        //         'programs.index', 'programs.show',
+        //         'applications.my', 'applications.store', 'applications.withdraw',
+        //         'challans.my', 'challans.upload-slip', 'challans.pdf',
+        //         'challans.my-show', 
+        //         // 'payments.verify-slip',
+        //         'payments.slip',
+        //         // CMS pages (students/public see only published)
+        //         'cms.pages.index', 'cms.pages.show',
+        //         // student: read-only
+        //         'cms.announcements.index', 'cms.announcements.show',
+        //         // CMS menus (student: read-only)
+        //         'cms.menus.index', 'cms.menus.show',
+        //         // CMS banners (student: read-only)
+        //         'cms.banners.index', 'cms.banners.show',
+        //         // CMS media (student: read-only)
+        //         'cms.media.index', 'cms.media.show',
+        //     ],
+        // ];
+
         $map = [
             'college_admin' => [
                 // Programs & fee structures
@@ -70,41 +121,35 @@ class CollegeInitializationService
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
                 // CMS
                 'settings.index', 'settings.update',
-                // CMS pages
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',
                 'cms.pages.update', 'cms.pages.destroy',
-                // CMS announcements
-                // college_admin: add all five
                 'cms.announcements.index', 'cms.announcements.store', 'cms.announcements.show',
                 'cms.announcements.update', 'cms.announcements.destroy',
-                // CMS menus
                 'cms.menus.index', 'cms.menus.store', 'cms.menus.show',
                 'cms.menus.update', 'cms.menus.destroy',
-                // CMS banners
                 'cms.banners.index', 'cms.banners.store', 'cms.banners.show',
                 'cms.banners.update', 'cms.banners.destroy',
-                // CMS media
                 'cms.media.index', 'cms.media.store', 'cms.media.show', 'cms.media.destroy',
-                // Audit Logs
                 'audit-logs.index',
+                // ── MENU (navigation) privileges — REQUIRED or the sidebar is empty ──
+                'menu.programs', 'menu.applications', 'menu.challans',
+                'menu.cms',
+                'menu.cms.pages', 'menu.cms.menus', 'menu.cms.banners',
+                'menu.cms.announcements', 'menu.cms.media', 'menu.cms.settings',
+                'menu.audit-logs',
             ],
             'student' => [
                 'programs.index', 'programs.show',
                 'applications.my', 'applications.store', 'applications.withdraw',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
-                'challans.my-show', 
-                // 'payments.verify-slip',
-                'payments.slip',
-                // CMS pages (students/public see only published)
+                'challans.my-show', 'payments.slip',
                 'cms.pages.index', 'cms.pages.show',
-                // student: read-only
                 'cms.announcements.index', 'cms.announcements.show',
-                // CMS menus (student: read-only)
                 'cms.menus.index', 'cms.menus.show',
-                // CMS banners (student: read-only)
                 'cms.banners.index', 'cms.banners.show',
-                // CMS media (student: read-only)
                 'cms.media.index', 'cms.media.show',
+                // ── MENU (navigation) privileges for students ──
+                'menu.student.programs', 'menu.student.applications', 'menu.student.challans',
             ],
         ];
 
