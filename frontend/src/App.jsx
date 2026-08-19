@@ -25,6 +25,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import ProgramList from './pages/college-admin/ProgramList';
 import ProgramForm from './pages/college-admin/ProgramForm';
 import ProgramDetail from './pages/college-admin/ProgramDetail';
+import ProgramFees from './pages/college-admin/ProgramFees';
 import ApplicationList from './pages/college-admin/ApplicationList';
 import ApplicationDetail from './pages/college-admin/ApplicationDetail';
 import CollegeList from './pages/super-admin/CollegeList';
@@ -66,18 +67,6 @@ export default function App() {
       </div>
     );
   }
-
-  // const rootRoutes = IS_MAIN_DOMAIN ? (
-  //   <Route path="/" element={<PlatformLayout />}>
-  //     <Route index element={<PlatformHome />} />
-  //     <Route path="colleges" element={<PlatformColleges />} />
-  //   </Route>
-  // ) : (
-  //   <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
-  //     <Route index element={<PublicHome />} />
-  //     <Route path=":slug" element={<PublicPage />} />
-  //   </Route>
-  // );
 
   return (
     <Routes>
@@ -130,6 +119,8 @@ export default function App() {
         <Route path="programs/:id" element={<PrivilegeRoute slug="programs.show"><ProgramDetail /></PrivilegeRoute>} />
         <Route path="programs/:id/edit" element={<PrivilegeRoute slug="programs.update"><ProgramForm /></PrivilegeRoute>} />
 
+        <Route path="programs/:id/fees" element={<PrivilegeRoute slug="programs.fee-structures"><ProgramFees /></PrivilegeRoute>} />
+
         {/* Applications */}
         <Route path="applications" element={<PrivilegeRoute slug="applications.index"><ApplicationList /></PrivilegeRoute>} />
         <Route path="applications/:id" element={<PrivilegeRoute slug="applications.show"><ApplicationDetail /></PrivilegeRoute>} />
@@ -173,23 +164,19 @@ export default function App() {
       </Route>
 
       {/* Root: platform site on main domain, college site on subdomain */}
-      {/* <Route
-        path="/"
-        element={IS_MAIN_DOMAIN
-          ? <PlatformLayout />
-          : <PublicSiteProvider><PublicLayout /></PublicSiteProvider>}
-      >
-        <Route index element={IS_MAIN_DOMAIN ? <PlatformHome /> : <PublicHome />} />
-        {IS_MAIN_DOMAIN
-          ? <Route path="colleges" element={<PlatformColleges />} />
-          : <Route path=":slug" element={<PublicPage />} />}
-      </Route> */}
-
-      <Route path="/" element={<PlatformLayout />}>
-        <Route index element={<PlatformHome />} />
-        <Route path="colleges" element={<PlatformColleges />} />
-        <Route path=":slug" element={<PublicPage />} />
-      </Route>
+      {IS_MAIN_DOMAIN ? (
+        <Route path="/" element={<PlatformLayout />}>
+          <Route index element={<PlatformHome />} />
+          <Route path="colleges" element={<PlatformColleges />} />
+          <Route path=":slug" element={<PublicPage />} />
+        </Route>
+        ) : (
+        <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
+          <Route index element={<PublicHome />} />
+          <Route path=":slug" element={<PublicPage />} />
+        </Route>
+        )
+      }
 
       <Route path="*" element={<Navigate to="/" replace />} />
 

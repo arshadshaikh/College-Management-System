@@ -165,4 +165,40 @@ class ProgramController extends Controller
 
         return response()->json($fee, 201);
     }
+
+    // PUT /api/programs/{program}/fee-structures/{feeStructure}
+    public function updateFeeStructure(Request $request, Program $program, FeeStructure $feeStructure)
+    {
+        // Ensure the fee belongs to this program (tenant scope already limits to the college).
+        if ($feeStructure->program_id !== $program->id) {
+            return response()->json(['message' => 'Fee structure not found for this program.'], 404);
+        }
+
+        $request->validate([
+            'fee_type'       => 'sometimes|in:admission,semester,exam,library,sports,security_deposit,arrears,other',
+            'label'          => 'sometimes|string|max:255',
+            'amount'         => 'sometimes|numeric|min:0',
+            'semester_no'    => 'nullable|integer|min:1|max:20',
+            'effective_from' => 'sometimes|date',
+            'effective_to'   => 'nullable|date|after:effective_from',
+            'is_active'      => 'boolean',
+        ]);
+
+        $feeStructure->update($request->only([
+            'fee_type', 'label', 'amount', 'semester_no',
+            'effective_from', 'effective_to', 'is_active',
+        ]));
+
+        return response()->json($feeStructure->fresh());
+    }
+
+    // DELETE /api/programs/{program}/fee-structures/{feeStructure}
+    public function destroyFeeStructure(Program $program, FeeStructure $feeStructure)
+    {
+        if ($feeStructure->program_id !== $program->id) {
+           return response()->json(['message' => 'Fee structure not found for this program.'], 404);
+        }
+        $feeStructure->delete();
+        return response()->json(['message' => 'Fee structure removed.']);
+    }
 }

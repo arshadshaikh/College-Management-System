@@ -143,6 +143,9 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     // Programs
     Route::apiResource('programs', ProgramController::class);
     Route::post('programs/{program}/fee-structures', [ProgramController::class, 'storeFeeStructure']);
+    Route::post('programs/{program}/fee-structures', [ProgramController::class, 'storeFeeStructure']);
+    Route::put('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'updateFeeStructure']);
+    Route::delete('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'destroyFeeStructure']);
 
     // Applications
     Route::get('applications/my', [ApplicationController::class, 'myApplications']);

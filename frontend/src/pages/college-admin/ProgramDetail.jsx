@@ -41,6 +41,12 @@ export default function ProgramDetail() {
             Edit
           </Link>
         )}
+        {hasPrv('programs.fee-structures') && (
+          <Link to={`${PORTAL}/programs/${program.id}/fees`}
+            className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50">
+            Manage Fees
+        </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6">

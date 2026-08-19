@@ -113,6 +113,7 @@ class CollegeInitializationService
                 // Programs & fee structures
                 'programs.index', 'programs.store', 'programs.show',
                 'programs.update', 'programs.destroy', 'programs.fee-structures',
+                'programs.fee-structures', 'programs.fee-structures.update', 'programs.fee-structures.destroy',
                 // Applications (admin side)
                 'applications.index', 'applications.show', 'applications.review',
                 'applications.approve', 'applications.reject', 'documents.download',

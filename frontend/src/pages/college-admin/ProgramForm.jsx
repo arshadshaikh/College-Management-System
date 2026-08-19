@@ -54,7 +54,8 @@ export default function ProgramForm() {
         await api.post('/programs', form);
         toast.success('Program created.');
       }
-      navigate('/programs');
+      // navigate('/programs');
+      navigate(`${PORTAL}/programs`);
     } catch (err) {
       if (err.response?.status === 422) {
         // Laravel validation errors: { errors: { field: [msg] } }
@@ -74,7 +75,7 @@ export default function ProgramForm() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link to="/programs" className="text-sm text-gray-500 hover:underline">← Programs</Link>
+        <Link to={`${PORTAL}/programs`} className="text-sm text-gray-500 hover:underline">← Programs</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">
           {isEdit ? 'Edit Program' : 'Create Program'}
         </h1>
