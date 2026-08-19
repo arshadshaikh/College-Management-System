@@ -8,7 +8,7 @@ const STATUS_STYLES = {
 };
 
 const actions = (row) => (
-  <Link to={`${PORTAL}/challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
+  <Link to={`${PORTAL}/my-challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
 );
 
 export default function MyChallans() {
