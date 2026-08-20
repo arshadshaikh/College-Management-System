@@ -142,4 +142,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->user_type === 'student';
     }
 
+    public function applications()
+    {
+        return $this->hasMany(\App\Models\Application::class, 'student_id');
+    }
+
 }

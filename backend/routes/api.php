@@ -12,6 +12,7 @@ use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ChallanController;
 use App\Http\Controllers\CmsPageController;
 use App\Http\Controllers\CmsAnnouncementController;
@@ -156,6 +157,12 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('applications/{application}/approve', [ApplicationController::class, 'approve']);
     Route::post('applications/{application}/reject', [ApplicationController::class, 'reject']);
     Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
+
+    // Student
+    Route::get('students', [StudentController::class, 'index']);
+    Route::post('students', [StudentController::class, 'store']);
+    Route::get('students/{student}', [StudentController::class, 'show']);
+    Route::put('students/{student}', [StudentController::class, 'update']);
 
     // Documents
     Route::get('documents/{document}/download', [ApplicationController::class, 'downloadDocument'])

@@ -117,6 +117,7 @@ class CollegeInitializationService
                 // Applications (admin side)
                 'applications.index', 'applications.show', 'applications.review',
                 'applications.approve', 'applications.reject', 'documents.download',
+                'students.index', 'students.store', 'students.show', 'students.update',
                 // Challans (admin side)
                 'challans.index', 'challans.store', 'challans.show', 'challans.cancel',
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
@@ -133,7 +134,7 @@ class CollegeInitializationService
                 'cms.media.index', 'cms.media.store', 'cms.media.show', 'cms.media.destroy',
                 'audit-logs.index',
                 // ── MENU (navigation) privileges — REQUIRED or the sidebar is empty ──
-                'menu.programs', 'menu.applications', 'menu.challans',
+                'menu.programs', 'menu.applications', 'menu.challans', 'menu.students',
                 'menu.cms',
                 'menu.cms.pages', 'menu.cms.menus', 'menu.cms.banners',
                 'menu.cms.announcements', 'menu.cms.media', 'menu.cms.settings',

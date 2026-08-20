@@ -28,6 +28,10 @@ import ProgramDetail from './pages/college-admin/ProgramDetail';
 import ProgramFees from './pages/college-admin/ProgramFees';
 import ApplicationList from './pages/college-admin/ApplicationList';
 import ApplicationDetail from './pages/college-admin/ApplicationDetail';
+import StudentList from './pages/college-admin/StudentList';
+import StudentForm from './pages/college-admin/StudentForm';
+import StudentDetail from './pages/college-admin/StudentDetail';
+import StudentEditForm from './pages/college-admin/StudentEditForm';
 import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
@@ -124,6 +128,12 @@ export default function App() {
         {/* Applications */}
         <Route path="applications" element={<PrivilegeRoute slug="applications.index"><ApplicationList /></PrivilegeRoute>} />
         <Route path="applications/:id" element={<PrivilegeRoute slug="applications.show"><ApplicationDetail /></PrivilegeRoute>} />
+
+        {/* Students */}
+        <Route path="students" element={<PrivilegeRoute slug="students.index"><StudentList /></PrivilegeRoute>} />
+        <Route path="students/create" element={<PrivilegeRoute slug="students.store"><StudentForm /></PrivilegeRoute>} />
+        <Route path="students/:id" element={<PrivilegeRoute slug="students.show"><StudentDetail /></PrivilegeRoute>} />
+        <Route path="students/:id/edit" element={<PrivilegeRoute slug="students.update"><StudentEditForm /></PrivilegeRoute>} />
 
         {/* Challans */}
         <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
