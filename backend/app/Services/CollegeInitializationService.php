@@ -117,6 +117,7 @@ class CollegeInitializationService
                 // Applications (admin side)
                 'applications.index', 'applications.show', 'applications.review',
                 'applications.approve', 'applications.reject', 'documents.download',
+                'students.import.template', 'students.import',
                 'students.index', 'students.store', 'students.show', 'students.update',
                 // Challans (admin side)
                 'challans.index', 'challans.store', 'challans.show', 'challans.cancel',

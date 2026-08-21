@@ -30,6 +30,7 @@ import ApplicationList from './pages/college-admin/ApplicationList';
 import ApplicationDetail from './pages/college-admin/ApplicationDetail';
 import StudentList from './pages/college-admin/StudentList';
 import StudentForm from './pages/college-admin/StudentForm';
+import StudentImport from './pages/college-admin/StudentImport';
 import StudentDetail from './pages/college-admin/StudentDetail';
 import StudentEditForm from './pages/college-admin/StudentEditForm';
 import CollegeList from './pages/super-admin/CollegeList';
@@ -132,6 +133,7 @@ export default function App() {
         {/* Students */}
         <Route path="students" element={<PrivilegeRoute slug="students.index"><StudentList /></PrivilegeRoute>} />
         <Route path="students/create" element={<PrivilegeRoute slug="students.store"><StudentForm /></PrivilegeRoute>} />
+        <Route path="students/import" element={<PrivilegeRoute slug="students.import"><StudentImport /></PrivilegeRoute>} />
         <Route path="students/:id" element={<PrivilegeRoute slug="students.show"><StudentDetail /></PrivilegeRoute>} />
         <Route path="students/:id/edit" element={<PrivilegeRoute slug="students.update"><StudentEditForm /></PrivilegeRoute>} />
 

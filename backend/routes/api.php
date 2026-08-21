@@ -159,6 +159,9 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
 
     // Student
+    Route::get('students/import/template', [StudentController::class, 'importTemplate']);
+    Route::post('students/import', [StudentController::class, 'import']);
+    // ... then the existing students/{student} routes
     Route::get('students', [StudentController::class, 'index']);
     Route::post('students', [StudentController::class, 'store']);
     Route::get('students/{student}', [StudentController::class, 'show']);
