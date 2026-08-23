@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getSubdomain } from './config/tenant';
 
 const api = axios.create({
   baseURL: '/api',
@@ -10,6 +11,11 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Tell the backend which college this is (used in path mode on the server).
+  const college = getSubdomain();
+  if (college) {
+    config.headers['X-College'] = college;
   }
   return config;
 });

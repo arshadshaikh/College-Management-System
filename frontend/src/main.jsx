@@ -7,8 +7,10 @@ import { AuthProvider } from './context/AuthContext';
 import App from './App';
 import './index.css';
 
+const BASENAME = import.meta.env.VITE_BASE_PATH ? `/${import.meta.env.VITE_BASE_PATH}` : '';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
+  <BrowserRouter basename={BASENAME}>
     <AppConfigProvider>
       <AuthProvider>
         <App />

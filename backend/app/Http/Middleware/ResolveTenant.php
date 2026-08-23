@@ -13,7 +13,14 @@ class ResolveTenant
     {
         $host = $request->getHost(); // e.g. "uos.localhost" or "localhost"
 
-        $slug = $this->extractSlug($host);
+        // $slug = $this->extractSlug($host);
+
+        // Path mode (server): read college from a header. Subdomain mode (local): read from host.
+        if (config('tenant.mode') === 'path') {
+            $slug = $request->header('X-College') ?: null;
+        } else {
+            $slug = $this->extractSlug($host);
+        }
 
         // No subdomain → this is the main domain (super admin / onboarding area)
         // if (!$slug) {
