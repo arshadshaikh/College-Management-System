@@ -1,0 +1,41 @@
+# ==========================================================================
+# SAMPLE .htaccess for subdirectory deployment (path-based tenancy)
+# --------------------------------------------------------------------------
+# This is a DOCUMENTED COPY of the file that lives at the web root of the
+# deployment, e.g.  public_html/cms/.htaccess  on the cPanel server.
+#
+# It is NOT read automatically from the repo — the real file must sit in the
+# web-root folder on the server. This copy exists so the recipe is version
+# controlled and the site can be rebuilt if the server file is ever lost.
+#
+# What it does:
+#   - SetEnv passes the subdirectory prefix to PHP so backend/public/index.php
+#     can strip it before Laravel matches routes (see index.php).
+#   - Rule 1: real files/dirs (assets, index.html, favicon) are served directly.
+#   - Rule 2: /cms/api/* requests are routed into Laravel.
+#   - Rule 3: everything else falls back to the React SPA's index.html, so
+#     client-side routing (/cms/uos, /cms/uos/portal, ...) works on refresh.
+#
+# To adapt for a different subdirectory (e.g. /app instead of /cms):
+#   - change  SetEnv APP_BASE_PATH /cms   -> /app
+#   - change  RewriteBase /cms/           -> /app/
+#   - rebuild the frontend with VITE_BASE_PATH=app (see DEPLOY.md)
+# ==========================================================================
+
+<IfModule mod_rewrite.c>
+    SetEnv APP_BASE_PATH /cms
+
+    RewriteEngine On
+    RewriteBase /cms/
+
+    # 1. Serve real files/directories directly (assets, index.html, favicon)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 2. API requests -> Laravel
+    RewriteRule ^api/ backend/public/index.php [L,QSA]
+
+    # 3. Everything else -> React SPA (client-side routing)
+    RewriteRule ^ index.html [L]
+</IfModule>
