@@ -19,9 +19,9 @@ require __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
 // When Laravel runs under a subdirectory (e.g. /cms), strip that prefix so
-// routes match. Set APP_BASE_PATH in .env (e.g. APP_BASE_PATH=/cms) on the
-// server; leave it unset locally so nothing changes.
-$basePath = env('APP_BASE_PATH', '');
+// routes match. Set via `SetEnv APP_BASE_PATH /cms` in the web-root .htaccess
+// on the server; unset locally so nothing changes.
+$basePath = $_SERVER['APP_BASE_PATH'] ?? '';
 if ($basePath !== '') {
     $uri = $_SERVER['REQUEST_URI'] ?? '';
     if (str_starts_with($uri, $basePath)) {
