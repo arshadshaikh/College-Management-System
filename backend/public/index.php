@@ -13,5 +13,20 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 require __DIR__.'/../vendor/autoload.php';
 
 // Bootstrap Laravel and handle the request...
-(require_once __DIR__.'/../bootstrap/app.php')
-    ->handleRequest(Request::capture());
+// (require_once __DIR__.'/../bootstrap/app.php')
+//     ->handleRequest(Request::capture());
+
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+// When Laravel runs under a subdirectory (e.g. /cms), strip that prefix so
+// routes match. Set APP_BASE_PATH in .env (e.g. APP_BASE_PATH=/cms) on the
+// server; leave it unset locally so nothing changes.
+$basePath = env('APP_BASE_PATH', '');
+if ($basePath !== '') {
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (str_starts_with($uri, $basePath)) {
+        $_SERVER['REQUEST_URI'] = substr($uri, strlen($basePath)) ?: '/';
+    }
+}
+
+$app->handleRequest(Request::capture());

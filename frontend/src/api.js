@@ -3,7 +3,8 @@ import toast from 'react-hot-toast';
 import { getSubdomain } from './config/tenant';
 
 const api = axios.create({
-  baseURL: '/api',
+  // baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   // headers: { 'Content-Type': 'application/json' },
 });
 

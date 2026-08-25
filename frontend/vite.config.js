@@ -1,24 +1,27 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
-  base: process.env.VITE_BASE_PATH ? `/${process.env.VITE_BASE_PATH}/` : '/',
-  plugins: [react(), tailwindcss()],
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        // target: 'http://localhost:8000',
-        target: 'http://127.0.0.1:80',
-        // changeOrigin: true,
-        changeOrigin: false,  // ← preserve the Host header so ResolveTenant sees the subdomain
-        secure: false,
-        headers: { 'Accept-Encoding': 'identity' },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    base: env.VITE_BASE_PATH ? `/${env.VITE_BASE_PATH}/` : '/',
+    plugins: [react(), tailwindcss()],
+    server: {
+      port: 3000,
+      proxy: {
+        '/api': {
+          // target: 'http://localhost:8000',
+          target: 'http://127.0.0.1:80',
+          // changeOrigin: true,
+          changeOrigin: false,  // ← preserve the Host header so ResolveTenant sees the subdomain
+          secure: false,
+          headers: { 'Accept-Encoding': 'identity' },
+        },
       },
     },
-  },
-  build: {
-    outDir: 'dist',
-  },
+    build: {
+      outDir: 'dist',
+    },
+  };
 });
