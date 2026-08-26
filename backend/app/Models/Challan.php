@@ -10,10 +10,16 @@ class Challan extends Model
 {
     use BelongsToTenant, SoftDeletes;
 
+    // protected $fillable = [
+    //     'challan_no', 'college_id', 'application_id', 'student_id',
+    //     'challan_type', 'semester_no', 'total_amount',
+    //     'issue_date', 'due_date', 'status', 'fee_breakdown',
+    // ];
+
     protected $fillable = [
         'challan_no', 'college_id', 'application_id', 'student_id',
-        'challan_type', 'semester_no', 'total_amount',
-        'issue_date', 'due_date', 'status', 'fee_breakdown',
+        'challan_type', 'title', 'semester_no', 'installment_no', 'scope',
+        'total_amount', 'issue_date', 'due_date', 'status', 'fee_breakdown',
     ];
 
     protected $casts = [
@@ -74,6 +80,11 @@ class Challan extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(ChallanItem::class)->orderBy('sort_order');
+    }
+
     public function isOverdue(): bool
     {
         return $this->status === 'unpaid' && $this->due_date->isPast();
@@ -82,5 +93,16 @@ class Challan extends Model
     public function isPaid(): bool
     {
         return $this->status === 'paid';
+    }
+
+    /**
+     * Recompute total_amount as the sum of this challan's items and save.
+     * Call after adding/editing/removing items so the header total always
+     * matches the printed lines.
+     */
+    public function recomputeTotal(): void
+    {
+        $this->total_amount = $this->items()->sum('amount');
+        $this->save();
     }
 }

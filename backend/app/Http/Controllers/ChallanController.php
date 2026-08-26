@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Challan;
+use App\Models\ChallanItem;
 use App\Models\Payment;
 use App\Models\AuditLog;
 use App\Services\ChallanService;
@@ -65,25 +66,23 @@ class ChallanController extends Controller
     public function show(Challan $challan)
     {
         return response()->json(
-            $challan->load(['student', 'application.program', 'payments.recordedBy'])
+            $challan->load(['items', 'student', 'application.program', 'payments.recordedBy'])
         );
     }
 
-    // ── College admin: manually generate semester/exam challan ────
+    // ── College admin: manually generate a challan by scope ────
     // POST /api/challans
     public function store(Request $request)
     {
-        \Log::info('Challan store raw input', [
-            'all'          => $request->all(),
-            'content_type' => $request->header('Content-Type'),
-            'raw_body'     => $request->getContent(),
-        ]);
-
         $request->validate([
             'application_id' => 'required|exists:applications,id',
-            'challan_type'   => 'required|in:semester,exam,arrears,other',
+            'scope'          => 'required|in:semester,year,program',
             'semester_no'    => 'nullable|integer|min:1|max:20',
+            'semester_nos'   => 'nullable|array',
+            'semester_nos.*' => 'integer|min:1|max:20',
             'due_date'       => 'required|date|after:today',
+            'title'          => 'nullable|string|max:255',
+            'installment_no' => 'nullable|integer|min:1|max:50',
         ]);
 
         $application = Application::findOrFail($request->application_id);
@@ -94,16 +93,31 @@ class ChallanController extends Controller
             ], 422);
         }
 
-        $challan = $this->challanService->generateManual(
-            $application,
-            $request->challan_type,
-            $request->semester_no,
-            Carbon::parse($request->due_date)
+        // For a single-semester challan, semester_no is required.
+        if ($request->scope === 'semester' && !$request->filled('semester_no')) {
+            return response()->json([
+                'message' => 'semester_no is required for a semester challan.',
+            ], 422);
+        }
+
+        $challan = $this->challanService->generateForScope(
+            application:   $application,
+            scope:         $request->scope,
+            semesterNo:    $request->semester_no,
+            dueDate:       Carbon::parse($request->due_date),
+            semesterNos:   $request->semester_nos ?? [],
+            title:         $request->title,
+            installmentNo: $request->installment_no,
         );
+
+        AuditLog::record('challan.generated', $challan, [
+            'challan_no' => $challan->challan_no,
+            'scope'      => $request->scope,
+        ]);
 
         return response()->json([
             'message' => 'Challan generated successfully.',
-            'challan' => $challan->load('application.program', 'student'),
+            'challan' => $challan->load('items', 'application.program', 'student'),
         ], 201);
     }
 
@@ -300,18 +314,45 @@ class ChallanController extends Controller
         return Storage::disk('private')->download($payment->slip_path);
     }
 
-    // ── Generate PDF challan ──────────────────────────────────────
+        // ── Generate PDF challan ──────────────────────────────────────
     // GET /api/challans/{challan}/pdf
     public function pdf(Challan $challan)
     {
-        $challan->load(['student', 'application.program', 'college']);
+        $challan->load(['items', 'student', 'application.program', 'college']);
+
+        // Generate a verification QR as a base64 PNG data URI (DomPDF embeds it inline).
+        $verifyText = ($challan->college->name ?? '')
+            . ' | Challan: ' . $challan->challan_no
+            . ' | Amount: Rs. ' . number_format($challan->total_amount, 2);
+        try {
+            $qrPng = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                ->size(200)->margin(0)->generate($verifyText);
+            $qrData = 'data:image/png;base64,' . base64_encode($qrPng);
+        } catch (\Throwable $e) {
+            $qrData = null; // QR is optional; never let it break the PDF
+        }
+
+        // Resolve the college logo to a base64 data URI if one is set on the public disk.
+        $logoData = null;
+        $logoSetting = \App\Models\Setting::where('college_id', $challan->college_id)
+            ->where('key', 'logo')->value('value');
+        if ($logoSetting) {
+            $path = str_replace('/storage/', '', parse_url($logoSetting, PHP_URL_PATH) ?? $logoSetting);
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                $bytes = \Illuminate\Support\Facades\Storage::disk('public')->get($path);
+                $mime  = str_ends_with(strtolower($path), '.png') ? 'image/png' : 'image/jpeg';
+                $logoData = 'data:' . $mime . ';base64,' . base64_encode($bytes);
+            }
+        }
 
         $pdf = Pdf::loadView('challans.pdf', [
-            'challan' => $challan,
-            'college' => $challan->college,
-            'student' => $challan->student,
-            'program' => $challan->application->program,
-        ])->setPaper('a4', 'portrait');
+            'challan'  => $challan,
+            'college'  => $challan->college,
+            'student'  => $challan->student,
+            'program'  => $challan->application->program,
+            'qrData'   => $qrData,
+            'logoData' => $logoData,
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->download("challan-{$challan->challan_no}.pdf");
     }
@@ -328,4 +369,112 @@ class ChallanController extends Controller
             $challan->load(['application.program', 'payments'])
         );
     }
+
+    // ── College admin: add a line-item to a challan ───────────────
+    // POST /api/challans/{challan}/items
+    public function addItem(Request $request, Challan $challan)
+    {
+        if (!in_array($challan->status, ['unpaid', 'overdue'])) {
+            return response()->json([
+                'message' => 'Items can only be changed on an unpaid or overdue challan.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'label'  => 'required|string|max:255',
+            'amount' => 'required|numeric',              // negative allowed (discount)
+            'type'   => 'required|in:fee,discount,late_fee,conditional',
+        ]);
+
+        // Place new line at the end.
+        $nextOrder = (int) $challan->items()->max('sort_order') + 1;
+
+        $item = $challan->items()->create([
+            'label'      => $validated['label'],
+            'amount'     => $validated['amount'],
+            'type'       => $validated['type'],
+            'sort_order' => $nextOrder,
+        ]);
+
+        $challan->recomputeTotal();
+
+        AuditLog::record('challan.item_added', $challan, [
+            'challan_no' => $challan->challan_no,
+            'label'      => $item->label,
+            'amount'     => $item->amount,
+            'type'       => $item->type,
+        ]);
+
+        return response()->json([
+            'message' => 'Line-item added.',
+            'challan' => $challan->fresh('items'),
+        ], 201);
+    }
+
+    // ── College admin: edit a line-item ───────────────────────────
+    // PUT /api/challans/{challan}/items/{item}
+    public function updateItem(Request $request, Challan $challan, ChallanItem $item)
+    {
+        // Ensure the item belongs to this challan (defence in depth).
+        if ((int) $item->challan_id !== (int) $challan->id) {
+            return response()->json(['message' => 'Item does not belong to this challan.'], 404);
+        }
+
+        if (!in_array($challan->status, ['unpaid', 'overdue'])) {
+            return response()->json([
+                'message' => 'Items can only be changed on an unpaid or overdue challan.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'label'  => 'sometimes|string|max:255',
+            'amount' => 'sometimes|numeric',
+            'type'   => 'sometimes|in:fee,discount,late_fee,conditional',
+        ]);
+
+        $item->update($validated);
+        $challan->recomputeTotal();
+
+        AuditLog::record('challan.item_updated', $challan, [
+            'challan_no' => $challan->challan_no,
+            'item_id'    => $item->id,
+            'label'      => $item->label,
+            'amount'     => $item->amount,
+        ]);
+
+        return response()->json([
+            'message' => 'Line-item updated.',
+            'challan' => $challan->fresh('items'),
+        ]);
+    }
+
+    // ── College admin: remove a line-item ─────────────────────────
+    // DELETE /api/challans/{challan}/items/{item}
+    public function deleteItem(Challan $challan, ChallanItem $item)
+    {
+        if ((int) $item->challan_id !== (int) $challan->id) {
+            return response()->json(['message' => 'Item does not belong to this challan.'], 404);
+        }
+
+        if (!in_array($challan->status, ['unpaid', 'overdue'])) {
+            return response()->json([
+                'message' => 'Items can only be changed on an unpaid or overdue challan.',
+            ], 422);
+        }
+
+        $snapshot = ['label' => $item->label, 'amount' => $item->amount, 'type' => $item->type];
+        $item->delete();
+        $challan->recomputeTotal();
+
+        AuditLog::record('challan.item_removed', $challan, array_merge(
+            ['challan_no' => $challan->challan_no],
+            $snapshot
+        ));
+
+        return response()->json([
+            'message' => 'Line-item removed.',
+            'challan' => $challan->fresh('items'),
+        ]);
+    }
+
 }

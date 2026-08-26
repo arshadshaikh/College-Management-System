@@ -251,7 +251,9 @@ class ApplicationController extends Controller
             ]);
 
             // Auto-generate admission challan
-            $challan = $this->challanService->generateAdmission($application);
+            // $challan = $this->challanService->generateAdmission($application);
+            // Auto-generate the first (Semester 1) challan
+            $challan = $this->challanService->generateFirstChallan($application);
 
             AuditLog::record('application.approved', $application, [
                 'application_no' => $application->application_no,

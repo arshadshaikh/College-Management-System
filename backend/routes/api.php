@@ -180,6 +180,9 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('challans/{challan}/mark-paid', [ChallanController::class, 'markPaid']);
     Route::post('challans/{challan}/upload-slip', [ChallanController::class, 'uploadSlip']);
     Route::get('challans/{challan}/pdf', [ChallanController::class, 'pdf']);
+    Route::post('challans/{challan}/items',                [ChallanController::class, 'addItem']);
+    Route::put('challans/{challan}/items/{item}',          [ChallanController::class, 'updateItem']);
+    Route::delete('challans/{challan}/items/{item}',       [ChallanController::class, 'deleteItem']);
 
     // Payments
     Route::post('payments/{payment}/verify-slip', [ChallanController::class, 'verifySlip']);

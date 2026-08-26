@@ -122,6 +122,7 @@ class CollegeInitializationService
                 // Challans (admin side)
                 'challans.index', 'challans.store', 'challans.show', 'challans.cancel',
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
+                'challans.items.store', 'challans.items.update', 'challans.items.destroy',
                 // CMS
                 'settings.index', 'settings.update',
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',

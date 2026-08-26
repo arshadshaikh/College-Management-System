@@ -91,9 +91,16 @@ class CmsMenuController extends Controller
     public function publicIndex()
     {
         return response()->json(
-            CmsMenu::with(['children' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            CmsMenu::with([
+                'page:id,slug',
+                'children' => fn($q) => $q->where('is_active', true)
+                                          ->orderBy('sort_order')
+                                          ->with('page:id,slug'),
+            ])
                 ->whereNull('parent_id')->where('is_active', true)->orderBy('sort_order')->get()
         );
     }
+
+    
 
 }
