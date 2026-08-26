@@ -39,6 +39,10 @@ class ChallanPrivilegeSeeder extends Seeder
             ['slug' => 'challans.pdf',          'name' => 'Download challan PDF',  'route' => '/api/challans/{id}/pdf',               'method' => 'GET',  'for' => 'both'],
             ['slug' => 'payments.verify-slip',  'name' => 'Verify payment slip',   'route' => '/api/payments/{id}/verify-slip',       'method' => 'POST', 'for' => 'admin'],
             ['slug' => 'payments.slip',         'name' => 'Download payment slip', 'route' => '/api/payments/{id}/slip',              'method' => 'GET',  'for' => 'admin'],
+            ['slug' => 'challans.items.store',   'name' => 'Add challan item',      'route' => '/api/challans/{id}/items',             'method' => 'POST', 'for' => 'admin'],
+            ['slug' => 'challans.items.update',  'name' => 'Update challan item',   'route' => '/api/challans/{id}/items/{id}',        'method' => 'PUT',  'for' => 'admin'],
+            ['slug' => 'challans.items.destroy', 'name' => 'Delete challan item',   'route' => '/api/challans/{id}/items/{id}',        'method' => 'DELETE', 'for' => 'admin'],
+
             // Student
             ['slug' => 'challans.my',           'name' => 'My challans',           'route' => '/api/challans/my',                     'method' => 'GET',  'for' => 'student'],
             ['slug' => 'challans.upload-slip',  'name' => 'Upload payment slip',   'route' => '/api/challans/{id}/upload-slip',       'method' => 'POST', 'for' => 'student'],
