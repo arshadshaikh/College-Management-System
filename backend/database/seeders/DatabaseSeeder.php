@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ChallanPrivilegeSeeder::class,  // fee/challan privileges
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student
+            SettingsBackfillSeeder::class,  // ensure every college has all expected settings
         ]);
     }
 }
