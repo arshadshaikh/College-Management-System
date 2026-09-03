@@ -31,6 +31,10 @@ class SettingController extends Controller
             'settings.contact_phone' => 'nullable|string|max:50',
             'settings.admission_open'=> 'nullable|in:true,false',
             'settings.allow_multiple_admissions' => 'nullable|in:true,false',
+            'settings.auto_generate_challan' => 'nullable|in:true,false',
+            'settings.late_fee_mode'         => 'nullable|in:off,flat,per_week,per_month',
+            'settings.late_fee_amount'       => 'nullable|numeric|min:0',
+            'settings.late_fee_partial'      => 'nullable|in:from_day_one,full_period',
             // 'logo' is intentionally NOT handled here — it's a file upload,
             // done via a separate endpoint with the public disk.
         ]);

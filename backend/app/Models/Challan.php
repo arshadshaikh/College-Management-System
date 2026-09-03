@@ -102,7 +102,7 @@ class Challan extends Model
      */
     public function recomputeTotal(): void
     {
-        $this->total_amount = $this->items()->sum('amount');
+        $this->total_amount = (string) $this->items()->sum('amount');
         $this->save();
     }
 }

@@ -196,4 +196,94 @@ class ChallanService
             return $challan->fresh('items');
         });
     }
+
+
+    /**
+     * Apply (or refresh) the late fee on a challan, per the college's late-fee
+     * policy. Fully configurable: mode (off/flat/per_week/per_month), amount,
+     * and partial-period handling (from_day_one/full_period) are all settings.
+     *
+     * Idempotent: keeps a single late-fee line, updated each call — never stacks.
+     * Self-healing: removes the line if the policy is turned off or the challan
+     * is no longer overdue. Safe to call on every challan view.
+     */
+    public function applyLateFee(Challan $challan): Challan
+    {
+        // Only unpaid/overdue challans accrue late fees. Paid/cancelled are locked.
+        if (!in_array($challan->status, ['unpaid', 'overdue'], true)) {
+            return $challan;
+        }
+
+        $today    = Carbon::today();
+        $dueDate  = $challan->due_date->copy()->startOfDay();
+        $existing = $challan->items()->where('type', 'late_fee')->first();
+
+        // Helper: drop any stale late-fee line and recompute.
+        $removeExisting = function () use ($challan, $existing) {
+            if ($existing) {
+                $existing->delete();
+                $challan->recomputeTotal();
+                return $challan->fresh('items');
+            }
+            return $challan;
+        };
+
+        // Not overdue yet → ensure no stale late fee, stop.
+        if ($today->lte($dueDate)) {
+            return $removeExisting();
+        }
+
+        // Resolve policy (platform can enforce; otherwise the college decides).
+        $mode    = PolicyService::resolve('late_fee_mode_policy',    'late_fee_mode',    $challan->college_id, 'off');
+        $amount  = (float) PolicyService::resolve('late_fee_amount_policy',  'late_fee_amount',  $challan->college_id, '0');
+        $partial = PolicyService::resolve('late_fee_partial_policy', 'late_fee_partial', $challan->college_id, 'from_day_one');
+
+        // Policy off or no amount → remove any existing late fee, stop.
+        if ($mode === 'off' || $amount <= 0) {
+            return $removeExisting();
+        }
+
+        $floor  = $partial === 'from_day_one' ? 1 : 0; // min periods charged
+        $weeks  = (int) $dueDate->diffInWeeks($today);
+        $months = (int) $dueDate->diffInMonths($today);
+
+        $fee = match ($mode) {
+            'flat'      => $amount,
+            'per_week'  => $amount * max($floor, $weeks),
+            'per_month' => $amount * max($floor, $months),
+            default     => 0,
+        };
+
+        // full_period mode before the first period completes → fee 0, no line.
+        if ($fee <= 0) {
+            return $removeExisting();
+        }
+
+        $label = 'Late Fee' . match ($mode) {
+            'per_week'  => ' (' . max($floor, $weeks) . ' week(s) overdue)',
+            'per_month' => ' (' . max($floor, $months) . ' month(s) overdue)',
+            default     => '',
+        };
+
+        // Update the single late-fee line, or create it. Idempotent.
+        if ($existing) {
+            $existing->update(['label' => $label, 'amount' => $fee]);
+        } else {
+            $challan->items()->create([
+                'label'      => $label,
+                'amount'     => $fee,
+                'type'       => 'late_fee',
+                'sort_order' => 999, // always last
+            ]);
+        }
+
+        // Reflect overdue status if still marked unpaid.
+        if ($challan->status === 'unpaid') {
+            $challan->update(['status' => 'overdue']);
+        }
+
+        $challan->recomputeTotal();
+        return $challan->fresh('items');
+    }
+
 }

@@ -65,6 +65,10 @@ class ChallanController extends Controller
     // GET /api/challans/{challan}
     public function show(Challan $challan)
     {
+        // Refresh the late fee (if the college's policy applies) before returning.
+        // Idempotent + self-healing — safe on every view.
+        $this->challanService->applyLateFee($challan);
+
         return response()->json(
             $challan->load(['items', 'student', 'application.program', 'payments.recordedBy'])
         );

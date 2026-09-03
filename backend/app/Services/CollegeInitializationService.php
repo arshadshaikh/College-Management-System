@@ -232,6 +232,10 @@ class CollegeInitializationService
             ['key' => 'contact_phone',  'value' => $college->phone, 'group' => 'contact'],
             ['key' => 'admission_open', 'value' => 'false',         'group' => 'admission'],
             ['key' => 'allow_multiple_admissions', 'value' => 'false', 'group' => 'admissions'],
+            ['key' => 'auto_generate_challan', 'value' => 'true',  'group' => 'fees'],
+            ['key' => 'late_fee_mode',         'value' => 'off',   'group' => 'fees'],
+            ['key' => 'late_fee_amount',       'value' => '0',     'group' => 'fees'],
+            ['key' => 'late_fee_partial',      'value' => 'from_day_one', 'group' => 'fees'],
         ];
 
         foreach ($settings as $s) {

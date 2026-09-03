@@ -34,6 +34,10 @@ export default function Settings() {
           contact_phone: values.contact_phone ?? '',
           admission_open: values.admission_open ?? 'false',
           allow_multiple_admissions: values.allow_multiple_admissions ?? 'false',
+          auto_generate_challan: values.auto_generate_challan ?? 'true',
+          late_fee_mode: values.late_fee_mode ?? 'off',
+          late_fee_amount: values.late_fee_amount ?? '0',
+          late_fee_partial: values.late_fee_partial ?? 'from_day_one',
         },
       };
       const { data } = await api.put('/settings', payload);
@@ -119,6 +123,66 @@ export default function Settings() {
             description="When on, a student may be admitted to more than one program. Only applies if the platform policy lets each college decide; otherwise the platform setting governs."
           />
 
+        </section>
+
+        {/* Fees */}
+        <section className="bg-white rounded-xl shadow-sm p-6 space-y-5">
+          <h2 className="font-semibold text-gray-900">Fees & Challans</h2>
+
+          <Toggle
+            checked={values.auto_generate_challan === 'true'}
+            onChange={(on) => set('auto_generate_challan', on ? 'true' : 'false')}
+            label="Auto-generate first challan on approval"
+            description="When on, approving an application automatically creates its first-semester challan. When off, an admin creates the challan manually."
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Late Fee</label>
+            <select
+              value={values.late_fee_mode ?? 'off'}
+              onChange={(e) => set('late_fee_mode', e.target.value)}
+              className={inputCls('late_fee_mode')}>
+              <option value="off">No late fee</option>
+              <option value="flat">Flat amount (charged once)</option>
+              <option value="per_week">Per week overdue</option>
+              <option value="per_month">Per month overdue</option>
+            </select>
+            {err('late_fee_mode') && <p className="text-xs text-red-600 mt-1">{err('late_fee_mode')}</p>}
+            <p className="text-xs text-gray-400 mt-1">
+              Applied automatically to overdue unpaid challans when viewed.
+            </p>
+          </div>
+
+          {values.late_fee_mode && values.late_fee_mode !== 'off' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Late Fee Amount (Rs.)
+                  {values.late_fee_mode === 'per_week' && ' — per week'}
+                  {values.late_fee_mode === 'per_month' && ' — per month'}
+                </label>
+                <input type="number" min="0" step="1"
+                  value={values.late_fee_amount ?? '0'}
+                  onChange={(e) => set('late_fee_amount', e.target.value)}
+                  className={inputCls('late_fee_amount')} />
+                {err('late_fee_amount') && <p className="text-xs text-red-600 mt-1">{err('late_fee_amount')}</p>}
+              </div>
+
+              {(values.late_fee_mode === 'per_week' || values.late_fee_mode === 'per_month') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Partial Period</label>
+                  <select
+                    value={values.late_fee_partial ?? 'from_day_one'}
+                    onChange={(e) => set('late_fee_partial', e.target.value)}
+                    className={inputCls('late_fee_partial')}>
+                    <option value="from_day_one">Charge from day one (any overdue = 1 full period)</option>
+                    <option value="full_period">Only completed periods (charge after each full period)</option>
+                  </select>
+                  {err('late_fee_partial') && <p className="text-xs text-red-600 mt-1">{err('late_fee_partial')}</p>}
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         <div className="flex gap-3">

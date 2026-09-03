@@ -250,14 +250,17 @@ class ApplicationController extends Controller
                 'reviewed_at' => now(),
             ]);
 
-            // Auto-generate admission challan
-            // $challan = $this->challanService->generateAdmission($application);
-            // Auto-generate the first (Semester 1) challan
-            $challan = $this->challanService->generateFirstChallan($application);
+            // Auto-generate the first (Semester 1) challan — only if the policy allows it.
+            // Platform can enforce; otherwise the college's auto_generate_challan setting decides.
+            // Defaults to 'true' so existing behavior is preserved when unset.
+            $challan = null;
+            if (PolicyService::allows('auto_generate_challan_policy', 'auto_generate_challan', $application->college_id, 'true')) {
+                $challan = $this->challanService->generateFirstChallan($application);
+            }
 
             AuditLog::record('application.approved', $application, [
                 'application_no' => $application->application_no,
-                'challan_no'     => $challan->challan_no,
+                'challan_no'     => $challan?->challan_no,
             ]);
 
             DB::commit();
