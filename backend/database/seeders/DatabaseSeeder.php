@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SuperAdminSeeder::class,        // super_admin role + user first
             RoleAndPrivilegeSeeder::class,  // college-admin mgmt privileges + grants
+            AdminCrudPrivilegeSeeder::class, // users/roles/privileges admin screens (slugs match App.jsx guards)
+            DocumentTypePrivilegeSeeder::class, // required document types admin screens
             CollegeSeeder::class,           // seeds Example College (id 1)
             CollegePrivilegeSeeder::class,  // college approve/reject/suspend privileges
             ProgramPrivilegeSeeder::class,  // programs + applications privileges
