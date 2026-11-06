@@ -61,6 +61,7 @@ import { PublicSiteProvider } from './context/PublicSiteContext';
 import PublicLayout from './pages/public/PublicLayout';
 import PublicHome from './pages/public/PublicHome';
 import PublicPage from './pages/public/PublicPage';
+import PublicPrograms from './pages/public/PublicPrograms';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -185,6 +186,7 @@ export default function App() {
         ) : (
         <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>
           <Route index element={<PublicHome />} />
+          <Route path="programs" element={<PublicPrograms />} />
           <Route path=":slug" element={<PublicPage />} />
         </Route>
         )

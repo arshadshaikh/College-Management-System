@@ -56,6 +56,21 @@ class ProgramController extends Controller
         // return response()->json($query->latest()->paginate(15));
     }
 
+
+    // GET /api/public/programs — tenant required, no login. Active programs only.
+    public function publicIndex()
+    {
+        $programs = Program::where('college_id', app('current_college')->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get([
+                'id', 'name', 'code', 'degree_level', 'duration_years',
+                'total_semesters', 'total_seats', 'eligibility_criteria', 'description',
+            ]);
+
+        return response()->json($programs);
+    }
+
     // POST /api/programs — college admin only
     public function store(Request $request)
     {

@@ -79,6 +79,7 @@ Route::middleware(['tenant', 'throttle:60,1'])->group(function () {
     Route::get('public/announcements',      [CmsAnnouncementController::class, 'publicIndex']);
     Route::get('public/menus',              [CmsMenuController::class, 'publicIndex']);
     Route::get('public/banners',            [CmsBannerController::class, 'publicIndex']);
+    Route::get('public/programs',           [ProgramController::class, 'publicIndex']);
 });
 
 // ── Protected — platform level ────────────────────────────────

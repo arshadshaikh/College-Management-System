@@ -64,7 +64,7 @@ class SettingController extends Controller
 
     public function publicIndex()
     {
-        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone'];
+        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone', 'admission_open'];
         $settings = Setting::whereIn('key', $keys)->pluck('value', 'key');
         $college = app('current_college');
         return response()->json([
