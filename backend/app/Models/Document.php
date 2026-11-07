@@ -36,6 +36,12 @@ class Document extends Model
         return $this->belongsTo(Application::class);
     }
 
+    // Profile documents belong to the student, not to one application.
+    public function scopeProfile($query)
+    {
+        return $query->whereNull('application_id');
+    }
+
     public function student()
     {
         return $this->belongsTo(User::class, 'student_id');

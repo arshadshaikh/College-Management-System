@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student
             SettingsBackfillSeeder::class,  // ensure every college has all expected settings
+            StudentDocumentTypeSeeder::class, // applicant-profile document types (scope student_application)
         ]);
     }
 }

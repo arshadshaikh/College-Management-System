@@ -132,6 +132,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(StudentEducation::class, 'student_id');
     }
 
+    public function profileDocuments()
+    {
+        return $this->hasMany(Document::class, 'student_id')->whereNull('application_id');
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->user_type === 'super_admin';
