@@ -11,12 +11,14 @@ Shared-database/shared-schema tenancy. JWT auth with CNIC-based login. Fail-clos
 - Repo: `https://github.com/arshadshaikh/College-Management-System.git` (private), branch `main`, root has `backend/` and `frontend/`. **GitHub account that owns it: `arshadshaikh` (hotmail email).** A different GitHub login (`arshadalishaikh`) is NOT allowed to push — if a push returns 403, clear the saved Windows credential and sign in as `arshadshaikh`.
 - Local (laptop 1): `D:\xampp-8.2\htdocs\College-Management-System`. Local (laptop 2, current): `E:\XAMPP-NOV-2025\htdocs\College-Management-System` (PHP 8.2.12, Node 24, Composer 2.9, Git 2.52).
 - Live (cPanel): `https://developer.usindh.edu.pk/cms/` — project is a git clone at `~/public_html/cms/` (user `developer2021`, DB `developer2021_cms`).
-- Last commit known pushed: `13ea8f3` (seeder fixes). A later commit "Add public programs page ..." was being committed/pushed when this handoff was written — verify with `git status` and `git log --oneline -3`; if uncommitted, commit these files: `ProgramController.php`, `SettingController.php`, `routes/api.php`, `frontend/src/App.jsx`, `frontend/src/pages/public/PublicPrograms.jsx`.
+- Last commit pushed and deployed: `48ab21c` (public programs page). Earlier: `13ea8f3` (seeder fixes). Server code and built frontend are both at this state.
 
 ## 2. Status
 **Live on server and verified:** auth, college onboarding, programs/applications, fee structures, students (+Excel import), CMS, public college sites, audit logs, path-mode tenancy, full challan redesign (4-copy landscape PDF), and the **policy toggles** (auto-generate first challan on approval; late fee = off/flat/per_week/per_month + amount + from_day_one/full_period; computed on-demand when a challan is viewed). Settings UI has a "Fees & Challans" section. SettingsBackfillSeeder, AdminCrudPrivilegeSeeder, DocumentTypePrivilegeSeeder have been run on the server.
 
-**Done locally, NOT deployed to the server yet:** public **Programs** page (`/programs` on the college site; `GET /api/public/programs`; shows "Apply now" only when setting `admission_open` is `'true'`, otherwise "Admissions closed"). Needs the usual deploy: `git pull`, cache clears, rebuild frontend, upload. College admin must also add a CMS menu item with URL `/programs` for it to appear in the nav.
+**Also live (deployed 7 Nov 2026, verified):** public **Programs** page (`/programs` on the college site; `GET /api/public/programs`; shows "Apply now" only when setting `admission_open` is `'true'`, otherwise "Admissions closed"). A college admin must still add a CMS menu item with URL `/programs` for it to appear in the nav.
+
+**Done locally but not deployed:** nothing. Local, GitHub and the live server are all in sync at `48ab21c`.
 
 **Next major feature (design agreed, not started in code): M.Phil/PhD admission profile** — see section 6.
 

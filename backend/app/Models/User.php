@@ -127,6 +127,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(StudentProfile::class);
     }
 
+    public function educations()
+    {
+        return $this->hasMany(StudentEducation::class, 'student_id');
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->user_type === 'super_admin';

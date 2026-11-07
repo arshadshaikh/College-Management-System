@@ -16,6 +16,9 @@ class StudentProfile extends Model
         'nationality', 'religion', 'permanent_address',
         'emergency_contact', 'matric_marks', 'matric_board',
         'matric_year', 'inter_marks', 'inter_board', 'inter_year',
+        // Admission profile (added 2026_11_07)
+        'mobile', 'domicile_province', 'domicile_district',
+        'prc_no', 'marital_status', 'present_address',
     ];
 
     protected $casts = [
