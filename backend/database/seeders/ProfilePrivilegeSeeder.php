@@ -28,11 +28,12 @@ class ProfilePrivilegeSeeder extends Seeder
         }
 
         $privileges = [
-            ['slug' => 'profile.show',               'name' => 'View my profile',          'route' => '/api/profile',                 'method' => 'GET'],
-            ['slug' => 'profile.update',             'name' => 'Update my profile',        'route' => '/api/profile',                 'method' => 'PUT'],
-            ['slug' => 'profile.educations.save',    'name' => 'Save education record',    'route' => '/api/profile/educations',      'method' => 'PUT'],
-            ['slug' => 'profile.educations.destroy', 'name' => 'Delete education record',  'route' => '/api/profile/educations/{id}', 'method' => 'DELETE'],
-            ['slug' => 'profile.documents.upload',   'name' => 'Upload profile document',  'route' => '/api/profile/documents',       'method' => 'POST'],
+            ['slug' => 'profile.show',               'name' => 'View my profile',               'route' => '/api/profile',                          'method' => 'GET'],
+            ['slug' => 'profile.update',             'name' => 'Update my profile',             'route' => '/api/profile',                          'method' => 'PUT'],
+            ['slug' => 'profile.educations.save',    'name' => 'Save education record',         'route' => '/api/profile/educations',               'method' => 'PUT'],
+            ['slug' => 'profile.educations.destroy', 'name' => 'Delete education record',       'route' => '/api/profile/educations/{id}',          'method' => 'DELETE'],
+            ['slug' => 'profile.documents.upload',   'name' => 'Upload profile document',       'route' => '/api/profile/documents',                'method' => 'POST'],
+            ['slug' => 'profile.documents.download', 'name' => 'Download own profile document', 'route' => '/api/profile/documents/{id}/download',  'method' => 'GET'],
         ];
 
         $ids = [];

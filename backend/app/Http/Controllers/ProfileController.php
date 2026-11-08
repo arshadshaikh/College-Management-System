@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -91,6 +92,21 @@ class ProfileController extends Controller
 
         $level = $data['level'];
         unset($data['level']);
+
+        // Higher levels must be passed after lower ones (order = config/admission.php).
+        $order = array_keys($catalog);
+        $pos   = array_search($level, $order);
+        foreach ($user->educations()->where('level', '!=', $level)->get(['level', 'passing_year']) as $other) {
+            $otherPos = array_search($other->level, $order);
+            if ($otherPos === false || !$other->passing_year) continue;
+            $label = $catalog[$other->level]['label'];
+            if ($otherPos < $pos && $data['passing_year'] <= $other->passing_year) {
+                throw ValidationException::withMessages(['passing_year' => "Must be after your {$label} year ({$other->passing_year})."]);
+            }
+            if ($otherPos > $pos && $data['passing_year'] >= $other->passing_year) {
+                throw ValidationException::withMessages(['passing_year' => "Must be before your {$label} year ({$other->passing_year})."]);
+            }
+        }
 
         // Link the certificate if it was already uploaded.
         $docId = $user->profileDocuments()
@@ -172,6 +188,18 @@ class ProfileController extends Controller
         });
 
         return response()->json(['message' => "{$type->name} uploaded.", 'document' => $document] + $this->payload($user), 201);
+    }
+
+    // GET /api/profile/documents/{id}/download   (own profile documents only)
+    public function downloadDocument(Request $request, int $document)
+    {
+        $doc = $request->user()->profileDocuments()->whereKey($document)->firstOrFail();
+
+        if (!Storage::disk('private')->exists($doc->stored_path)) {
+            return response()->json(['message' => 'File not found.'], 404);
+        }
+
+        return Storage::disk('private')->download($doc->stored_path, $doc->original_name);
     }
 
     // ── helpers ────────────────────────────────────────────────────────────

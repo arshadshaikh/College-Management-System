@@ -51,6 +51,7 @@ import MyApplications from './pages/student/MyApplications';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
+import MyProfile from './pages/student/MyProfile';
 import CollegeRegister from './pages/auth/CollegeRegister';
 import DocumentTypeList from './pages/super-admin/DocumentTypeList';
 import DocumentTypeForm from './pages/super-admin/DocumentTypeForm';
@@ -169,6 +170,7 @@ export default function App() {
         <Route path="cms/media" element={<PrivilegeRoute slug="cms.media.index"><MediaLibrary /></PrivilegeRoute>} />
 
         {/* Student Routes */}
+        <Route path="my-profile" element={<PrivilegeRoute slug="profile.show"><MyProfile /></PrivilegeRoute>} />
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
         <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />

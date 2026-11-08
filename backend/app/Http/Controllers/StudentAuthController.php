@@ -69,7 +69,7 @@ class StudentAuthController extends Controller
                     'programs.index', 'programs.show',
                     'applications.my', 'applications.store', 'applications.withdraw',
                     'challans.my', 'challans.upload-slip', 'challans.pdf',
-                    'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload',
+                    'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download',
                 ])->pluck('id');
 
                 foreach ($studentPrivileges as $privId) {
