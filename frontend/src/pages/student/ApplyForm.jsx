@@ -4,20 +4,16 @@ import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
 
-const DOCS = [
-  { key: 'doc_cnic',   label: 'CNIC (B-Form)' },
-  { key: 'doc_matric', label: 'Matric Certificate' },
-  { key: 'doc_inter',  label: 'Intermediate Certificate' },
-  { key: 'doc_photo',  label: 'Photograph' },
-];
-
-const MAX_MB = 2;
+// Applying no longer uploads files: documents, education and personal details
+// come from the applicant profile (My Profile) and are reused for every application.
+// Whether an incomplete profile may apply is the college setting `require_complete_profile`
+// (checked on the server; the 422 reply includes what is missing).
 
 export default function ApplyForm() {
   const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
+  const [completeness, setCompleteness] = useState(null);
   const [form, setForm] = useState({ program_id: '', semester_no: 1, admission_year: new Date().getFullYear() });
-  const [files, setFiles] = useState({});
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -25,50 +21,29 @@ export default function ApplyForm() {
     api.get('/programs', { params: { per_page: 100 } })
       .then(({ data }) => setPrograms(data.data ?? data))
       .catch(() => toast.error('Could not load programs.'));
+    api.get('/profile')
+      .then(({ data }) => setCompleteness(data.completeness))
+      .catch(() => {});
   }, []);
-
-  const setFile = (key) => (e) => {
-    const file = e.target.files[0] ?? null;
-    if (file && file.size > MAX_MB * 1024 * 1024) {
-      toast.error(`${file.name} is larger than ${MAX_MB} MB.`);
-      e.target.value = '';
-      return;
-    }
-    setFiles((f) => ({ ...f, [key]: file }));
-    setErrors((er) => ({ ...er, [key]: undefined }));
-  };
 
   const submit = async (e) => {
     e.preventDefault();
-
-    // Client-side completeness check before the upload starts.
-    const missing = DOCS.filter((d) => !files[d.key]);
-    if (!form.program_id || missing.length) {
-      const er = {};
-      if (!form.program_id) er.program_id = ['Please choose a program.'];
-      missing.forEach((d) => { er[d.key] = ['This document is required.']; });
-      setErrors(er);
-      toast.error('Please complete all required fields.');
+    if (!form.program_id) {
+      setErrors({ program_id: ['Please choose a program.'] });
       return;
     }
-
     setSaving(true);
     setErrors({});
     try {
-      const fd = new FormData();
-      fd.append('program_id', form.program_id);
-      fd.append('semester_no', form.semester_no);
-      fd.append('admission_year', form.admission_year);
-      DOCS.forEach((d) => fd.append(d.key, files[d.key]));
-
-      const { data } = await api.post('/applications', fd);
+      const { data } = await api.post('/applications', form);
       toast.success(`Application ${data.application?.application_no} submitted.`);
       navigate(`${PORTAL}/my-applications`);
     } catch (err) {
       if (err.response?.status === 422) {
-        setErrors(err.response.data.errors ?? {});
-        const msg = err.response.data.message;
-        if (msg && !err.response.data.errors) toast.error(msg);   // e.g. duplicate application / no seats
+        const d = err.response.data;
+        if (d.completeness) setCompleteness(d.completeness);   // profile gate
+        setErrors(d.errors ?? {});
+        if (d.message && !d.errors) toast.error(d.message);    // duplicate / no seats / incomplete profile
       }
     } finally {
       setSaving(false);
@@ -87,6 +62,31 @@ export default function ApplyForm() {
         <Link to={`${PORTAL}/my-applications`} className="text-sm text-gray-500 hover:underline">← My Applications</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Apply for Admission</h1>
       </div>
+
+      {/* Profile status */}
+      {completeness && (
+        completeness.complete ? (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+            Your admission profile is complete. Your details, education and documents will be sent with this application.{' '}
+            <Link to={`${PORTAL}/my-profile`} className="underline">Review profile</Link>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+            <p className="font-medium">Your admission profile is {completeness.percent}% complete.</p>
+            <ul className="list-disc ml-5 mt-1 text-xs">
+              {completeness.missing.map((m) => (
+                <li key={`${m.section}-${m.key}`}>
+                  {m.section.charAt(0).toUpperCase() + m.section.slice(1)}: {m.label ?? m.key.replace(/_/g, ' ')}
+                </li>
+              ))}
+            </ul>
+            <Link to={`${PORTAL}/my-profile`}
+              className="inline-block mt-3 px-4 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700">
+              Complete my profile
+            </Link>
+          </div>
+        )
+      )}
 
       <form onSubmit={submit} className="bg-white rounded-xl shadow-sm p-6 space-y-5">
         <div>
@@ -107,26 +107,14 @@ export default function ApplyForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
             <input type="number" min="1" value={form.semester_no}
-              onChange={(e) => setForm({ ...form, semester_no: e.target.value })} className={inputCls()} />
+              onChange={(e) => setForm({ ...form, semester_no: e.target.value })} className={inputCls(errors.semester_no)} />
+            {errors.semester_no && <p className="text-xs text-red-600 mt-1">{errors.semester_no[0]}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Admission Year</label>
             <input type="number" value={form.admission_year}
-              onChange={(e) => setForm({ ...form, admission_year: e.target.value })} className={inputCls()} />
-          </div>
-        </div>
-
-        <div className="border-t pt-4">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">Required Documents <span className="font-normal text-gray-500">(jpg/png/pdf, max {MAX_MB} MB each)</span></h2>
-          <div className="space-y-4">
-            {DOCS.map((d) => (
-              <div key={d.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{d.label} <span className="text-red-500">*</span></label>
-                <input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={setFile(d.key)} className="text-sm" />
-                {files[d.key] && <p className="text-xs text-green-600 mt-1">✓ {files[d.key].name}</p>}
-                {errors[d.key] && <p className="text-xs text-red-600 mt-1">{errors[d.key][0]}</p>}
-              </div>
-            ))}
+              onChange={(e) => setForm({ ...form, admission_year: e.target.value })} className={inputCls(errors.admission_year)} />
+            {errors.admission_year && <p className="text-xs text-red-600 mt-1">{errors.admission_year[0]}</p>}
           </div>
         </div>
 

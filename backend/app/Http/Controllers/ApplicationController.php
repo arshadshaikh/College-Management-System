@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\Document;
 use App\Models\Program;
 use App\Models\AuditLog;
+use App\Services\ApplicantProfileService;
 use App\Services\ChallanService;
 use App\Services\PolicyService;
 use Illuminate\Http\Request;
@@ -96,22 +97,27 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'program_id'    => 'required|exists:programs,id',
-            'semester_no'   => 'required|integer|min:1',
-            'admission_year'=> 'required|integer|min:2020|max:2099',
-
-            // Required documents
-            'doc_cnic'      => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'doc_matric'    => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'doc_inter'     => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-            'doc_photo'     => 'required|file|mimes:jpg,jpeg,png|max:1024',
+            'program_id'     => 'required|exists:programs,id',
+            'semester_no'    => 'required|integer|min:1',
+            'admission_year' => 'required|integer|min:2020|max:2099',
         ]);
 
         $college = app('current_college');
         $student = $request->user();
 
-        // Ensure program belongs to this college (BelongsToTenant already scopes,
-        // but explicit check gives a clearer error message)
+        // Documents now live on the applicant profile (reused for every application).
+        // College setting `require_complete_profile` (default true) gates applying.
+        $profiles = app(ApplicantProfileService::class);
+        if ($profiles->requiresCompleteProfile($college->id)) {
+            $completeness = $profiles->completeness($student, $college->id);
+            if (!$completeness['complete']) {
+                return response()->json([
+                    'message'      => 'Please complete your admission profile before applying.',
+                    'completeness' => $completeness,
+                ], 422);
+            }
+        }
+
         $program = Program::findOrFail($request->program_id);
 
         // Prevent duplicate active applications for the same program
@@ -126,64 +132,25 @@ class ApplicationController extends Controller
             ], 422);
         }
 
-        // Check seat availability
         if ($program->availableSeats() === 0) {
             return response()->json([
                 'message' => 'No seats available for this program.',
             ], 422);
         }
 
-        DB::beginTransaction();
-        try {
-            // 1. Create application
-            $application = Application::create([
-                'college_id'     => $college->id,
-                'student_id'     => $student->id,
-                'program_id'     => $program->id,
-                'semester_no'    => $request->semester_no,
-                'admission_year' => $request->admission_year,
-                'status'         => 'submitted', // direct submit, no draft step via API
-            ]);
+        $application = Application::create([
+            'college_id'     => $college->id,
+            'student_id'     => $student->id,
+            'program_id'     => $program->id,
+            'semester_no'    => $request->semester_no,
+            'admission_year' => $request->admission_year,
+            'status'         => 'submitted',
+        ]);
 
-            // 2. Upload and store documents
-            $documents = [
-                'doc_cnic'   => 'cnic',
-                'doc_matric' => 'matric_certificate',
-                'doc_inter'  => 'inter_certificate',
-                'doc_photo'  => 'photo',
-            ];
-
-            foreach ($documents as $field => $type) {
-                $file = $request->file($field);
-                $path = $file->store(
-                    "colleges/{$college->id}/docs/{$application->id}",
-                    'private'  // stored in storage/app/private — not web-accessible
-                );
-
-                Document::create([
-                    'college_id'          => $college->id,
-                    'application_id'      => $application->id,
-                    'student_id'          => $student->id,
-                    'document_type'       => $type,
-                    'original_name'       => $file->getClientOriginalName(),
-                    'stored_path'         => $path,
-                    'mime_type'           => $file->getMimeType(),
-                    'file_size'           => $file->getSize(),
-                    'verification_status' => 'pending',
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'message'     => 'Application submitted successfully.',
-                'application' => $application->load('program', 'documents'),
-            ], 201);
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        return response()->json([
+            'message'     => 'Application submitted successfully.',
+            'application' => $application->load('program'),
+        ], 201);
     }
 
     // ── College admin: view one application ───────────────────────

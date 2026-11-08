@@ -8,11 +8,13 @@ use App\Models\Setting;
 use App\Models\StudentEducation;
 use App\Models\StudentProfile;
 use App\Models\User;
+use App\Services\ApplicantProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+
 
 class ProfileController extends Controller
 {
@@ -236,45 +238,7 @@ class ProfileController extends Controller
             'documents'      => $documents,
             'levels'         => $levels,
             'document_types' => $docTypes,
-            'completeness'   => $this->completeness($user, $profile, $educations, $documents, $levels, $docTypes),
-        ];
-    }
-
-    private function completeness(User $user, ?StudentProfile $profile, $educations, $documents, $levels, $docTypes): array
-    {
-        $missing = [];
-
-        foreach (self::REQUIRED_PERSONAL as $field) {
-            $value = in_array($field, ['name', 'phone']) ? $user->{$field} : $profile?->{$field};
-            if (blank($value)) $missing[] = ['section' => 'personal', 'key' => $field];
-        }
-
-        $haveLevels = $educations->pluck('level')->all();
-        foreach ($levels->where('required', true) as $level) {
-            if (!in_array($level['key'], $haveLevels)) {
-                $missing[] = ['section' => 'education', 'key' => $level['key'], 'label' => $level['label']];
-            }
-        }
-
-        // Mandatory types + the certificate of every required level.
-        $needDocs = $docTypes->where('is_mandatory', true)->pluck('slug')
-            ->merge($levels->where('required', true)->pluck('document')->filter())
-            ->unique();
-        $haveDocs = $documents->pluck('document_type')->all();
-        foreach ($needDocs as $slug) {
-            if (!in_array($slug, $haveDocs)) {
-                $missing[] = ['section' => 'documents', 'key' => $slug,
-                              'label' => $docTypes->firstWhere('slug', $slug)?->name ?? $slug];
-            }
-        }
-
-        $total = count(self::REQUIRED_PERSONAL) + $levels->where('required', true)->count() + $needDocs->count();
-        $done  = $total - count($missing);
-
-        return [
-            'percent'  => $total ? (int) floor($done * 100 / $total) : 100,
-            'complete' => empty($missing),
-            'missing'  => $missing,
+            'completeness'   => app(ApplicantProfileService::class)->completeness($user, app('current_college')->id),
         ];
     }
 }
