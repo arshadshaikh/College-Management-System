@@ -40,6 +40,7 @@ class MenuSeeder extends Seeder
             ]],
 
             // ── Student ──────────────────────────────────────────
+            ['slug'=>'menu.student.profile',      'name'=>'My Profile',       'route'=>'/my-profile',       'icon'=>'fa-user',           'roles'=>['student']],
             ['slug'=>'menu.student.programs',     'name'=>'Programs',         'route'=>'/programs',         'icon'=>'fa-graduation-cap', 'roles'=>['student']],
             ['slug'=>'menu.student.applications', 'name'=>'My Applications',  'route'=>'/my-applications',  'icon'=>'fa-file-alt',       'roles'=>['student']],
             ['slug'=>'menu.student.challans',     'name'=>'My Challans',      'route'=>'/my-challans',      'icon'=>'fa-receipt',        'roles'=>['student']],

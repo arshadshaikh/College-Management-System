@@ -154,7 +154,7 @@ class CollegeInitializationService
                 'cms.banners.index', 'cms.banners.show',
                 'cms.media.index', 'cms.media.show',
                 // ── MENU (navigation) privileges for students ──
-                'menu.student.programs', 'menu.student.applications', 'menu.student.challans',
+                'menu.student.profile', 'menu.student.programs', 'menu.student.applications', 'menu.student.challans',
             ],
         ];
 
