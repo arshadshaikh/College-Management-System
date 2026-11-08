@@ -27,6 +27,7 @@ class StudentDocumentTypeSeeder extends Seeder
             ['inter_certificate',      'Intermediate / HSSC Certificate',  true,  $doc, 2048],
             ['bachelors_degree',       "Bachelor's Degree / Transcript",   false, $doc, 4096],
             ['masters_degree',         "Master's Degree / Transcript",     false, $doc, 4096],
+            ['mphil_degree',           'M.Phil / MS Degree / Transcript',  false, $doc, 4096],
             ['character_certificate',  'Character Certificate',            false, $doc, 2048],
         ];
 

@@ -145,6 +145,7 @@ class CollegeInitializationService
             'student' => [
                 'programs.index', 'programs.show',
                 'applications.my', 'applications.store', 'applications.withdraw',
+                'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
                 'challans.my-show', 'payments.slip',
                 'cms.pages.index', 'cms.pages.show',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CollegeAdminController;
 use App\Http\Controllers\CollegeController;
@@ -148,6 +149,13 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('programs/{program}/fee-structures', [ProgramController::class, 'storeFeeStructure']);
     Route::put('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'updateFeeStructure']);
     Route::delete('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'destroyFeeStructure']);
+
+    // Applicant profile (student, own data only)
+    Route::get('profile', [ProfileController::class, 'show']);
+    Route::put('profile', [ProfileController::class, 'update']);
+    Route::put('profile/educations', [ProfileController::class, 'saveEducation']);
+    Route::delete('profile/educations/{education}', [ProfileController::class, 'destroyEducation']);
+    Route::post('profile/documents', [ProfileController::class, 'uploadDocument']);
 
     // Applications
     Route::get('applications/my', [ApplicationController::class, 'myApplications']);

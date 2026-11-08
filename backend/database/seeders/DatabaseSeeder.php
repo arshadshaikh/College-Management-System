@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CollegeSeeder::class,           // seeds Example College (id 1)
             CollegePrivilegeSeeder::class,  // college approve/reject/suspend privileges
             ProgramPrivilegeSeeder::class,  // programs + applications privileges
+            ProfilePrivilegeSeeder::class,  // applicant profile (student side)
             ChallanPrivilegeSeeder::class,  // fee/challan privileges
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student
