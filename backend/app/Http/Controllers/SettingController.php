@@ -17,6 +17,9 @@ class SettingController extends Controller
         return response()->json([
             'settings' => $settings->pluck('value', 'key'),   // { "primary_color": "#1e40af", ... }
             'grouped'  => $settings->groupBy('group'),         // optional: organized by group
+            // Level catalog for the "Required Education Levels" checkboxes.
+            'education_levels' => collect(config('admission.education_levels', []))
+                ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
         ]);
     }
 
@@ -35,6 +38,13 @@ class SettingController extends Controller
             'settings.late_fee_mode'         => 'nullable|in:off,flat,per_week,per_month',
             'settings.late_fee_amount'       => 'nullable|numeric|min:0',
             'settings.late_fee_partial'      => 'nullable|in:from_day_one,full_period',
+            'settings.require_complete_profile'  => 'nullable|in:true,false',
+            'settings.required_education_levels' => ['nullable', 'string', function ($attr, $value, $fail) {
+                $known = array_keys(config('admission.education_levels', []));
+                foreach (array_filter(array_map('trim', explode(',', (string) $value))) as $k) {
+                    if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
+                }
+            }],
             // 'logo' is intentionally NOT handled here — it's a file upload,
             // done via a separate endpoint with the public disk.
         ]);

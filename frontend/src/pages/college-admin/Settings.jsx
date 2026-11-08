@@ -5,13 +5,17 @@ import Toggle from '../../components/Toggle';
 
 export default function Settings() {
   const [values, setValues] = useState({});
+  const [levels, setLevels] = useState([]);   // education level catalog (config/admission.php)
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     api.get('/settings')
-      .then(({ data }) => setValues(data.settings ?? {}))
+      .then(({ data }) => {
+        setValues(data.settings ?? {});
+        setLevels(data.education_levels ?? []);
+      })
       .catch(() => toast.error('Could not load settings.'))
       .finally(() => setLoading(false));
   }, []);
@@ -19,6 +23,14 @@ export default function Settings() {
   const set = (key, value) => {
     setValues((v) => ({ ...v, [key]: value }));
     setErrors((e) => ({ ...e, [`settings.${key}`]: undefined }));
+  };
+
+  // required_education_levels is stored as a comma list of level keys, in catalog order.
+  const requiredLevels = (values.required_education_levels ?? '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+  const toggleLevel = (key, on) => {
+    const next = on ? [...requiredLevels, key] : requiredLevels.filter((k) => k !== key);
+    set('required_education_levels', levels.map((l) => l.key).filter((k) => next.includes(k)).join(','));
   };
 
   const submit = async (e) => {
@@ -34,6 +46,8 @@ export default function Settings() {
           contact_phone: values.contact_phone ?? '',
           admission_open: values.admission_open ?? 'false',
           allow_multiple_admissions: values.allow_multiple_admissions ?? 'false',
+          require_complete_profile: values.require_complete_profile ?? 'true',
+          required_education_levels: values.required_education_levels ?? '',
           auto_generate_challan: values.auto_generate_challan ?? 'true',
           late_fee_mode: values.late_fee_mode ?? 'off',
           late_fee_amount: values.late_fee_amount ?? '0',
@@ -123,11 +137,35 @@ export default function Settings() {
             description="When on, a student may be admitted to more than one program. Only applies if the platform policy lets each college decide; otherwise the platform setting governs."
           />
 
+          <Toggle
+            checked={(values.require_complete_profile ?? 'true') === 'true'}
+            onChange={(on) => set('require_complete_profile', on ? 'true' : 'false')}
+            label="Require a complete profile before applying"
+            description="When on, a student can only apply once their admission profile (personal details, required education and required documents) is 100% complete."
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Required Education Levels</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Applicants must enter these levels and upload their certificates. Other levels stay optional.
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {levels.map((l) => (
+                <label key={l.key} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="h-4 w-4"
+                    checked={requiredLevels.includes(l.key)}
+                    onChange={(e) => toggleLevel(l.key, e.target.checked)} />
+                  {l.label}
+                </label>
+              ))}
+            </div>
+            {err('required_education_levels') && <p className="text-xs text-red-600 mt-1">{err('required_education_levels')}</p>}
+          </div>
         </section>
 
         {/* Fees */}
         <section className="bg-white rounded-xl shadow-sm p-6 space-y-5">
-          <h2 className="font-semibold text-gray-900">Fees & Challans</h2>
+          <h2 className="font-semibold text-gray-900">Fees &amp; Challans</h2>
 
           <Toggle
             checked={values.auto_generate_challan === 'true'}
