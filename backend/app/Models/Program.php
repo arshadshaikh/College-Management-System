@@ -13,7 +13,7 @@ class Program extends Model
     protected $fillable = [
         'college_id', 'name', 'code', 'degree_level',
         'duration_years', 'total_semesters', 'total_seats',
-        'eligibility_criteria', 'description', 'is_active',
+        'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
     ];
 
     protected $casts = [

@@ -89,12 +89,18 @@ class ProgramController extends Controller
             'eligibility_criteria'=> 'nullable|string|max:2000',
             'description'         => 'nullable|string|max:5000',
             'is_active'           => 'boolean',
+            'required_education_levels' => ['nullable', 'string', function ($attr, $value, $fail) {
+                $known = array_keys(config('admission.education_levels', []));
+                foreach (array_filter(array_map('trim', explode(',', (string) $value))) as $k) {
+                    if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
+                }
+            }],
         ]);
 
         $program = Program::create($request->only([
             'name', 'code', 'degree_level', 'duration_years',
             'total_semesters', 'total_seats',
-            'eligibility_criteria', 'description', 'is_active',
+            'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
         ]));
 
         return response()->json($program->load('feeStructures'), 201);
@@ -131,12 +137,18 @@ class ProgramController extends Controller
             'eligibility_criteria'=> 'nullable|string|max:2000',
             'description'         => 'nullable|string|max:5000',
             'is_active'           => 'boolean',
+            'required_education_levels' => ['nullable', 'string', function ($attr, $value, $fail) {
+                $known = array_keys(config('admission.education_levels', []));
+                foreach (array_filter(array_map('trim', explode(',', (string) $value))) as $k) {
+                    if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
+                }
+            }],
         ]);
 
         $program->update($request->only([
             'name', 'code', 'degree_level', 'duration_years',
             'total_semesters', 'total_seats',
-            'eligibility_criteria', 'description', 'is_active',
+            'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
         ]));
 
         return response()->json($program->load('feeStructures'));

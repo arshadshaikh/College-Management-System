@@ -5,12 +5,20 @@ import api from '../../api';
 import { PORTAL } from '../../config/app';
 
 const DEGREE_LEVELS = ['certificate', 'diploma', 'associate', 'bachelor', 'master', 'phd'];
+// Display names (stored values stay lowercase).
+const DEGREE_LABELS = {
+  certificate: 'Certificate', diploma: 'Diploma', associate: 'Associate',
+  bachelor: 'Bachelor', master: 'Master', phd: 'PhD',
+};
 
 const EMPTY = {
   name: '', code: '', degree_level: 'bachelor',
   duration_years: 4, total_semesters: 8, total_seats: 60,
   eligibility_criteria: '', description: '', is_active: true,
+  required_education_levels: '',
 };
+
+const splitLevels = (v) => (v ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
 export default function ProgramForm() {
   const { id } = useParams();            // present = edit mode
@@ -21,6 +29,18 @@ export default function ProgramForm() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [levels, setLevels] = useState([]);       // catalog from config/admission.php
+  const [baseline, setBaseline] = useState([]);   // college setting required_education_levels
+
+  // Level catalog + college baseline come from the settings endpoint.
+  useEffect(() => {
+    api.get('/settings')
+      .then(({ data }) => {
+        setLevels(data.education_levels ?? []);
+        setBaseline(splitLevels(data.settings?.required_education_levels));
+      })
+      .catch(() => {});
+  }, []);
 
   // Edit mode: load the existing program into the form.
   useEffect(() => {
@@ -31,6 +51,7 @@ export default function ProgramForm() {
         ...data,
         eligibility_criteria: data.eligibility_criteria ?? '',
         description: data.description ?? '',
+        required_education_levels: data.required_education_levels ?? '',
       }))
       .catch(() => toast.error('Could not load program.'))
       .finally(() => setLoading(false));
@@ -40,6 +61,15 @@ export default function ProgramForm() {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
     setErrors((er) => ({ ...er, [key]: undefined }));   // clear field error on change
+  };
+
+  // Extra levels for this program only (stored in catalog order, without baseline levels).
+  const extra = splitLevels(form.required_education_levels);
+  const toggleLevel = (key, on) => {
+    const next = on ? [...extra, key] : extra.filter((k) => k !== key);
+    const ordered = levels.map((l) => l.key).filter((k) => next.includes(k) && !baseline.includes(k));
+    setForm((f) => ({ ...f, required_education_levels: ordered.join(',') }));
+    setErrors((er) => ({ ...er, required_education_levels: undefined }));
   };
 
   const submit = async (e) => {
@@ -54,7 +84,6 @@ export default function ProgramForm() {
         await api.post('/programs', form);
         toast.success('Program created.');
       }
-      // navigate('/programs');
       navigate(`${PORTAL}/programs`);
     } catch (err) {
       if (err.response?.status === 422) {
@@ -92,7 +121,7 @@ export default function ProgramForm() {
           </Field>
           <Field label="Degree Level" error={errors.degree_level} required>
             <select value={form.degree_level} onChange={set('degree_level')} className={inputCls(errors.degree_level)}>
-              {DEGREE_LEVELS.map((l) => <option key={l} value={l} className="capitalize">{l}</option>)}
+              {DEGREE_LEVELS.map((l) => <option key={l} value={l}>{DEGREE_LABELS[l]}</option>)}
             </select>
           </Field>
         </div>
@@ -112,6 +141,28 @@ export default function ProgramForm() {
         <Field label="Eligibility Criteria" error={errors.eligibility_criteria}>
           <textarea rows={3} value={form.eligibility_criteria} onChange={set('eligibility_criteria')} className={inputCls(errors.eligibility_criteria)} />
         </Field>
+
+        {/* Required education for applicants to THIS program, on top of the college baseline */}
+        {levels.length > 0 && (
+          <Field label="Required Education" error={errors.required_education_levels}>
+            <p className="text-xs text-gray-500 mb-2">
+              Greyed levels are required for every program (College Settings). Tick extra levels applicants to this program must have.
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {levels.map((l) => {
+                const isBase = baseline.includes(l.key);
+                return (
+                  <label key={l.key} className={`flex items-center gap-2 text-sm ${isBase ? 'text-gray-400' : 'text-gray-700'}`}>
+                    <input type="checkbox" className="h-4 w-4" disabled={isBase}
+                      checked={isBase || extra.includes(l.key)}
+                      onChange={(e) => toggleLevel(l.key, e.target.checked)} />
+                    {l.label}
+                  </label>
+                );
+              })}
+            </div>
+          </Field>
+        )}
 
         <Field label="Description" error={errors.description}>
           <textarea rows={3} value={form.description} onChange={set('description')} className={inputCls(errors.description)} />

@@ -105,20 +105,21 @@ class ApplicationController extends Controller
         $college = app('current_college');
         $student = $request->user();
 
-        // Documents now live on the applicant profile (reused for every application).
-        // College setting `require_complete_profile` (default true) gates applying.
+        $program = Program::findOrFail($request->program_id);
+
+        // Baseline levels (college setting) + this program's extra levels.
+        $programLevels = array_values(array_filter(array_map('trim', explode(',', (string) $program->required_education_levels))));
+
         $profiles = app(ApplicantProfileService::class);
         if ($profiles->requiresCompleteProfile($college->id)) {
-            $completeness = $profiles->completeness($student, $college->id);
+            $completeness = $profiles->completeness($student, $college->id, $programLevels);
             if (!$completeness['complete']) {
                 return response()->json([
-                    'message'      => 'Please complete your admission profile before applying.',
+                    'message'      => "Please complete your admission profile before applying to {$program->name}.",
                     'completeness' => $completeness,
                 ], 422);
             }
         }
-
-        $program = Program::findOrFail($request->program_id);
 
         // Prevent duplicate active applications for the same program
         $duplicate = Application::where('student_id', $student->id)

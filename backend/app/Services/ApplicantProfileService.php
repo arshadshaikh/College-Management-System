@@ -43,12 +43,13 @@ class ApplicantProfileService
         return $value === null ? true : $value === 'true';
     }
 
-    public function completeness(User $user, int $collegeId): array
+    public function completeness(User $user, int $collegeId, array $extraLevels = []): array
     {
         $profile    = StudentProfile::where('user_id', $user->id)->first();
         $educations = $user->educations()->get();
         $documents  = $user->profileDocuments()->get();
-        $required   = $this->requiredLevels($collegeId);
+        // College baseline + any extra levels (e.g. the chosen program's).
+        $required   = array_values(array_unique(array_merge($this->requiredLevels($collegeId), $extraLevels)));
 
         $levels = collect(config('admission.education_levels', []))
             ->map(fn ($meta, $key) => $meta + ['key' => $key, 'required' => in_array($key, $required)])
