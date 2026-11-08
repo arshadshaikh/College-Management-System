@@ -190,9 +190,16 @@ class ApplicationController extends Controller
     // GET /api/applications/{application}
     public function show(Application $application)
     {
-        return response()->json(
-            $application->load(['student.studentProfile', 'program', 'documents', 'reviewer'])
-        );
+        $application->load([
+            'student.studentProfile', 'student.educations', 'student.profileDocuments',
+            'program', 'documents', 'reviewer',
+        ]);
+
+        return response()->json($application->toArray() + [
+            // Labels for the admin view: level names and document type names.
+            'education_levels' => config('admission.education_levels', []),
+            'document_types'   => \App\Models\RequiredDocumentType::where('scope', 'student_application')->pluck('name', 'slug'),
+        ]);
     }
 
     // ── College admin: move to under_review ───────────────────────

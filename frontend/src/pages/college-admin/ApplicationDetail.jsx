@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
+import ApplicantProfile from './ApplicantProfile';
 
 const STATUS_STYLES = {
   submitted:    'bg-blue-50 text-blue-700',
@@ -165,9 +166,11 @@ export default function ApplicationDetail() {
         </div>
       </div>
 
+      <ApplicantProfile app={app} onDownload={downloadDoc} />
+
       {/* Documents */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Documents</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">Application Documents</h2>
         {app.documents?.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {app.documents.map((doc) => (
