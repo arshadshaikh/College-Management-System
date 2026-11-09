@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CollegeDocumentType;
 use App\Models\RequiredDocumentType;
 use App\Models\Setting;
 use App\Models\StudentProfile;
@@ -21,6 +22,14 @@ class ApplicantProfileService
     public const REQUIRED_PERSONAL = [
         'name', 'phone', 'father_name', 'date_of_birth', 'gender',
         'nationality', 'domicile_province', 'domicile_district', 'permanent_address',
+    ];
+
+    // Readable names for the "Still needed" lists (profile page and Apply banner).
+    public const PERSONAL_LABELS = [
+        'name' => 'Full Name', 'phone' => 'Mobile Number', 'father_name' => "Father's Name",
+        'date_of_birth' => 'Date of Birth', 'gender' => 'Gender', 'nationality' => 'Nationality',
+        'domicile_province' => 'Domicile Province', 'domicile_district' => 'Domicile District',
+        'permanent_address' => 'Permanent Address',
     ];
 
     // Level keys the college requires (setting `required_education_levels`).
@@ -43,6 +52,39 @@ class ApplicantProfileService
         return $value === null ? true : $value === 'true';
     }
 
+    /**
+     * The applicant document types THIS college asks for.
+     * Master list (super admin, active only) + the college's own choices.
+     * No college row = master is_mandatory applies. `is_mandatory` on each
+     * returned item is the effective value for this college.
+     * Education certificates (config/admission.php) ignore college choices:
+     * they are always listed and required when their level is required.
+     */
+    public function documentTypes(int $collegeId)
+    {
+        $choices = CollegeDocumentType::where('college_id', $collegeId)
+            ->get()->keyBy('required_document_type_id');
+        $certs = $this->certificateSlugs();
+
+        return RequiredDocumentType::where('scope', self::DOC_SCOPE)
+            ->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('name')
+            ->get()
+            ->filter(fn ($t) => in_array($t->slug, $certs) || ($choices->get($t->id)?->is_active ?? true))
+            ->map(function ($t) use ($choices, $certs) {
+                $choice = $choices->get($t->id);
+                if ($choice && !in_array($t->slug, $certs)) $t->is_mandatory = $choice->is_required;
+                return $t;
+            })
+            ->values();
+    }
+
+    // Document slugs tied to an education level (matric_certificate, ...).
+    public function certificateSlugs(): array
+    {
+        return collect(config('admission.education_levels', []))->pluck('document')->filter()->values()->all();
+    }
+
     public function completeness(User $user, int $collegeId, array $extraLevels = []): array
     {
         $profile    = StudentProfile::where('user_id', $user->id)->first();
@@ -55,15 +97,13 @@ class ApplicantProfileService
             ->map(fn ($meta, $key) => $meta + ['key' => $key, 'required' => in_array($key, $required)])
             ->values();
 
-        $docTypes = RequiredDocumentType::where('scope', self::DOC_SCOPE)
-            ->where('is_active', true)
-            ->get(['name', 'slug', 'is_mandatory']);
+        $docTypes = $this->documentTypes($collegeId);
 
         $missing = [];
 
         foreach (self::REQUIRED_PERSONAL as $field) {
             $value = in_array($field, ['name', 'phone']) ? $user->{$field} : $profile?->{$field};
-            if (blank($value)) $missing[] = ['section' => 'personal', 'key' => $field];
+            if (blank($value)) $missing[] = ['section' => 'personal', 'key' => $field, 'label' => self::PERSONAL_LABELS[$field] ?? ucwords(str_replace('_', ' ', $field))];
         }
 
         $haveLevels = $educations->pluck('level')->all();

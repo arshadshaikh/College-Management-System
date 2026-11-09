@@ -8,6 +8,7 @@ import PlatformLayout from './pages/platform/PlatformLayout';
 import PlatformHome from './pages/platform/PlatformHome';
 import PlatformColleges from './pages/platform/PlatformColleges';
 import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import Dashboard from './pages/shared/Dashboard';
 import UserList from './pages/UserList';
 import UserCreate from './pages/UserCreate';
@@ -78,6 +79,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/portal" replace /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to="/portal" replace /> : <Register />} />
       <Route path="/forgot-password" element={user ? <Navigate to="/portal" replace /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to="/portal" replace /> : <ResetPassword />} />
       <Route path="/register-college" element={<CollegeRegister />} />

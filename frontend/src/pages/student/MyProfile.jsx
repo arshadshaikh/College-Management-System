@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api';
-import EducationSection from './profile/EducationSection';
-import DocumentsSection from './profile/DocumentsSection';
 
 // Personal fields. `account` = stored on users; the rest on student_profiles.
 const PERSONAL = [
@@ -121,12 +119,16 @@ export default function MyProfile() {
 
       {/* ── Personal ─────────────────────────────────────────── */}
       <form onSubmit={savePersonal} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Personal Details</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Personal Details</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Fields marked <span className="text-red-500">*</span> are needed before you can apply. You can save a partly filled form.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {PERSONAL.map((f) => (
             <div key={f.key} className={f.textarea ? 'md:col-span-2' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {f.label} {f.required && <span className="text-red-500">*</span>}
+                {f.label}{' '}
+                {(f.required || data.required_personal?.includes(f.key)) && <span className="text-red-500">*</span>}
               </label>
               {f.options ? (
                 <select value={personal[f.key] ?? ''} onChange={setField(f.key)} className={inputCls(errors[f.key])}>
@@ -149,8 +151,6 @@ export default function MyProfile() {
           </button>
         </div>
       </form>
-      <EducationSection data={data} onSaved={setData} />
-      <DocumentsSection data={data} onSaved={setData} />
     </div>
   );
 }

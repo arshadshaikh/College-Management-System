@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use App\Models\CollegeDocumentType;
+use App\Models\RequiredDocumentType;
+use App\Services\ApplicantProfileService;
 
 class SettingController extends Controller
 {
@@ -20,6 +23,7 @@ class SettingController extends Controller
             // Level catalog for the "Required Education Levels" checkboxes.
             'education_levels' => collect(config('admission.education_levels', []))
                 ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
+            'document_types' => $this->collegeDocumentTypes(),
         ]);
     }
 
@@ -45,6 +49,10 @@ class SettingController extends Controller
                     if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
                 }
             }],
+            'document_types'               => 'nullable|array',
+            'document_types.*.id'          => 'required|integer|exists:required_document_types,id',
+            'document_types.*.is_active'   => 'required|boolean',
+            'document_types.*.is_required' => 'required|boolean',
             // 'logo' is intentionally NOT handled here — it's a file upload,
             // done via a separate endpoint with the public disk.
         ]);
@@ -63,6 +71,14 @@ class SettingController extends Controller
             }
         }
 
+        // This college's applicant document choices (master list stays with super admin).
+        foreach ($request->input('document_types', []) as $row) {
+            CollegeDocumentType::updateOrCreate(
+                ['college_id' => app('current_college')->id, 'required_document_type_id' => $row['id']],
+                ['is_active' => $row['is_active'], 'is_required' => $row['is_active'] && $row['is_required']]
+            );
+        }
+
         $settings = Setting::all(['key', 'value', 'group']);
 
         return response()->json([
@@ -70,6 +86,29 @@ class SettingController extends Controller
             'updated_keys' => $updated,
             'settings'     => $settings->pluck('value', 'key'),
         ]);
+    }
+
+    // Applicant document types for the Settings screen: master list + this college's choices.
+    private function collegeDocumentTypes(): array
+    {
+        $collegeId = app('current_college')->id;
+        $certs     = app(ApplicantProfileService::class)->certificateSlugs();
+        $choices   = CollegeDocumentType::where('college_id', $collegeId)->get()->keyBy('required_document_type_id');
+
+        return RequiredDocumentType::where('scope', ApplicantProfileService::DOC_SCOPE)
+            ->where('is_active', true)
+            ->orderBy('sort_order')->orderBy('name')
+            ->get()
+            ->map(fn ($t) => [
+                'id'             => $t->id,
+                'name'           => $t->name,
+                'slug'           => $t->slug,
+                'is_certificate' => in_array($t->slug, $certs),   // follows education levels, not editable
+                'is_active'      => $choices->get($t->id)?->is_active ?? true,
+                'is_required'    => $choices->get($t->id)?->is_required ?? (bool) $t->is_mandatory,
+            ])
+            ->values()
+            ->all();
     }
 
     public function publicIndex()

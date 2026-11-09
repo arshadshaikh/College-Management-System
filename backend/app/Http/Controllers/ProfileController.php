@@ -139,9 +139,12 @@ class ProfileController extends Controller
             'document_type' => ['required', 'string', Rule::exists('required_document_types', 'slug')
                 ->where('scope', self::DOC_SCOPE)->where('is_active', true)],
         ]);
+        
+        $type = app(ApplicantProfileService::class)
+            ->documentTypes(app('current_college')->id)
+            ->firstWhere('slug', $request->document_type);
+        abort_if(!$type, 422, 'This college does not ask for this document.');
 
-        $type = RequiredDocumentType::where('scope', self::DOC_SCOPE)
-            ->where('slug', $request->document_type)->firstOrFail();
 
         // File rules come from the configured document type.
         $fileRules = ['required', 'file', 'mimetypes:' . $type->allowed_mime_types, 'max:' . $type->max_size_kb];
@@ -225,11 +228,8 @@ class ProfileController extends Controller
         $levels = collect(config('admission.education_levels', []))
             ->map(fn ($meta, $key) => $meta + ['key' => $key, 'required' => in_array($key, $required)])
             ->values();
-
-        $docTypes = RequiredDocumentType::where('scope', self::DOC_SCOPE)
-            ->where('is_active', true)
-            ->orderBy('sort_order')->orderBy('name')
-            ->get(['name', 'slug', 'is_mandatory', 'allowed_mime_types', 'max_size_kb', 'max_dimension']);
+        
+        $docTypes = app(ApplicantProfileService::class)->documentTypes(app('current_college')->id);
 
         return [
             'user'           => $user->only(['id', 'name', 'cnic_no', 'phone', 'email']),
@@ -239,6 +239,7 @@ class ProfileController extends Controller
             'levels'         => $levels,
             'document_types' => $docTypes,
             'completeness'   => app(ApplicantProfileService::class)->completeness($user, app('current_college')->id),
+            'required_personal' => ApplicantProfileService::REQUIRED_PERSONAL,
         ];
     }
 }

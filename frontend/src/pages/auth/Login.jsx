@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAppConfig } from '../../context/AppConfigContext';
 import AppIcon from '../../components/AppIcon';
+import { IS_MAIN_DOMAIN } from '../../config/tenant';
 
 export default function Login() {
   const [cnic, setCnic] = useState('');
@@ -96,6 +97,14 @@ export default function Login() {
                 </span>
               ) : 'Sign In'}
             </button>
+
+            {!IS_MAIN_DOMAIN && (
+              <p className="text-center text-sm text-gray-500">
+                New applicant?{' '}
+                <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">Create an account</Link>
+              </p>
+            )}
+
           </form>
         </div>
       </div>

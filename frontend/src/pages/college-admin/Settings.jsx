@@ -6,6 +6,7 @@ import Toggle from '../../components/Toggle';
 export default function Settings() {
   const [values, setValues] = useState({});
   const [levels, setLevels] = useState([]);   // education level catalog (config/admission.php)
+  const [docTypes, setDocTypes] = useState([]); // applicant documents: master list + this college's choices
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -15,6 +16,7 @@ export default function Settings() {
       .then(({ data }) => {
         setValues(data.settings ?? {});
         setLevels(data.education_levels ?? []);
+        setDocTypes(data.document_types ?? []);
       })
       .catch(() => toast.error('Could not load settings.'))
       .finally(() => setLoading(false));
@@ -32,6 +34,12 @@ export default function Settings() {
     const next = on ? [...requiredLevels, key] : requiredLevels.filter((k) => k !== key);
     set('required_education_levels', levels.map((l) => l.key).filter((k) => next.includes(k)).join(','));
   };
+
+  // One dropdown per document: off / optional / required.
+  const docMode = (d) => (!d.is_active ? 'off' : d.is_required ? 'required' : 'optional');
+  const setDocMode = (id, mode) =>
+    setDocTypes((list) => list.map((d) => (d.id === id
+      ? { ...d, is_active: mode !== 'off', is_required: mode === 'required' } : d)));
 
   const submit = async (e) => {
     e.preventDefault();
@@ -53,6 +61,9 @@ export default function Settings() {
           late_fee_amount: values.late_fee_amount ?? '0',
           late_fee_partial: values.late_fee_partial ?? 'from_day_one',
         },
+        // Certificates follow the education levels, so they are not sent.
+        document_types: docTypes.filter((d) => !d.is_certificate)
+          .map(({ id, is_active, is_required }) => ({ id, is_active, is_required })),
       };
       const { data } = await api.put('/settings', payload);
       setValues(data.settings ?? values);
@@ -160,6 +171,31 @@ export default function Settings() {
               ))}
             </div>
             {err('required_education_levels') && <p className="text-xs text-red-600 mt-1">{err('required_education_levels')}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Documents</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Choose which documents applicants upload to their profile. Education certificates follow the
+              required education levels above (and each program's extra levels).
+            </p>
+            <div className="border border-gray-200 rounded-lg divide-y divide-gray-200">
+              {docTypes.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-4 px-4 py-2.5">
+                  <span className="text-sm text-gray-800">{d.name}</span>
+                  {d.is_certificate ? (
+                    <span className="text-xs text-gray-400">Follows education levels</span>
+                  ) : (
+                    <select value={docMode(d)} onChange={(e) => setDocMode(d.id, e.target.value)}
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                      <option value="required">Required</option>
+                      <option value="optional">Optional</option>
+                      <option value="off">Not asked</option>
+                    </select>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
