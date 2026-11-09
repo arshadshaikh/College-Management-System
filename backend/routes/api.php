@@ -24,15 +24,37 @@ use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
-// Public
-Route::get('/app-config', function () {
-    return response()->json([
+// Public. On a college subdomain (or X-College header in path mode) the portal
+// is branded with that college's name and Settings; otherwise the platform defaults.
+Route::middleware('tenant')->get('/app-config', function () {
+    $base = [
         'name'          => config('site.name'),
         'short_name'    => config('site.short_name'),
         'icon'          => config('site.icon'),
         'primary_color' => config('site.primary_color'),
-    ]);
+        'logo_url'      => null,
+        'is_college'    => false,
+    ];
+
+    $college = app()->bound('current_college') ? app('current_college') : null;
+    if (!$college || $college->is_platform) {
+        return response()->json($base);
+    }
+
+    $settings = \App\Models\Setting::where('college_id', $college->id)
+        ->whereIn('key', ['primary_color', 'logo'])
+        ->pluck('value', 'key');
+
+    return response()->json(array_merge($base, [
+        'name'          => $college->name,
+        'short_name'    => $college->slug ? strtoupper($college->slug) : $base['short_name'],
+        'primary_color' => ($settings['primary_color'] ?? null) ?: $base['primary_color'],
+        'logo_url'      => ($settings['logo'] ?? null) ?: null,   // a Media Library URL chosen in Settings
+        'is_college'    => true,
+    ]));
 });
+
+
 
 // College self-registration — public, main domain
 Route::post('/colleges/register', [CollegeController::class, 'register']);

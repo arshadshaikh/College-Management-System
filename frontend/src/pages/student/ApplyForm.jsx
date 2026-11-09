@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
@@ -11,9 +11,10 @@ import { PORTAL } from '../../config/app';
 
 export default function ApplyForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();   // ?program=ID from the public "Apply now" button
   const [programs, setPrograms] = useState([]);
   const [completeness, setCompleteness] = useState(null);
-  const [form, setForm] = useState({ program_id: '', semester_no: 1, admission_year: new Date().getFullYear() });
+  const [form, setForm] = useState({ program_id: searchParams.get('program') ?? '', semester_no: 1, admission_year: new Date().getFullYear() });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 

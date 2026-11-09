@@ -55,6 +55,12 @@ class SettingController extends Controller
             'document_types.*.is_required' => 'required|boolean',
             // 'logo' is intentionally NOT handled here — it's a file upload,
             // done via a separate endpoint with the public disk.
+            'settings.logo' => ['nullable', 'string', 'max:500', function ($attr, $value, $fail) {
+                // Only an image from THIS college's Media Library (tenant scope applies).
+                if (filled($value) && !\App\Models\Media::where('public_url', $value)->where('media_type', 'image')->exists()) {
+                    $fail("Choose an image from this college's Media Library.");
+                }
+            }],
         ]);
 
         $incoming = $request->input('settings', []);

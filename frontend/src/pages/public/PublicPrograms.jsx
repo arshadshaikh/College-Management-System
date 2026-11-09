@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api';
+import { useAuth } from '../../context/AuthContext';
+import { PORTAL } from '../../config/app';
 import { usePublicSite } from '../../context/PublicSiteContext';
 
 const LEVEL_LABELS = {
@@ -10,6 +12,9 @@ const LEVEL_LABELS = {
 
 export default function PublicPrograms() {
   const { settings } = usePublicSite();
+  const { user } = useAuth();
+  // Logged-in students go straight to Apply with the program chosen; visitors sign up first.
+  const applyLink = (id) => (user ? `${PORTAL}/apply?program=${id}` : '/register');
   const primary = settings.primary_color || '#1e40af';
   // Setting values arrive as strings; anything other than an explicit "false" counts as open.
   const admissionsOpen = settings.admission_open === 'true' || settings.admission_open === true;
@@ -75,7 +80,7 @@ export default function PublicPrograms() {
               {p.description && <p className="mt-2 text-sm text-gray-600">{p.description}</p>}
               <div className="mt-auto pt-4">
                 {admissionsOpen ? (
-                  <Link to="/login" className="inline-block px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: primary }}>
+                  <Link to={applyLink(p.id)} className="inline-block px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: primary }}>
                     Apply now
                   </Link>
                 ) : (

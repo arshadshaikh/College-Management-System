@@ -19,9 +19,18 @@ const icons = {
 };
 
 export default function AppIcon({ className = 'w-8 h-8' }) {
-  const { icon } = useAppConfig();
-  const svgPath = icons[icon] || icons.shield;
+  const { icon, logo_url, name } = useAppConfig();
 
+  // A college logo (Settings → Branding) fills its coloured badge on a white
+  // background, so Login, Sign-up and the sidebar need no changes.
+  if (logo_url) {
+    return (
+      <img src={logo_url} alt={name}
+        className="w-full h-full object-contain bg-white p-0.5 rounded-[inherit]" />
+    );
+  }
+
+  const svgPath = icons[icon] || icons.shield;
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       {svgPath}

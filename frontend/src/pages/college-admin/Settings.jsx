@@ -2,6 +2,80 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import Toggle from '../../components/Toggle';
+import { Link } from 'react-router-dom';
+import { PORTAL } from '../../config/app';
+
+// Picks the college logo from the Media Library (images only). Stores the image URL in the `logo` setting.
+function LogoPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [images, setImages] = useState(null);
+
+  const openPicker = () => {
+    setOpen(true);
+    if (images === null) {
+      api.get('/cms/media', { params: { media_type: 'image', per_page: 100 } })
+        .then(({ data }) => setImages(data.data ?? data))
+        .catch(() => { setImages([]); toast.error('Could not load the Media Library.'); });
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
+          {value ? <img src={value} alt="Logo" className="w-full h-full object-contain" />
+                 : <span className="text-xs text-gray-400">None</span>}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={openPicker}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+            {value ? 'Change' : 'Choose from Media Library'}
+          </button>
+          {value && (
+            <button type="button" onClick={() => onChange('')}
+              className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove</button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-gray-400 mt-1">
+        Shown on the login, sign-up and portal pages. A square PNG with a transparent background looks best.
+      </p>
+
+      {open && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-900">Choose a logo</h3>
+              <button type="button" onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              {images === null ? (
+                <p className="text-sm text-gray-400">Loading…</p>
+              ) : images.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No images yet. Upload one in the{' '}
+                  <Link to={`${PORTAL}/cms/media`} className="text-indigo-600 font-medium">Media Library</Link>, then come back.
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {images.map((m) => (
+                    <button type="button" key={m.id} title={m.original_name}
+                      onClick={() => { onChange(m.public_url); setOpen(false); }}
+                      className={`aspect-square rounded-lg border-2 overflow-hidden bg-gray-50 hover:border-indigo-500 ${
+                        value === m.public_url ? 'border-indigo-600' : 'border-gray-200'}`}>
+                      <img src={m.public_url} alt={m.alt_text || m.original_name} className="w-full h-full object-contain" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const [values, setValues] = useState({});
@@ -50,6 +124,7 @@ export default function Settings() {
       const payload = {
         settings: {
           primary_color: values.primary_color ?? '',
+          logo: values.logo ?? '',
           contact_email: values.contact_email ?? '',
           contact_phone: values.contact_phone ?? '',
           admission_open: values.admission_open ?? 'false',
@@ -108,7 +183,8 @@ export default function Settings() {
             </div>
             {err('primary_color') && <p className="text-xs text-red-600 mt-1">{err('primary_color')}</p>}
           </div>
-          <p className="text-xs text-gray-400">Logo upload is managed separately (coming with the media tools).</p>
+          <LogoPicker value={values.logo ?? ''} onChange={(url) => set('logo', url)} />
+          {err('logo') && <p className="text-xs text-red-600 mt-1">{err('logo')}</p>}
         </section>
 
         {/* Contact */}
