@@ -7,6 +7,7 @@ use App\Models\RequiredDocumentType;
 use App\Models\Setting;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Illuminate\Support\Arr;
 
 /**
  * Applicant-profile rules shared by ProfileController (student page)
@@ -133,5 +134,72 @@ class ApplicantProfileService
             'complete' => empty($missing),
             'missing'  => $missing,
         ];
+    }
+
+    /**
+     * A frozen copy of what the student submits with an application:
+     * account + profile fields, education rows and the profile documents (id + version).
+     */
+    public function snapshot(User $user): array
+    {
+        $profile = StudentProfile::where('user_id', $user->id)->first();
+        $skip = ['id', 'user_id', 'student_id', 'college_id', 'created_at', 'updated_at'];
+
+        return [
+            'taken_at'   => now()->toIso8601String(),
+            'user'       => $user->only(['name', 'cnic_no', 'phone', 'email']),
+            'profile'    => $profile ? Arr::except($profile->toArray(), $skip) : [],
+            'educations' => $user->educations()->get()
+                ->map(fn ($e) => Arr::except($e->toArray(), array_merge($skip, ['document_id'])))
+                ->keyBy('level')->all(),
+            'documents'  => $user->profileDocuments()->get()
+                ->mapWithKeys(fn ($d) => [$d->document_type => [
+                    'id'         => $d->id,
+                    'updated_at' => optional($d->updated_at)->toIso8601String(),
+                ]])->all(),
+        ];
+    }
+
+    /**
+     * What changed in the student's profile since $snapshot was taken.
+     * Returns readable lines, e.g. "Domicile District", "Intermediate / HSSC: Obtained Marks",
+     * "Document replaced: CNIC / B-Form". Empty array = nothing changed.
+     */
+    public function changesSince(?array $snapshot, User $user): array
+    {
+        if (!$snapshot) return [];
+        $now     = $this->snapshot($user);
+        $catalog = config('admission.education_levels', []);
+        $label   = fn ($k) => self::PERSONAL_LABELS[$k] ?? ucwords(str_replace('_', ' ', $k));
+        $changes = [];
+
+        $before = ($snapshot['user'] ?? []) + ($snapshot['profile'] ?? []);
+        $after  = $now['user'] + $now['profile'];
+        foreach (array_unique(array_merge(array_keys($before), array_keys($after))) as $k) {
+            if ((string) ($before[$k] ?? '') !== (string) ($after[$k] ?? '')) $changes[] = $label($k);
+        }
+
+        $eb = $snapshot['educations'] ?? [];
+        $ea = $now['educations'];
+        foreach (array_unique(array_merge(array_keys($eb), array_keys($ea))) as $lvl) {
+            $name = $catalog[$lvl]['label'] ?? $lvl;
+            if (!isset($eb[$lvl])) { $changes[] = "{$name}: added"; continue; }
+            if (!isset($ea[$lvl])) { $changes[] = "{$name}: removed"; continue; }
+            foreach (array_unique(array_merge(array_keys($eb[$lvl]), array_keys($ea[$lvl]))) as $f) {
+                if ((string) ($eb[$lvl][$f] ?? '') !== (string) ($ea[$lvl][$f] ?? '')) $changes[] = "{$name}: " . $label($f);
+            }
+        }
+
+        $names = RequiredDocumentType::where('scope', self::DOC_SCOPE)->pluck('name', 'slug');
+        $db = $snapshot['documents'] ?? [];
+        $da = $now['documents'];
+        foreach (array_unique(array_merge(array_keys($db), array_keys($da))) as $slug) {
+            $name = $names[$slug] ?? $slug;
+            if (!isset($db[$slug]))      $changes[] = "Document added: {$name}";
+            elseif (!isset($da[$slug]))  $changes[] = "Document removed: {$name}";
+            elseif ($db[$slug] != $da[$slug]) $changes[] = "Document replaced: {$name}";
+        }
+
+        return array_values(array_unique($changes));
     }
 }

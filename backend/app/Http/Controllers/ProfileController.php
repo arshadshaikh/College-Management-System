@@ -111,12 +111,13 @@ class ProfileController extends Controller
         }
         
         // Passing year must be realistic for the student's date of birth.
-        $dob = $user->studentProfile?->date_of_birth;
-        if ($dob) {
-            $earliest = \Carbon\Carbon::parse($dob)->year + (int) config('admission.min_passing_age', 10);
+        $dob    = $user->studentProfile?->date_of_birth;
+        $minAge = $catalog[$level]['min_age'] ?? null;
+        if ($dob && $minAge) {
+            $earliest = \Carbon\Carbon::parse($dob)->year + (int) $minAge;
             if ($data['passing_year'] < $earliest) {
                 throw ValidationException::withMessages([
-                    'passing_year' => "Looks too early for your date of birth. The earliest possible year is {$earliest}.",
+                    'passing_year' => "Looks too early for your date of birth. For {$catalog[$level]['label']} the earliest possible year is {$earliest}.",
                 ]);
             }
         }

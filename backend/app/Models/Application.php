@@ -15,12 +15,15 @@ class Application extends Model
         'application_no', 'college_id', 'student_id',
         'program_id', 'status', 'rejection_reason',
         'reviewed_by', 'reviewed_at', 'semester_no', 'admission_year',
+        'correction_note', 'profile_snapshot', 'submitted_at',
     ];
 
     protected $casts = [
         'reviewed_at'   => 'datetime',
         'semester_no'   => 'integer',
         'admission_year' => 'integer',
+        'profile_snapshot' => 'array',
+        'submitted_at'     => 'datetime',
     ];
 
     // Generate a unique application number before creating

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 // Full applicant profile for the college admin, shown on Application Detail.
 // Data comes from GET /api/applications/{id}:
 //   student.student_profile, student.educations, student.profile_documents,
@@ -27,24 +29,73 @@ const result = (e) => {
   return '—';
 };
 
+// Shows whether the profile changed after the student submitted (profile_snapshot vs now).
+function SubmissionBanner({ app, view, setView }) {
+  const snap = app.profile_snapshot;
+  const changes = app.profile_changes ?? [];
+  const when = app.submitted_at ? new Date(app.submitted_at).toLocaleString() : null;
+  if (!snap) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-600">
+        This application was submitted before submission copies were kept, so the current profile is shown.
+      </div>
+    );
+  }
+  return (
+    <div className={`rounded-xl px-4 py-3 text-sm border ${changes.length ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-green-50 border-green-200 text-green-800'}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-medium">
+          {changes.length
+            ? `The applicant changed their profile after submitting${when ? ` (${when})` : ''}.`
+            : `Profile unchanged since submission${when ? ` (${when})` : ''}.`}
+        </p>
+        <div className="inline-flex rounded-lg border border-gray-300 bg-white overflow-hidden text-xs">
+          {[['submitted', 'As submitted'], ['current', 'Current']].map(([k, label]) => (
+            <button key={k} type="button" onClick={() => setView(k)}
+              className={`px-3 py-1.5 ${view === k ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {changes.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-2">
+          {changes.map((c) => <li key={c} className="text-xs px-2 py-0.5 rounded-full bg-white border border-amber-200">{c}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function ApplicantProfile({ app, onDownload }) {
-  const s = app.student ?? {};
-  const p = s.student_profile ?? {};
+  const snap = app.profile_snapshot;
+  const [view, setView] = useState(snap ? 'submitted' : 'current');
+  const asSubmitted = view === 'submitted' && snap;
+
+  const cur = app.student ?? {};
+  // "As submitted" reads personal details and education from the snapshot; documents are always current.
+  const s = asSubmitted ? { ...cur, ...snap.user } : cur;
+  const p = asSubmitted ? (snap.profile ?? {}) : (cur.student_profile ?? {});
   const levels = app.education_levels ?? {};
   const docNames = app.document_types ?? {};
   const levelOrder = Object.keys(levels);
-  const educations = [...(s.educations ?? [])].sort(
+  const eduSource = asSubmitted ? Object.values(snap.educations ?? {}) : (cur.educations ?? []);
+  const educations = [...eduSource].sort(
     (a, b) => levelOrder.indexOf(a.level) - levelOrder.indexOf(b.level)
   );
-  const docs = s.profile_documents ?? [];
+  const docs = cur.profile_documents ?? [];
   const dob = p.date_of_birth ? String(p.date_of_birth).slice(0, 10) : null;
   const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
 
   return (
     <div className="space-y-6">
+      <SubmissionBanner app={app} view={view} setView={setView} />
+
       {/* Personal */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Applicant Profile</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">
+          Applicant Profile {asSubmitted && <span className="ml-2 text-xs font-normal text-gray-500">as submitted</span>}
+        </h2>
         <dl className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3">
           <Field label="Name" value={s.name} />
           <Field label="Father's Name" value={p.father_name} />
@@ -85,9 +136,10 @@ export default function ApplicantProfile({ app, onDownload }) {
               </thead>
               <tbody>
                 {educations.map((e) => {
-                  const cert = docs.find((d) => d.id === e.document_id);
+                  const cert = docs.find((d) => d.id === e.document_id)
+                    ?? docs.find((d) => d.document_type === levels[e.level]?.document);
                   return (
-                    <tr key={e.id} className="border-b border-gray-100 last:border-0">
+                    <tr key={e.id ?? e.level} className="border-b border-gray-100 last:border-0">
                       <td className="py-2 pr-4 font-medium text-gray-900">{levels[e.level]?.label ?? e.level}</td>
                       <td className="py-2 pr-4">{e.degree_title || '—'}</td>
                       <td className="py-2 pr-4">{e.board_university}</td>

@@ -146,6 +146,8 @@ class ApplicationController extends Controller
             'semester_no'    => $request->semester_no,
             'admission_year' => $request->admission_year,
             'status'         => 'submitted',
+            'profile_snapshot' => $profiles->snapshot($student),
+            'submitted_at'     => now(),
         ]);
 
         return response()->json([
@@ -167,6 +169,10 @@ class ApplicationController extends Controller
             // Labels for the admin view: level names and document type names.
             'education_levels' => config('admission.education_levels', []),
             'document_types'   => \App\Models\RequiredDocumentType::where('scope', 'student_application')->pluck('name', 'slug'),
+            // Readable list of profile edits made after submitting (empty = unchanged).
+            'profile_changes' => $application->profile_snapshot
+                ? app(ApplicantProfileService::class)->changesSince($application->profile_snapshot, $application->student)
+                : [],
         ]);
     }
 
