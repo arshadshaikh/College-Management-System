@@ -109,6 +109,18 @@ class ProfileController extends Controller
                 throw ValidationException::withMessages(['passing_year' => "Must be before your {$label} year ({$other->passing_year})."]);
             }
         }
+        
+        // Passing year must be realistic for the student's date of birth.
+        $dob = $user->studentProfile?->date_of_birth;
+        if ($dob) {
+            $earliest = \Carbon\Carbon::parse($dob)->year + (int) config('admission.min_passing_age', 10);
+            if ($data['passing_year'] < $earliest) {
+                throw ValidationException::withMessages([
+                    'passing_year' => "Looks too early for your date of birth. The earliest possible year is {$earliest}.",
+                ]);
+            }
+        }
+
 
         // Link the certificate if it was already uploaded.
         $docId = $user->profileDocuments()

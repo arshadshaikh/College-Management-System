@@ -17,22 +17,40 @@ export default function ApplyForm() {
   const [form, setForm] = useState({ program_id: searchParams.get('program') ?? '', semester_no: 1, admission_year: new Date().getFullYear() });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState(null);   // full profile payload, shown on the review step
+  const [step, setStep] = useState('form');        // form -> review -> submit
+  const [agree, setAgree] = useState(false);
+  const [appliedIds, setAppliedIds] = useState([]);  // programs with an active application
 
   useEffect(() => {
     api.get('/programs', { params: { per_page: 100 } })
       .then(({ data }) => setPrograms(data.data ?? data))
       .catch(() => toast.error('Could not load programs.'));
+    api.get('/applications/my')
+      .then(({ data }) => setAppliedIds((data.data ?? data)
+        .filter((a) => a.status !== 'withdrawn' && a.status !== 'rejected')
+        .map((a) => String(a.program_id))))
+      .catch(() => {});
     api.get('/profile')
-      .then(({ data }) => setCompleteness(data.completeness))
+      .then(({ data }) => { setCompleteness(data.completeness); setProfile(data); })
       .catch(() => {});
   }, []);
 
-  const submit = async (e) => {
+  // Step 1: check the form, then show the review.
+  const review = (e) => {
     e.preventDefault();
     if (!form.program_id) {
       setErrors({ program_id: ['Please choose a program.'] });
       return;
     }
+    setErrors({});
+    setAgree(false);
+    setStep('review');
+    window.scrollTo?.(0, 0);
+  };
+
+  // Step 2: confirmed on the review screen.
+  const submit = async () => {
     setSaving(true);
     setErrors({});
     try {
@@ -41,6 +59,7 @@ export default function ApplyForm() {
       navigate(`${PORTAL}/my-applications`);
     } catch (err) {
       if (err.response?.status === 422) {
+        setStep('form');                                        // show the problem on the form
         const d = err.response.data;
         if (d.completeness) setCompleteness(d.completeness);   // profile gate
         setErrors(d.errors ?? {});
@@ -89,13 +108,22 @@ export default function ApplyForm() {
         )
       )}
 
-      <form onSubmit={submit} className="bg-white rounded-xl shadow-sm p-6 space-y-5">
+      {step === 'review' && selected && (
+        <ReviewCard program={selected} form={form} profile={profile}
+          agree={agree} setAgree={setAgree} saving={saving}
+          onBack={() => setStep('form')} onSubmit={submit} />
+      )}
+
+      {step === 'form' && (
+      <form onSubmit={review} className="bg-white rounded-xl shadow-sm p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Program <span className="text-red-500">*</span></label>
           <select value={form.program_id} onChange={(e) => setForm({ ...form, program_id: e.target.value })} className={inputCls(errors.program_id)}>
             <option value="">Choose a program…</option>
             {programs.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+              <option key={p.id} value={p.id} disabled={appliedIds.includes(String(p.id))}>
+                {p.name} ({p.code}){appliedIds.includes(String(p.id)) ? ' — already applied' : ''}
+              </option>
             ))}
           </select>
           {errors.program_id && <p className="text-xs text-red-600 mt-1">{errors.program_id[0]}</p>}
@@ -122,11 +150,95 @@ export default function ApplyForm() {
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving}
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-            {saving ? 'Submitting…' : 'Submit Application'}
+            Review application
           </button>
           <Link to={`${PORTAL}/my-applications`} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</Link>
         </div>
       </form>
+      )}
+    </div>
+  );
+}
+
+const Row = ({ label, value }) => (
+  <div className="flex justify-between gap-4 py-1.5 text-sm">
+    <span className="text-gray-500">{label}</span>
+    <span className="text-gray-900 text-right">{value || '—'}</span>
+  </div>
+);
+
+// One-page summary of what the college will receive, plus a declaration.
+function ReviewCard({ program, form, profile, agree, setAgree, saving, onBack, onSubmit }) {
+  const u = profile?.user ?? {};
+  const p = profile?.profile ?? {};
+  const levelLabel = (k) => profile?.levels?.find((l) => l.key === k)?.label ?? k;
+  const docName = (slug) => profile?.document_types?.find((t) => t.slug === slug)?.name ?? slug;
+  const result = (e) => (e.cgpa ? `CGPA ${e.cgpa} / ${e.cgpa_scale}` : e.obtained_marks ? `${e.obtained_marks} / ${e.total_marks}` : '');
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">Review your application</h2>
+        <p className="text-sm text-gray-500 mt-1">Please check everything below. To change your details, go back to My Profile.</p>
+      </div>
+
+      <section>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Program</h3>
+        <div className="divide-y divide-gray-100">
+          <Row label="Program" value={`${program.name} (${program.code})`} />
+          <Row label="Semester" value={form.semester_no} />
+          <Row label="Admission year" value={form.admission_year} />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Applicant</h3>
+        <div className="divide-y divide-gray-100">
+          <Row label="Name" value={u.name} />
+          <Row label="Father's name" value={p.father_name} />
+          <Row label="CNIC / B-Form" value={u.cnic_no} />
+          <Row label="Date of birth" value={p.date_of_birth?.slice(0, 10)} />
+          <Row label="Domicile" value={[p.domicile_district, p.domicile_province].filter(Boolean).join(', ')} />
+          <Row label="Mobile" value={u.phone} />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Education</h3>
+        {(profile?.educations ?? []).length === 0 ? <p className="text-sm text-gray-500">None added.</p> : (
+          <div className="divide-y divide-gray-100">
+            {profile.educations.map((e) => (
+              <Row key={e.id} label={levelLabel(e.level)}
+                value={[e.board_university, e.passing_year, result(e)].filter(Boolean).join(' · ')} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Documents</h3>
+        <div className="flex flex-wrap gap-2">
+          {(profile?.documents ?? []).map((d) => (
+            <span key={d.id} className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">✓ {docName(d.document_type)}</span>
+          ))}
+        </div>
+      </section>
+
+      <label className="flex items-start gap-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+        <input type="checkbox" className="h-4 w-4 mt-0.5" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+        I confirm that the information and documents I have provided are true and complete. I understand that
+        false information may lead to cancellation of my admission.
+      </label>
+
+      <div className="flex gap-3">
+        <button type="button" onClick={onSubmit} disabled={!agree || saving}
+          className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+          {saving ? 'Submitting…' : 'Confirm & Submit'}
+        </button>
+        <button type="button" onClick={onBack} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+          Back
+        </button>
+      </div>
     </div>
   );
 }

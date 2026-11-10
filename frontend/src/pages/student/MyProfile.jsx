@@ -4,7 +4,6 @@ import api from '../../api';
 import EducationSection from './profile/EducationSection';
 import DocumentsSection from './profile/DocumentsSection';
 
-
 // Personal fields. `account` = stored on users; the rest on student_profiles.
 const PERSONAL = [
   { key: 'name',              label: 'Full Name (as on certificates)', required: true, account: true },
@@ -27,9 +26,18 @@ const PERSONAL = [
 const labelFor = (key) => PERSONAL.find((f) => f.key === key)?.label ?? key;
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+const SECTIONS = [
+  { key: 'personal',  label: 'Personal details' },
+  { key: 'education', label: 'Education' },
+  { key: 'documents', label: 'Documents' },
+];
+const goTo = (id) => document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+// Overall progress + one tile per section. Every missing item is a link to its section.
 function Completeness({ c }) {
   if (!c) return null;
-  const color = c.complete ? 'bg-green-500' : c.percent >= 60 ? 'bg-indigo-500' : 'bg-amber-500';
+  const color = c.complete ? 'bg-green-500' : 'bg-indigo-600';
+  const missingIn = (key) => c.missing.filter((m) => m.section === key);
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-2">
@@ -39,15 +47,35 @@ function Completeness({ c }) {
       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
         <div className={`h-2 ${color} transition-all`} style={{ width: `${c.percent}%` }} />
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+        {SECTIONS.map((s) => {
+          const left = missingIn(s.key);
+          return (
+            <button key={s.key} type="button" onClick={() => goTo(s.key)}
+              className={`text-left rounded-lg border px-3 py-2.5 transition hover:shadow-sm ${
+                left.length ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}`}>
+              <span className="block text-sm font-medium text-gray-900">{s.label}</span>
+              <span className={`block text-xs mt-0.5 ${left.length ? 'text-amber-700' : 'text-green-700'}`}>
+                {left.length ? `${left.length} item${left.length > 1 ? 's' : ''} needed` : '✓ Complete'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {c.complete ? (
         <p className="text-xs text-green-700 mt-3">Your profile is complete. You can now apply for admission.</p>
       ) : (
-        <div className="mt-3 text-xs text-gray-600">
-          <p className="mb-1">Still needed:</p>
-          <ul className="list-disc ml-5 space-y-0.5">
+        <div className="mt-4 text-xs text-gray-600">
+          <p className="mb-1">Still needed (click to jump there):</p>
+          <ul className="flex flex-wrap gap-2">
             {c.missing.map((m) => (
               <li key={`${m.section}-${m.key}`}>
-                {cap(m.section)}: {m.label ?? labelFor(m.key)}
+                <button type="button" onClick={() => goTo(m.section)}
+                  className="px-2 py-1 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700">
+                  {m.label ?? labelFor(m.key)}
+                </button>
               </li>
             ))}
           </ul>
@@ -121,7 +149,7 @@ export default function MyProfile() {
       <Completeness c={data.completeness} />
 
       {/* ── Personal ─────────────────────────────────────────── */}
-      <form onSubmit={savePersonal} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+      <form id="section-personal" onSubmit={savePersonal} className="bg-white rounded-xl shadow-sm p-6 space-y-4 scroll-mt-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Personal Details</h2>
           <p className="text-xs text-gray-500 mt-0.5">Fields marked <span className="text-red-500">*</span> are needed before you can apply. You can save a partly filled form.</p>
@@ -155,8 +183,8 @@ export default function MyProfile() {
         </div>
       </form>
 
-      <EducationSection data={data} onSaved={setData} />
-      <DocumentsSection data={data} onSaved={setData} />
+      <div id="section-education" className="scroll-mt-4"><EducationSection data={data} onSaved={setData} /></div>
+      <div id="section-documents" className="scroll-mt-4"><DocumentsSection data={data} onSaved={setData} /></div>
     </div>
   );
 }
