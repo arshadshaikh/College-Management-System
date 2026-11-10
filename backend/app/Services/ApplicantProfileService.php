@@ -202,4 +202,19 @@ class ApplicantProfileService
 
         return array_values(array_unique($changes));
     }
+
+    /**
+     * The application that currently locks this student's profile, or null.
+     * Statuses that lock are set in config/admission.php ('lock_profile_statuses').
+     * 'returned' (sent back for correction) never locks.
+     */
+    public function lockingApplication(User $user): ?\App\Models\Application
+    {
+        $statuses = config('admission.lock_profile_statuses', ['under_review', 'shortlisted', 'approved']);
+
+        return \App\Models\Application::where('student_id', $user->id)
+            ->whereIn('status', $statuses)
+            ->latest('id')
+            ->first();
+    }
 }

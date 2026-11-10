@@ -52,6 +52,8 @@ class ProgramPrivilegeSeeder extends Seeder
             ['slug' => 'applications.show',           'name' => 'View application',         'route' => '/api/applications/{id}',                  'method' => 'GET'],
             ['slug' => 'applications.review',         'name' => 'Mark application review',  'route' => '/api/applications/{id}/review',           'method' => 'POST'],
             ['slug' => 'applications.approve',        'name' => 'Approve application',      'route' => '/api/applications/{id}/approve',          'method' => 'POST'],
+            ['slug' => 'applications.return','name' => 'Return application for correction', 'route' => '/api/applications/{id}/return',           'method' => 'POST'],
+            ['slug' => 'applications.resubmit', 'name' => 'Resubmit returned application',  'route' => '/api/applications/{id}/resubmit',         'method' => 'POST'],
             ['slug' => 'applications.reject',         'name' => 'Reject application',       'route' => '/api/applications/{id}/reject',           'method' => 'POST'],
             ['slug' => 'documents.download',          'name' => 'Download document',        'route' => '/api/documents/{id}/download',            'method' => 'GET'],
 
@@ -65,8 +67,8 @@ class ProgramPrivilegeSeeder extends Seeder
         $adminPrivilegeIds     = [];
         $studentPrivilegeIds   = [];
 
-        $adminSlugs  = ['programs.index','programs.store','programs.show','programs.update','programs.destroy','programs.fee-structures','applications.index','applications.show','applications.review','applications.approve','applications.reject','documents.download'];
-        $studentSlugs = ['programs.index','programs.show','applications.my','applications.store','applications.withdraw'];
+        $adminSlugs  = ['programs.index','programs.store','programs.show','programs.update','programs.destroy','programs.fee-structures','applications.index','applications.show','applications.review','applications.approve','applications.reject','applications.return','documents.download'];
+        $studentSlugs = ['programs.index','programs.show','applications.my','applications.store','applications.withdraw','applications.resubmit'];
 
         foreach ($privileges as $priv) {
             $privId = DB::table('privileges')->where('slug', $priv['slug'])->value('id');

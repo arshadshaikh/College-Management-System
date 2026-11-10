@@ -15,7 +15,7 @@ const STATUS = {
 const niceTypes = (mimes) =>
   mimes.split(',').map((m) => m.trim().split('/')[1]?.replace('jpeg', 'jpg').toUpperCase()).filter(Boolean).join(', ');
 
-function DocRow({ type, doc, required, onSaved }) {
+function DocRow({ type, doc, required, onSaved, profileLocked }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -97,7 +97,7 @@ function DocRow({ type, doc, required, onSaved }) {
             View
           </button>
         )}
-        {!locked && (
+        {!locked && !profileLocked && (
           <label htmlFor={inputId}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer ${
               busy ? 'bg-gray-200 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'
@@ -112,7 +112,7 @@ function DocRow({ type, doc, required, onSaved }) {
   );
 }
 
-export default function DocumentsSection({ data, onSaved }) {
+export default function DocumentsSection({ data, onSaved, profileLocked = false }) {
   const docs = data.documents ?? [];
   // Required = mandatory type, or the certificate of a level the college requires.
   const levelDocs = (data.levels ?? []).filter((l) => l.required).map((l) => l.document);
@@ -130,7 +130,7 @@ export default function DocumentsSection({ data, onSaved }) {
       <div className="space-y-3">
         {types.map((t) => (
           <DocRow key={t.slug} type={t} required={isRequired(t)}
-            doc={docs.find((d) => d.document_type === t.slug)} onSaved={onSaved} />
+            doc={docs.find((d) => d.document_type === t.slug)} profileLocked={profileLocked} onSaved={onSaved} />
         ))}
       </div>
     </div>

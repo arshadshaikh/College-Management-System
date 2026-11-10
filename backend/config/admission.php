@@ -12,4 +12,6 @@ return [
         'masters'      => ['label' => "Master's (16 years)",             'document' => 'masters_degree',     'result' => 'cgpa', 'min_age' => 19],
         'mphil'        => ['label' => 'M.Phil / MS (18 years)',          'document' => 'mphil_degree',       'result' => 'cgpa', 'min_age' => 21],
     ],
+        // Application statuses that lock the applicant's profile. 'returned' never locks.
+    'lock_profile_statuses' => ['under_review', 'shortlisted', 'approved'],
 ];

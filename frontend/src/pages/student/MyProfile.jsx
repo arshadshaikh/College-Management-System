@@ -146,7 +146,25 @@ export default function MyProfile() {
         </p>
       </div>
 
+      {data.locked && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl px-4 py-3 text-sm">
+          <p className="font-medium">Your profile is locked while application {data.locked.application_no} is {data.locked.status_label}.</p>
+          <p className="mt-0.5 text-blue-800">
+            This keeps what the admissions office is reviewing unchanged. If something needs correcting,
+            contact the admissions office; they can return your application to you for correction.
+          </p>
+        </div>
+      )}
+
+      {data.returned?.map((r) => (
+        <ReturnedBanner key={r.id} app={r} complete={data.completeness?.complete}
+          onDone={() => api.get('/profile').then(({ data: d }) => apply(d))} />
+      ))}
+
       <Completeness c={data.completeness} />
+
+      {/* A disabled fieldset disables every input and button inside it. */}
+      <fieldset disabled={!!data.locked} className="space-y-6 min-w-0 disabled:opacity-75">
 
       {/* ── Personal ─────────────────────────────────────────── */}
       <form id="section-personal" onSubmit={savePersonal} className="bg-white rounded-xl shadow-sm p-6 space-y-4 scroll-mt-4">
@@ -184,7 +202,53 @@ export default function MyProfile() {
       </form>
 
       <div id="section-education" className="scroll-mt-4"><EducationSection data={data} onSaved={setData} /></div>
-      <div id="section-documents" className="scroll-mt-4"><DocumentsSection data={data} onSaved={setData} /></div>
+      
+      </fieldset>
+      
+      <div id="section-documents" className="scroll-mt-4">
+        <DocumentsSection data={data} onSaved={setData} profileLocked={!!data.locked} />
+      </div>
+
+    </div>
+  );
+}
+
+function ReturnedBanner({ app, complete, onDone }) {
+  const [busy, setBusy] = useState(false);
+
+  const resubmit = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.post(`/applications/${app.id}/resubmit`);
+      toast.success(data.message ?? 'Application resubmitted.');
+      await onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not resubmit.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-4 text-sm">
+      <p className="font-semibold text-orange-900">
+        Application {app.application_no}{app.program ? ` (${app.program.name})` : ''} was returned for correction
+      </p>
+      <p className="mt-2 text-orange-800">The admissions office says:</p>
+      <p className="mt-1 bg-white/70 border border-orange-100 rounded-lg px-3 py-2 text-gray-800 whitespace-pre-line">
+        {app.correction_note}
+      </p>
+      <p className="mt-2 text-orange-800">
+        Make the changes below and save each section, then press Resubmit.
+      </p>
+      <button
+        onClick={resubmit}
+        disabled={busy || !complete}
+        title={complete ? '' : 'Complete your profile first'}
+        className="mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
+      >
+        {busy ? 'Resubmitting…' : 'Resubmit Application'}
+      </button>
     </div>
   );
 }

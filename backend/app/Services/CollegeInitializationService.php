@@ -116,7 +116,7 @@ class CollegeInitializationService
                 'programs.fee-structures', 'programs.fee-structures.update', 'programs.fee-structures.destroy',
                 // Applications (admin side)
                 'applications.index', 'applications.show', 'applications.review',
-                'applications.approve', 'applications.reject', 'documents.download',
+                'applications.approve', 'applications.reject', 'applications.return', 'documents.download',
                 'students.import.template', 'students.import',
                 'students.index', 'students.store', 'students.show', 'students.update',
                 // Challans (admin side)
@@ -144,7 +144,7 @@ class CollegeInitializationService
             ],
             'student' => [
                 'programs.index', 'programs.show',
-                'applications.my', 'applications.store', 'applications.withdraw',
+                'applications.my', 'applications.store', 'applications.withdraw', 'applications.resubmit',
                 'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
                 'challans.my-show', 'payments.slip',

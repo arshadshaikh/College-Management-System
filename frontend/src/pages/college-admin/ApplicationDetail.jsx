@@ -9,6 +9,7 @@ import ApplicantProfile from './ApplicantProfile';
 const STATUS_STYLES = {
   submitted:    'bg-blue-50 text-blue-700',
   under_review: 'bg-amber-50 text-amber-700',
+  returned:     'bg-orange-50 text-orange-700',
   shortlisted:  'bg-purple-50 text-purple-700',
   approved:     'bg-green-50 text-green-700',
   rejected:     'bg-red-50 text-red-700',
@@ -169,7 +170,7 @@ export default function ApplicationDetail() {
       <ApplicantProfile app={app} onDownload={downloadDoc} />
 
       {/* Documents */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className={`bg-white rounded-xl shadow-sm p-6 ${app.documents?.length ? '' : 'hidden'}`}>
         <h2 className="font-semibold text-gray-900 mb-4">Application Documents</h2>
         {app.documents?.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -205,6 +206,8 @@ export default function ApplicationDetail() {
         </div>
       )}
 
+      <ReturnForCorrection app={app} onDone={load} />
+      
       {/* Actions */}
       {canReview && (
         <div className="bg-white rounded-xl shadow-sm p-6">
@@ -277,6 +280,88 @@ function Row({ label, value }) {
     <div className="flex justify-between gap-4">
       <dt className="text-gray-500">{label}</dt>
       <dd className="text-gray-900 text-right capitalize">{value || '—'}</dd>
+    </div>
+  );
+}
+
+const NoteBox = 'textarea'; // a plain multi-line text box
+
+function ReturnForCorrection({ app, onDone }) {
+  const { hasPrv } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  // Already returned: show the note the applicant was given.
+  if (app.status === 'returned') {
+    return (
+      <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+        <div className="text-sm font-medium text-orange-800">Returned to applicant for correction</div>
+        <p className="text-sm text-orange-700 mt-1 whitespace-pre-line">{app.correction_note}</p>
+        <p className="text-xs text-orange-600 mt-2">The applicant can edit their profile and resubmit.</p>
+      </div>
+    );
+  }
+
+  const canReturn = ['submitted', 'under_review', 'shortlisted'].includes(app.status)
+    && hasPrv('applications.return');
+  if (!canReturn) return null;
+
+  const send = async () => {
+    setBusy(true);
+    try {
+      await api.post(`/applications/${app.id}/return`, { note });
+      toast.success('Returned to the applicant for correction.');
+      setOpen(false);
+      setNote('');
+      await onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not return the application.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <h2 className="font-semibold text-gray-900 mb-1">Needs a correction?</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        Send it back with a note. The applicant's profile unlocks so they can fix it and resubmit.
+      </p>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600"
+        >
+          Return for Correction
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <NoteBox
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="What should the applicant fix? e.g. Matric marks don't match the uploaded certificate."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <div className="flex gap-3">
+            <button
+              disabled={busy || !note.trim()}
+              onClick={send}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
+            >
+              Send Back
+            </button>
+            <button
+              onClick={() => { setOpen(false); setNote(''); }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

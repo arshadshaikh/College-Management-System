@@ -11,6 +11,7 @@ import { PORTAL } from '../../config/app';
 const STATUS_BADGE = {
   submitted:    ['Submitted',    'bg-blue-50 text-blue-700'],
   under_review: ['Under review', 'bg-amber-50 text-amber-700'],
+  returned:     ['Returned for correction', 'bg-orange-50 text-orange-700'],
   approved:     ['Approved',     'bg-green-50 text-green-700'],
   rejected:     ['Not approved', 'bg-red-50 text-red-700'],
   withdrawn:    ['Withdrawn',    'bg-gray-100 text-gray-600'],
@@ -76,6 +77,7 @@ export default function StudentDashboard() {
   const active = d.applications.filter((x) => x.status !== 'withdrawn');
   const latest = active[0];                       // newest first from the API
   const approved = active.find((x) => x.status === 'approved');
+  const returned = active.find((x) => x.status === 'returned');
   const openChallans = d.challans.filter((c) => !['paid', 'cancelled'].includes(c.status));
   const paidAny = d.challans.some((c) => c.status === 'paid');
 
@@ -136,6 +138,11 @@ export default function StudentDashboard() {
             <Step n={4} title="Admission decision" state={sDecision}>
               {approved ? <>Approved for <b>{approved.program?.name}</b>.</>
                 : latest?.status === 'rejected' ? <>Your application for {latest.program?.name} was not approved.{latest.remarks ? ` Reason: ${latest.remarks}` : ''}</>
+                : returned ? <>
+                    Your application for <b>{returned.program?.name}</b> was returned for correction.
+                    {returned.correction_note ? <span className="block mt-1 text-orange-700">“{returned.correction_note}”</span> : null}
+                    <Btn to={`${PORTAL}/my-profile`}>Fix and resubmit</Btn>
+                  </>
                 : latest ? <>{latest.program?.name}: <Badge status={latest.status} /> The admissions office will review it.</>
                 : 'You will see the decision here after you apply.'}
             </Step>

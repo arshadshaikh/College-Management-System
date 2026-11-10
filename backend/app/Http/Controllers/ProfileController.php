@@ -35,6 +35,7 @@ class ProfileController extends Controller
     // PUT /api/profile
     public function update(Request $request)
     {
+        $this->ensureEditable($request->user());
         $data = $request->validate([
             'name'              => 'required|string|max:255',
             'phone'             => 'nullable|string|max:20',
@@ -74,6 +75,7 @@ class ProfileController extends Controller
     // PUT /api/profile/educations   (body: level + fields)
     public function saveEducation(Request $request)
     {
+        $this->ensureEditable($request->user());
         $catalog = config('admission.education_levels', []);
 
         $data = $request->validate([
@@ -139,6 +141,7 @@ class ProfileController extends Controller
     // DELETE /api/profile/educations/{id}
     public function destroyEducation(Request $request, int $education)
     {
+        $this->ensureEditable($request->user());
         $user = $request->user();
         $user->educations()->whereKey($education)->delete();   // own rows only
 
@@ -148,6 +151,8 @@ class ProfileController extends Controller
     // POST /api/profile/documents   (multipart: document_type, file)
     public function uploadDocument(Request $request)
     {
+        $this->ensureEditable($request->user());
+
         $request->validate([
             'document_type' => ['required', 'string', Rule::exists('required_document_types', 'slug')
                 ->where('scope', self::DOC_SCOPE)->where('is_active', true)],
@@ -231,6 +236,19 @@ class ProfileController extends Controller
         return array_values(array_filter(array_map('trim', explode(',', (string) $value))));
     }
 
+    // Refuse profile edits while an application is being reviewed (config lock_profile_statuses).
+    private function ensureEditable(User $user): void
+    {
+        $app = app(ApplicantProfileService::class)->lockingApplication($user);
+        if ($app) {
+            abort(response()->json([
+                'message' => "Your profile is locked while application {$app->application_no} is "
+                           . str_replace('_', ' ', $app->status)
+                           . '. Contact the admissions office if something needs correcting.',
+            ], 423));
+        }
+    }
+
     private function payload(User $user): array
     {
         $profile    = StudentProfile::where('user_id', $user->id)->first();
@@ -253,6 +271,15 @@ class ProfileController extends Controller
             'document_types' => $docTypes,
             'completeness'   => app(ApplicantProfileService::class)->completeness($user, app('current_college')->id),
             'required_personal' => ApplicantProfileService::REQUIRED_PERSONAL,
+            'locked' => ($lock = app(ApplicantProfileService::class)->lockingApplication($user))
+                ? ['application_no' => $lock->application_no, 'status' => $lock->status,
+                   'status_label' => str_replace('_', ' ', $lock->status)]
+                : null,
+            'returned' => \App\Models\Application::with('program:id,name')
+                ->where('student_id', $user->id)
+                ->where('status', 'returned')
+                ->latest('id')
+                ->get(['id', 'application_no', 'program_id', 'correction_note']),
         ];
     }
 }

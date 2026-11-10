@@ -67,7 +67,7 @@ class StudentAuthController extends Controller
                 // Assign standard student privileges to this new role
                 $studentPrivileges = \App\Models\Privilege::whereIn('slug', [
                     'programs.index', 'programs.show',
-                    'applications.my', 'applications.store', 'applications.withdraw',
+                    'applications.my', 'applications.store', 'applications.withdraw', 'applications.resubmit',
                     'challans.my', 'challans.upload-slip', 'challans.pdf',
                     'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download',
                 ])->pluck('id');

@@ -5,7 +5,7 @@ import DataTable from '../../components/DataTable';
 const STATUS_STYLES = {
   submitted: 'bg-blue-50 text-blue-700', under_review: 'bg-amber-50 text-amber-700',
   shortlisted: 'bg-purple-50 text-purple-700', approved: 'bg-green-50 text-green-700',
-  rejected: 'bg-red-50 text-red-700', withdrawn: 'bg-gray-100 text-gray-600',
+  rejected: 'bg-red-50 text-red-700', withdrawn: 'bg-gray-100 text-gray-600', returned: 'bg-orange-50 text-orange-700',
 };
 
 export default function MyApplications() {

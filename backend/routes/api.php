@@ -189,6 +189,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('applications/{application}/approve', [ApplicationController::class, 'approve']);
     Route::post('applications/{application}/reject', [ApplicationController::class, 'reject']);
     Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
+    Route::post('applications/{application}/return', [ApplicationController::class, 'returnForCorrection']);
+    Route::post('applications/{application}/resubmit', [ApplicationController::class, 'resubmit']);
 
     // Student
     Route::get('students/import/template', [StudentController::class, 'importTemplate']);

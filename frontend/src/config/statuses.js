@@ -5,6 +5,7 @@
 export const APPLICATION_STATUSES = {
   submitted:    { label: 'Submitted',    color: 'bg-blue-50 text-blue-700' },
   under_review: { label: 'Under Review', color: 'bg-amber-50 text-amber-700' },
+  returned:     { label: 'Returned', color: 'bg-orange-50 text-orange-700' },
   shortlisted:  { label: 'Shortlisted',  color: 'bg-purple-50 text-purple-700' },
   approved:     { label: 'Approved',     color: 'bg-green-50 text-green-700' },
   rejected:     { label: 'Rejected',     color: 'bg-red-50 text-red-700' },

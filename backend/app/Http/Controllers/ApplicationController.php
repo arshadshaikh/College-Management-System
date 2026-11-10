@@ -290,6 +290,73 @@ class ApplicationController extends Controller
         ]);
     }
 
+    // ── College admin: return for correction ──────────────────
+    // POST /api/applications/{application}/return
+    public function returnForCorrection(Request $request, Application $application)
+    {
+        abort_if($application->college_id !== app('current_college')->id, 404);
+
+        $request->validate(['note' => 'required|string|max:1000']);
+
+        if (!in_array($application->status, ['submitted', 'under_review', 'shortlisted'])) {
+            return response()->json([
+                'message' => 'Only submitted or in-review applications can be returned.',
+            ], 422);
+        }
+
+        $application->update([
+            'status'          => 'returned',
+            'correction_note' => $request->note,
+            'reviewed_by'     => $request->user()->id,
+            'reviewed_at'     => now(),
+        ]);
+
+        return response()->json([
+            'message'     => 'Application returned to the applicant for correction.',
+            'application' => $application->fresh(),
+        ]);
+    }
+
+    // ── Student: resubmit after correction ────────────────────
+    // POST /api/applications/{application}/resubmit
+    public function resubmit(Request $request, Application $application)
+    {
+        $student = $request->user();
+        abort_if($application->student_id !== $student->id, 403, 'This is not your application.');
+
+        if ($application->status !== 'returned') {
+            return response()->json([
+                'message' => 'Only returned applications can be resubmitted.',
+            ], 422);
+        }
+
+        $college  = app('current_college');
+        $profiles = app(ApplicantProfileService::class);
+        $program  = $application->program;
+        $programLevels = array_values(array_filter(array_map('trim', explode(',', (string) $program->required_education_levels))));
+
+        if ($profiles->requiresCompleteProfile($college->id)) {
+            $completeness = $profiles->completeness($student, $college->id, $programLevels);
+            if (!$completeness['complete']) {
+                return response()->json([
+                    'message'      => 'Please complete your admission profile before resubmitting.',
+                    'completeness' => $completeness,
+                ], 422);
+            }
+        }
+
+        $application->update([
+            'status'           => 'submitted',
+            'profile_snapshot' => $profiles->snapshot($student),
+            'submitted_at'     => now(),
+        ]);
+
+        return response()->json([
+            'message'     => 'Application resubmitted successfully.',
+            'application' => $application->fresh()->load('program'),
+        ]);
+    }
+
     // ── Student: withdraw their own application ───────────────────
     // POST /api/applications/{application}/withdraw
     public function withdraw(Request $request, Application $application)
