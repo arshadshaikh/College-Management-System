@@ -53,6 +53,7 @@ import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
 import MyProfile from './pages/student/MyProfile';
+import StudentPrograms from './pages/student/StudentPrograms';
 import CollegeRegister from './pages/auth/CollegeRegister';
 import DocumentTypeList from './pages/super-admin/DocumentTypeList';
 import DocumentTypeForm from './pages/super-admin/DocumentTypeForm';
@@ -66,7 +67,10 @@ import PublicPage from './pages/public/PublicPage';
 import PublicPrograms from './pages/public/PublicPrograms';
 
 export default function App() {
-  const { user, loading } = useAuth();
+
+  const { user, loading, privileges = [] } = useAuth();
+  // Applicants (by privilege, not role name) see program cards; admins keep the table.
+  const isApplicant = privileges.includes('profile.show') && privileges.includes('applications.my');
 
   if (loading) {
     return (
@@ -123,7 +127,7 @@ export default function App() {
         
 
         {/* Programs */}
-        <Route path="programs" element={<PrivilegeRoute slug="programs.index"><ProgramList /></PrivilegeRoute>} />
+        <Route path="programs" element={<PrivilegeRoute slug="programs.index">{isApplicant ? <StudentPrograms /> : <ProgramList />}</PrivilegeRoute>} />
         <Route path="programs/create" element={<PrivilegeRoute slug="programs.store"><ProgramForm /></PrivilegeRoute>} />
         <Route path="programs/:id" element={<PrivilegeRoute slug="programs.show"><ProgramDetail /></PrivilegeRoute>} />
         <Route path="programs/:id/edit" element={<PrivilegeRoute slug="programs.update"><ProgramForm /></PrivilegeRoute>} />

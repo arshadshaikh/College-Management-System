@@ -1,7 +1,14 @@
 import { useAuth } from '../../context/AuthContext';
+import StudentDashboard from '../student/StudentDashboard';
 
 export default function Dashboard() {
   const { user, privileges } = useAuth();
+
+// Applicants get a guided admission checklist instead of the admin summary.
+// Decided by privileges (configurable per role), not by a hard-coded role name.
+if (privileges.includes('profile.show') && privileges.includes('applications.my')) {
+  return <StudentDashboard />;
+}
 
   return (
     <div>

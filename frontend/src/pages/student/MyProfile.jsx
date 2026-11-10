@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api';
+import EducationSection from './profile/EducationSection';
+import DocumentsSection from './profile/DocumentsSection';
+
 
 // Personal fields. `account` = stored on users; the rest on student_profiles.
 const PERSONAL = [
@@ -151,6 +154,9 @@ export default function MyProfile() {
           </button>
         </div>
       </form>
+
+      <EducationSection data={data} onSaved={setData} />
+      <DocumentsSection data={data} onSaved={setData} />
     </div>
   );
 }
