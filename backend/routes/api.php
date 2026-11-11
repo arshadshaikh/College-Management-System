@@ -179,6 +179,7 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::delete('profile/educations/{education}', [ProfileController::class, 'destroyEducation']);
     Route::post('profile/documents', [ProfileController::class, 'uploadDocument']);
     Route::get('profile/documents/{document}/download', [ProfileController::class, 'downloadDocument']);
+    Route::delete('profile/documents/{document}', [ProfileController::class, 'destroyDocument']);
 
     // Applications
     Route::get('applications/my', [ApplicationController::class, 'myApplications']);

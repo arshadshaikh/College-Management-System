@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../../api';
+import DocumentCard from './DocumentCard';
 
 // One card per education level from the API (`data.levels`).
 // Which levels are required comes from the college setting `required_education_levels`.
@@ -15,12 +16,19 @@ const inputCls = (error) =>
     error ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-indigo-500'
   }`;
 
-function LevelCard({ level, row, onSaved }) {
+function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [mode, setMode] = useState(level.result);      // 'marks' | 'cgpa'
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  
+  // Documents asked at this level (Pass, Marks ...), with the full type for file rules.
+  const levelDocs = (level.documents ?? [])
+    .map((d) => ({ ...d, type: docTypes.find((t) => t.slug === d.slug) }))
+    .filter((d) => d.type);
+  const uploaded = levelDocs.filter((d) => docs.some((x) => x.document_type === d.slug)).length;
+  const showDocs = levelDocs.length > 0 && (row || level.required);
 
   // Fill the form from the saved row whenever it changes.
   useEffect(() => {
@@ -102,14 +110,26 @@ function LevelCard({ level, row, onSaved }) {
           </p>
           <p className={`text-xs mt-0.5 ${row ? 'text-green-700' : 'text-gray-500'}`}>
             {summary ?? 'Not added yet'}
-            {row && (row.document_id ? ' · certificate uploaded' : ' · certificate not uploaded yet')}
+            {row && levelDocs.length > 0 && ` · ${uploaded} of ${levelDocs.length} documents uploaded`}
           </p>
         </div>
-        <button type="button" onClick={() => setOpen(!open)}
-          className="shrink-0 px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-gray-50">
-          {open ? 'Close' : row ? 'Edit' : 'Add'}
-        </button>
+        
+        {!locked && (
+          <button type="button" onClick={() => setOpen(!open)}
+            className="shrink-0 px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-gray-50">
+            {open ? 'Close' : row ? 'Edit' : 'Add'}
+          </button>
+        )}
       </div>
+
+      {showDocs && (
+        <div className="mt-3 space-y-2">
+          {levelDocs.map((d) => (
+            <DocumentCard key={d.slug} type={d.type} required={level.required && d.required} locked={locked}
+              doc={docs.find((x) => x.document_type === d.slug)} onSaved={onSaved} />
+          ))}
+        </div>
+      )}
 
       {open && (
         <form onSubmit={save} className="mt-4 space-y-3">
@@ -157,14 +177,13 @@ function LevelCard({ level, row, onSaved }) {
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500">Upload the certificate for this level in the Documents section below.</p>
-        </form>
+         </form>
       )}
     </div>
   );
 }
 
-export default function EducationSection({ data, onSaved }) {
+export default function EducationSection({ data, onSaved, locked = false }) {
   const rows = data.educations ?? [];
   // Required levels first, then optional, keeping catalog order within each group.
   const levels = [...(data.levels ?? [])].sort((a, b) => Number(b.required) - Number(a.required));
@@ -177,8 +196,9 @@ export default function EducationSection({ data, onSaved }) {
       </div>
       <div className="space-y-3">
         {levels.map((level) => (
-          <LevelCard key={level.key} level={level}
-            row={rows.find((r) => r.level === level.key)} onSaved={onSaved} />
+          <LevelCard key={level.key} level={level} locked={locked}
+            row={rows.find((r) => r.level === level.key)} onSaved={onSaved}
+            docTypes={data.document_types ?? []} docs={data.documents ?? []} />
         ))}
       </div>
     </div>

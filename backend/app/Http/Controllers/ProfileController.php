@@ -200,12 +200,8 @@ class ProfileController extends Controller
                 'verification_status' => 'pending',
             ]);
 
-            // Attach to the matching education row, if this is a certificate.
-            foreach (config('admission.education_levels', []) as $level => $meta) {
-                if (($meta['document'] ?? null) === $type->slug) {
-                    $user->educations()->where('level', $level)->update(['document_id' => $document->id]);
-                }
-            }
+            // Level certificates are matched by document type (education_level on the type),
+            // so a level can have several (Pass, Marks, ...). educations.document_id is no longer used.
 
             return $document;
         });
@@ -223,6 +219,29 @@ class ProfileController extends Controller
         }
 
         return Storage::disk('private')->download($doc->stored_path, $doc->original_name);
+    }
+
+    // DELETE /api/profile/documents/{id}   (own, unverified profile documents only)
+    public function destroyDocument(Request $request, int $document)
+    {
+        $user = $request->user();
+        $this->ensureEditable($user);
+
+        $doc = $user->profileDocuments()->whereKey($document)->firstOrFail();
+        if ($doc->verification_status === 'verified') {
+            return response()->json([
+                'message' => 'A verified document cannot be removed. Contact the admissions office.',
+            ], 422);
+        }
+
+        $name = \App\Models\RequiredDocumentType::where('scope', ApplicantProfileService::DOC_SCOPE)
+            ->where('slug', $doc->document_type)->value('name') ?? 'Document';
+
+        Storage::disk('private')->delete($doc->stored_path);
+        $user->educations()->where('document_id', $doc->id)->update(['document_id' => null]);
+        $doc->delete();
+
+        return response()->json(['message' => "{$name} removed."] + $this->payload($user));
     }
 
     // ── helpers ────────────────────────────────────────────────────────────
@@ -254,12 +273,10 @@ class ProfileController extends Controller
         $profile    = StudentProfile::where('user_id', $user->id)->first();
         $educations = $user->educations()->get();
         $documents  = $user->profileDocuments()->get();
-        $required   = $this->requiredLevels();
-
-        $levels = collect(config('admission.education_levels', []))
-            ->map(fn ($meta, $key) => $meta + ['key' => $key, 'required' => in_array($key, $required)])
-            ->values();
         
+        // Levels with `required` and the `documents` this college asks at each level.
+        $levels = app(ApplicantProfileService::class)->levels(app('current_college')->id);
+
         $docTypes = app(ApplicantProfileService::class)->documentTypes(app('current_college')->id);
 
         return [

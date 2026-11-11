@@ -33,6 +33,7 @@ class ProfilePrivilegeSeeder extends Seeder
             ['slug' => 'profile.educations.save',    'name' => 'Save education record',         'route' => '/api/profile/educations',               'method' => 'PUT'],
             ['slug' => 'profile.educations.destroy', 'name' => 'Delete education record',       'route' => '/api/profile/educations/{id}',          'method' => 'DELETE'],
             ['slug' => 'profile.documents.upload',   'name' => 'Upload profile document',       'route' => '/api/profile/documents',                'method' => 'POST'],
+            ['slug' => 'profile.documents.destroy',  'name' => 'Remove profile document',       'route' => '/api/profile/documents/{id}',           'method' => 'DELETE'],
             ['slug' => 'profile.documents.download', 'name' => 'Download own profile document', 'route' => '/api/profile/documents/{id}/download',  'method' => 'GET'],
         ];
 

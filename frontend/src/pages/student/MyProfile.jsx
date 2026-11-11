@@ -201,9 +201,12 @@ export default function MyProfile() {
         </div>
       </form>
 
-      <div id="section-education" className="scroll-mt-4"><EducationSection data={data} onSaved={setData} /></div>
-      
       </fieldset>
+      <div id="section-education" className="scroll-mt-4">
+        <EducationSection data={data} onSaved={setData} locked={!!data.locked} />
+      </div>
+
+      
       
       <div id="section-documents" className="scroll-mt-4">
         <DocumentsSection data={data} onSaved={setData} profileLocked={!!data.locked} />
