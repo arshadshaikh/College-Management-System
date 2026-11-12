@@ -6,6 +6,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import { IS_MAIN_DOMAIN } from './config/tenant';
 import PlatformLayout from './pages/platform/PlatformLayout';
 import PlatformHome from './pages/platform/PlatformHome';
+import PlatformPage from './pages/platform/PlatformPage';
 import PlatformColleges from './pages/platform/PlatformColleges';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -70,7 +71,7 @@ export default function App() {
 
   const { user, loading, privileges = [] } = useAuth();
   // Applicants (by privilege, not role name) see program cards; admins keep the table.
-  const isApplicant = privileges.includes('profile.show') && privileges.includes('applications.my');
+  const isApplicant = privileges.includes('profile.show') && privileges.includes('applications.my') && user?.user_type === 'student';
 
   if (loading) {
     return (
@@ -189,7 +190,7 @@ export default function App() {
         <Route path="/" element={<PlatformLayout />}>
           <Route index element={<PlatformHome />} />
           <Route path="colleges" element={<PlatformColleges />} />
-          <Route path=":slug" element={<PublicPage />} />
+          <Route path="pages/:slug" element={<PlatformPage />} />
         </Route>
         ) : (
         <Route path="/" element={<PublicSiteProvider><PublicLayout /></PublicSiteProvider>}>

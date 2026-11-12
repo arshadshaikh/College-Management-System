@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             AdminCrudPrivilegeSeeder::class, // users/roles/privileges admin screens (slugs match App.jsx guards)
             DocumentTypePrivilegeSeeder::class, // required document types admin screens
             CollegeSeeder::class,           // seeds Example College (id 1)
+            PlatformTenantSeeder::class,    // main-domain tenant for the platform site (is_platform)
+            PlatformPageSeeder::class,      // starter pages + header menu for the platform site
             CollegePrivilegeSeeder::class,  // college approve/reject/suspend privileges
             ProgramPrivilegeSeeder::class,  // programs + applications privileges
             ProfilePrivilegeSeeder::class,  // applicant profile (student side)

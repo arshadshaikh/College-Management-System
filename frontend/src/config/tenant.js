@@ -32,7 +32,7 @@ function getFromPath() {
 
   // Words that are NOT a college — they belong to the platform site
   const platformRoutes = ['colleges', 'login', 'register-college', 'portal',
-                          'forgot-password', 'reset-password'];
+                          'forgot-password', 'reset-password', 'pages'];
   if (!first || platformRoutes.includes(first)) return null;
   return first;
 }
@@ -44,3 +44,9 @@ export function getSubdomain() {
 }
 
 export const IS_MAIN_DOMAIN = getSubdomain() === null;
+
+// Link to a college's public site: subdomain locally, /cms/<slug>/ on the server.
+export function collegeUrl(slug) {
+  if (BASE_PATH) return `/${BASE_PATH}/${slug}/`;
+  return `${window.location.protocol}//${slug}.${window.location.host}/`;
+}

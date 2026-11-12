@@ -30,7 +30,7 @@ class MenuSeeder extends Seeder
             ['slug'=>'menu.programs',     'name'=>'Programs',     'route'=>'/programs',     'icon'=>'fa-graduation-cap', 'roles'=>['college_admin']],
             ['slug'=>'menu.applications', 'name'=>'Applications', 'route'=>'/applications', 'icon'=>'fa-file-alt',       'roles'=>['college_admin']],
             ['slug'=>'menu.challans',     'name'=>'Challans',     'route'=>'/challans',     'icon'=>'fa-receipt',        'roles'=>['college_admin']],
-            ['slug'=>'menu.cms',          'name'=>'CMS',          'route'=>null,            'icon'=>'fa-globe',          'roles'=>['college_admin'], 'children'=>[
+            ['slug'=>'menu.cms',          'name'=>'CMS',          'route'=>null,            'icon'=>'fa-globe',          'roles'=>['college_admin','super_admin'], 'children'=>[
                 ['slug'=>'menu.cms.pages',         'name'=>'Pages',         'route'=>'/cms/pages',         'icon'=>'fa-file'],
                 ['slug'=>'menu.cms.menus',         'name'=>'Menus',         'route'=>'/cms/menus',         'icon'=>'fa-bars'],
                 ['slug'=>'menu.cms.banners',       'name'=>'Banners',       'route'=>'/cms/banners',       'icon'=>'fa-image'],

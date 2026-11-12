@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { collegeUrl } from '../../config/tenant';
 import api from '../../api';
 
 export default function PlatformColleges() {
@@ -35,7 +36,7 @@ export default function PlatformColleges() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {colleges.map((c) => {
-            const href = `http://${c.slug}.localhost:3000`;
+            const href = collegeUrl(c.slug);
             return (
               <a key={c.id} href={href} className="block border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
                 <div className="flex items-center gap-3">

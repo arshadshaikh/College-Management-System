@@ -22,6 +22,12 @@ class StudentAuthController extends Controller
         // ResolveTenant middleware already ran — college is guaranteed here
         $college = app('current_college');
 
+        if ($college->is_platform) {
+            return response()->json([
+                'message' => 'Student registration is only available on a college portal.',
+            ], 422);
+        }
+
         $request->validate([
             // Account credentials
             'name'        => 'required|string|max:255',

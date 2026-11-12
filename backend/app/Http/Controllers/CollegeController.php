@@ -30,7 +30,7 @@ class CollegeController extends Controller
                 'max:30',
                 'alpha_dash',          // only letters, numbers, dashes, underscores
                 'unique:colleges,slug',
-                'not_in:www,api,admin,mail,ftp,localhost,app',
+                'not_in:www,api,admin,mail,ftp,localhost,app,pages,colleges,login,portal,register-college,forgot-password,reset-password',
             ],
             'email'    => 'required|email|max:255|unique:colleges,email',
             'phone'    => 'nullable|string|max:20',
@@ -119,7 +119,7 @@ class CollegeController extends Controller
     // GET /api/colleges
     public function index(Request $request)
     {
-        $query = College::query();
+        $query = College::where('is_platform', false);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
