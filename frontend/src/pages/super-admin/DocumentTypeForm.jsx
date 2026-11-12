@@ -11,9 +11,12 @@ const MIME_OPTIONS = [
   { value: 'application/pdf', label: 'PDF document' },
 ];
 
+const Choice = 'select';  // dropdown
+const Opt = 'option';     // dropdown item
+
 const EMPTY = {
   scope: DEFAULT_SCOPE,
-  name: '', is_mandatory: true, is_active: true, sort_order: 0,
+  name: '', education_level: '', is_mandatory: true, is_active: true, sort_order: 0,
   allowed_mime_types: ['image/jpeg', 'image/png', 'application/pdf'],
   max_size_mb: 4, max_dimension: '',
 };
@@ -29,18 +32,21 @@ export default function DocumentTypeForm() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [levels, setLevels] = useState([]);   // education level catalog for the dropdown
 
   useEffect(() => {
-    if (!isEdit) return;
-    // No single-show endpoint; fetch all types and find this one (across any scope).
-    api.get('/required-document-types')
+    // No single-show endpoint; fetch all types (+ the level catalog) and find this one.
+    api.get('/required-document-types', { params: { with_levels: 1 } })
       .then(({ data }) => {
+        setLevels(data.education_levels ?? []);
+        if (!isEdit) return;
         const rows = data.data ?? data;
         const d = rows.find((r) => String(r.id) === String(id));
         if (!d) { toast.error('Document type not found.'); return; }
         setForm({
           scope: d.scope,
           name: d.name,
+          education_level: d.education_level ?? '',
           is_mandatory: d.is_mandatory,
           is_active: d.is_active,
           sort_order: d.sort_order ?? 0,
@@ -73,6 +79,7 @@ export default function DocumentTypeForm() {
 
     const payload = {
       name: form.name,
+      education_level: form.scope === 'student_application' ? (form.education_level || null) : null,
       is_mandatory: form.is_mandatory,
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
@@ -170,6 +177,20 @@ export default function DocumentTypeForm() {
             <input type="number" min="0" value={form.sort_order}
               onChange={(e) => setForm({ ...form, sort_order: e.target.value })} className={inputCls()} />
           </div>
+
+          {form.scope === 'student_application' && (
+            <div>
+              <p className="block text-sm font-medium text-gray-700 mb-1">Education Level</p>
+              <Choice value={form.education_level}
+                onChange={(e) => setForm({ ...form, education_level: e.target.value })}
+                className={inputCls(errors.education_level)}>
+                <Opt value="">None (general document)</Opt>
+                {levels.map((l) => <Opt key={l.key} value={l.key}>{l.label}</Opt>)}
+              </Choice>
+              {errors.education_level && <p className="text-xs text-red-600 mt-1">{errors.education_level[0]}</p>}
+              <p className="text-xs text-gray-400 mt-1">Linked documents appear under that level on the applicant's profile.</p>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-6">
@@ -182,6 +203,13 @@ export default function DocumentTypeForm() {
             Active
           </label>
         </div>
+
+        {form.education_level && (
+          <p className="text-xs text-gray-500 -mt-2">
+            For a level document, "Mandatory" is not used: it is required whenever its level is required,
+            unless a college sets it to Optional or Not asked.
+          </p>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving}

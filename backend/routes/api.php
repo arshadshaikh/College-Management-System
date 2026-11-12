@@ -24,9 +24,8 @@ use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
-// Public. On a college subdomain (or X-College header in path mode) the portal
-// is branded with that college's name and Settings; otherwise the platform defaults.
-Route::middleware('tenant')->get('/app-config', function () {
+// No 'tenant' guard: on the main domain there is no college and the platform defaults are returned.
+Route::get('/app-config', function () {
     $base = [
         'name'          => config('site.name'),
         'short_name'    => config('site.short_name'),

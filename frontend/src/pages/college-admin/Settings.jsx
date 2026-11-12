@@ -136,9 +136,10 @@ export default function Settings() {
           late_fee_amount: values.late_fee_amount ?? '0',
           late_fee_partial: values.late_fee_partial ?? 'from_day_one',
         },
-        // Certificates follow the education levels, so they are not sent.
-        document_types: docTypes.filter((d) => !d.is_certificate)
+        // Every applicant document, certificates included (Required / Optional / Not asked).
+        document_types: docTypes
           .map(({ id, is_active, is_required }) => ({ id, is_active, is_required })),
+
       };
       const { data } = await api.put('/settings', payload);
       setValues(data.settings ?? values);
@@ -252,23 +253,21 @@ export default function Settings() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Documents</label>
             <p className="text-xs text-gray-500 mb-2">
-              Choose which documents applicants upload to their profile. Education certificates follow the
-              required education levels above (and each program's extra levels).
+              Choose which documents applicants upload to their profile. Education certificates count only when their level is required, here or by a program.
             </p>
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-200">
               {docTypes.map((d) => (
                 <div key={d.id} className="flex items-center justify-between gap-4 px-4 py-2.5">
-                  <span className="text-sm text-gray-800">{d.name}</span>
-                  {d.is_certificate ? (
-                    <span className="text-xs text-gray-400">Follows education levels</span>
-                  ) : (
-                    <select value={docMode(d)} onChange={(e) => setDocMode(d.id, e.target.value)}
-                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                      <option value="required">Required</option>
-                      <option value="optional">Optional</option>
-                      <option value="off">Not asked</option>
-                    </select>
-                  )}
+                  <span className="text-sm text-gray-800">
+                    {d.name}
+                    {d.is_certificate && <span className="block text-xs text-gray-400">Counts only when its education level is required</span>}
+                  </span>
+                  <select value={docMode(d)} onChange={(e) => setDocMode(d.id, e.target.value)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="required">Required</option>
+                    <option value="optional">Optional</option>
+                    <option value="off">Not asked</option>
+                  </select>
                 </div>
               ))}
             </div>

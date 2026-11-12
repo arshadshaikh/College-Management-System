@@ -4,6 +4,7 @@
 export const DOCUMENT_SCOPES = [
   { value: 'college_registration', label: 'College Registration' },
   // { value: 'student_application', label: 'Student Application' },  // enable when built
+  { value: 'student_application', label: 'Applicant Profile' },
 ];
 
 export const DEFAULT_SCOPE = 'college_registration';

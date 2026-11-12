@@ -6,7 +6,7 @@ export default function Dashboard() {
 
 // Applicants get a guided admission checklist instead of the admin summary.
 // Decided by privileges (configurable per role), not by a hard-coded role name.
-if (privileges.includes('profile.show') && privileges.includes('applications.my')) {
+if (privileges.includes('profile.show') && privileges.includes('applications.my') && user?.user_type === 'student') {
   return <StudentDashboard />;
 }
 

@@ -98,7 +98,7 @@ class SettingController extends Controller
     private function collegeDocumentTypes(): array
     {
         $collegeId = app('current_college')->id;
-        $certs     = app(ApplicantProfileService::class)->certificateSlugs();
+        // $certs     = app(ApplicantProfileService::class)->certificateSlugs();
         $choices   = CollegeDocumentType::where('college_id', $collegeId)->get()->keyBy('required_document_type_id');
 
         return RequiredDocumentType::where('scope', ApplicantProfileService::DOC_SCOPE)
@@ -109,9 +109,11 @@ class SettingController extends Controller
                 'id'             => $t->id,
                 'name'           => $t->name,
                 'slug'           => $t->slug,
-                'is_certificate' => in_array($t->slug, $certs),   // follows education levels, not editable
+                'is_certificate' => (bool) $t->education_level,   // tied to an education level
+                'education_level'=> $t->education_level,
                 'is_active'      => $choices->get($t->id)?->is_active ?? true,
-                'is_required'    => $choices->get($t->id)?->is_required ?? (bool) $t->is_mandatory,
+                // Level documents default to Required (they count only when their level is required).
+                'is_required'    => $choices->get($t->id)?->is_required ?? ($t->education_level ? true : (bool) $t->is_mandatory),
             ])
             ->values()
             ->all();

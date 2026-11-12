@@ -13,7 +13,19 @@ class RequiredDocumentTypeController extends Controller
     {
         $query = RequiredDocumentType::query();
         if ($request->filled('scope')) $query->where('scope', $request->scope);
-        return response()->json($query->orderBy('sort_order')->orderBy('name')->get());
+        // return response()->json($query->orderBy('sort_order')->orderBy('name')->get());
+
+        $rows = $query->orderBy('sort_order')->orderBy('name')->get();
+
+        // The form asks for the education level catalog too (config/admission.php).
+        if ($request->boolean('with_levels')) {
+            return response()->json([
+                'data' => $rows,
+                'education_levels' => collect(config('admission.education_levels', []))
+                    ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
+            ]);
+        }
+        return response()->json($rows);
     }
 
     public function store(Request $request)
@@ -23,6 +35,7 @@ class RequiredDocumentTypeController extends Controller
             'name'               => 'required|string|max:255',
             'is_mandatory'       => 'boolean',
             'is_active'          => 'boolean',
+            'education_level'    => ['nullable', Rule::in(array_keys(config('admission.education_levels', [])))],
             'sort_order'         => 'nullable|integer|min:0',
             'allowed_mime_types' => 'required|string|max:500',   // e.g. "image/jpeg,image/png,application/pdf"
             'max_size_kb'        => 'nullable|integer|min:1|max:20480',
@@ -47,6 +60,7 @@ class RequiredDocumentTypeController extends Controller
             'name'         => 'sometimes|string|max:255',
             'is_mandatory' => 'boolean',
             'is_active'    => 'boolean',
+            'education_level'    => ['nullable', Rule::in(array_keys(config('admission.education_levels', [])))],
             'sort_order'   => 'nullable|integer|min:0',
             'allowed_mime_types' => 'sometimes|string|max:500',
             'max_size_kb'        => 'nullable|integer|min:1|max:20480',
