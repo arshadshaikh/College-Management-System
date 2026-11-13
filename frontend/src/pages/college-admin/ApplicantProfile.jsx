@@ -78,6 +78,7 @@ export default function ApplicantProfile({ app, onDownload }) {
   const p = asSubmitted ? (snap.profile ?? {}) : (cur.student_profile ?? {});
   const levels = app.education_levels ?? {};
   const docNames = app.document_types ?? {};
+  const docLevels = app.document_levels ?? {};
   const levelOrder = Object.keys(levels);
   const eduSource = asSubmitted ? Object.values(snap.educations ?? {}) : (cur.educations ?? []);
   const educations = [...eduSource].sort(
@@ -131,13 +132,12 @@ export default function ApplicantProfile({ app, onDownload }) {
                   <th className="py-2 pr-4 font-medium">Year</th>
                   <th className="py-2 pr-4 font-medium">Result</th>
                   <th className="py-2 pr-4 font-medium">Grade</th>
-                  <th className="py-2 font-medium">Certificate</th>
+                  <th className="py-2 font-medium">Documents</th>
                 </tr>
               </thead>
               <tbody>
-                {educations.map((e) => {
-                  const cert = docs.find((d) => d.id === e.document_id)
-                    ?? docs.find((d) => d.document_type === levels[e.level]?.document);
+                {educations.map((e) => {                  
+                  const levelDocs = docs.filter((d) => docLevels[d.document_type] === e.level);
                   return (
                     <tr key={e.id ?? e.level} className="border-b border-gray-100 last:border-0">
                       <td className="py-2 pr-4 font-medium text-gray-900">{levels[e.level]?.label ?? e.level}</td>
@@ -149,9 +149,16 @@ export default function ApplicantProfile({ app, onDownload }) {
                       <td className="py-2 pr-4 whitespace-nowrap">{result(e)}</td>
                       <td className="py-2 pr-4">{e.grade || '—'}</td>
                       <td className="py-2">
-                        {cert
-                          ? <button onClick={() => onDownload(cert)} className="text-indigo-600 hover:underline">Download</button>
-                          : <span className="text-gray-400">Not uploaded</span>}
+                        {levelDocs.length ? (
+                          <div className="flex flex-col gap-1">
+                            {levelDocs.map((d) => (
+                              <button key={d.id} onClick={() => onDownload(d)}
+                                className="text-left text-indigo-600 hover:underline whitespace-nowrap">
+                                {docNames[d.document_type] ?? d.document_type}
+                              </button>
+                            ))}
+                          </div>
+                        ) : <span className="text-gray-400">Not uploaded</span>}
                       </td>
                     </tr>
                   );
@@ -169,7 +176,7 @@ export default function ApplicantProfile({ app, onDownload }) {
         <h2 className="font-semibold text-gray-900 mb-4">Profile Documents</h2>
         {docs.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {docs.map((doc) => (
+            {docs.filter((doc) => !docLevels[doc.document_type]).map((doc) => (
               <div key={doc.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3">
                 <div className="min-w-0">
                   <div className="font-medium text-sm text-gray-900">{docNames[doc.document_type] ?? doc.document_type}</div>

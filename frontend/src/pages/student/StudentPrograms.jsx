@@ -47,7 +47,8 @@ export default function StudentPrograms() {
       const lv = levels.find((l) => l.key === key);
       if (!lv) return;
       if (!haveLevels.includes(key)) out.push(lv.label);
-      else if (lv.document && !haveDocs.includes(lv.document)) out.push(`${lv.label} certificate`);
+      else (lv.documents ?? []).filter((x) => x.required && !haveDocs.includes(x.slug))
+        .forEach((x) => out.push(x.name));
     });
     return { extra, out };
   };

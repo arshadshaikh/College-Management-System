@@ -169,6 +169,9 @@ class ApplicationController extends Controller
             // Labels for the admin view: level names and document type names.
             'education_levels' => config('admission.education_levels', []),
             'document_types'   => \App\Models\RequiredDocumentType::where('scope', 'student_application')->pluck('name', 'slug'),
+            // slug => education level, so the admin view can group certificates by level.
+            'document_levels' => \App\Models\RequiredDocumentType::where('scope', ApplicantProfileService::DOC_SCOPE)
+                ->whereNotNull('education_level')->pluck('education_level', 'slug'),
             // Readable list of profile edits made after submitting (empty = unchanged).
             'profile_changes' => $application->profile_snapshot
                 ? app(ApplicantProfileService::class)->changesSince($application->profile_snapshot, $application->student)
