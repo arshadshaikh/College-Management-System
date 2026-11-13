@@ -110,7 +110,7 @@ class ApplicantProfileService
         return collect(config('admission.education_levels', []))
             ->map(function ($meta, $key) use ($required, $docTypes) {
                 $docs = $docTypes->where('education_level', $key)->values()
-                    ->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name, 'required' => (bool) $t->is_mandatory])
+                    ->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name, 'required' => (bool) $t->is_mandatory, 'system' => $t->education_system])
                     ->all();
 
                 return array_merge(Arr::except($meta, ['document']), [
@@ -144,12 +144,22 @@ class ApplicantProfileService
                 $missing[] = ['section' => 'education', 'key' => $level['key'], 'label' => $level['label']];
             }
         }
+        
+        // A level's system as chosen on the student's row (default: the level's first system, e.g. Matric).
+        $systemOf = function ($key) use ($educations) {
+            $systems = config("admission.education_levels.{$key}.systems", []);
+            return $educations->firstWhere('level', $key)?->system ?? array_key_first($systems);
+        };
 
         // General documents the college requires + the required documents of every required level.
+        // A document limited to one system (e.g. IBCC => O Level) only counts for that system.
         $needDocs = $docTypes->whereNull('education_level')->where('is_mandatory', true)->pluck('slug')
-            ->merge($levels->where('required', true)
-                ->flatMap(fn ($l) => collect($l['documents'])->where('required', true)->pluck('slug')))
+            ->merge($levels->where('required', true)->flatMap(fn ($l) => collect($l['documents'])
+                ->where('required', true)
+                ->filter(fn ($d) => !$d['system'] || $d['system'] === $systemOf($l['key']))
+                ->pluck('slug')))
             ->unique()->values();
+
         $haveDocs = $documents->pluck('document_type')->all();
         foreach ($needDocs as $slug) {
             if (!in_array($slug, $haveDocs)) {                

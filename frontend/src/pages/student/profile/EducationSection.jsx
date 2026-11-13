@@ -9,6 +9,7 @@ import DocumentCard from './DocumentCard';
 const EMPTY = {
   degree_title: '', board_university: '', institution: '', roll_no: '', passing_year: '',
   total_marks: '', obtained_marks: '', grade: '', cgpa: '', cgpa_scale: '4',
+  system: '', grades_summary: '',
 };
 
 const inputCls = (error) =>
@@ -23,8 +24,15 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   
-  // Documents asked at this level (Pass, Marks ...), with the full type for file rules.
+  // Qualification systems for this level (e.g. Matric or O Level). Empty for degree levels.
+  const systems = Object.entries(level.systems ?? {});
+  const currentSystem = form.system || systems[0]?.[0] || '';
+  const isGrades = !!level.systems?.[currentSystem]?.grades;
+  const rowSystem = row?.system || systems[0]?.[0];
+
+  // Documents asked at this level (Pass, Marks ...), only those for the saved system.
   const levelDocs = (level.documents ?? [])
+    .filter((d) => !d.system || d.system === rowSystem)
     .map((d) => ({ ...d, type: docTypes.find((t) => t.slug === d.slug) }))
     .filter((d) => d.type);
   const uploaded = levelDocs.filter((d) => docs.some((x) => x.document_type === d.slug)).length;
@@ -47,9 +55,10 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
     setSaving(true);
     setErrors({});
     // Send only the result fields for the chosen mode.
-    const body = { ...form, level: level.key };
-    if (mode === 'marks') { body.cgpa = ''; body.cgpa_scale = ''; }
+    const body = { ...form, level: level.key, system: systems.length ? currentSystem : '' };
+    if (mode === 'marks' || isGrades) { body.cgpa = ''; body.cgpa_scale = ''; }
     else { body.total_marks = ''; body.obtained_marks = ''; }
+    if (isGrades) body.grade = '';   // O/A Level uses grades_summary instead
     try {
       const { data } = await api.put('/profile/educations', body);
       onSaved(data);
@@ -80,12 +89,14 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
 
   const summary = row
     ? [
+        level.systems?.[row.system]?.label,
         row.degree_title,
         row.board_university,
         row.passing_year,
         row.total_marks
           ? `${row.obtained_marks}/${row.total_marks} (${((row.obtained_marks / row.total_marks) * 100).toFixed(1)}%)`
           : row.cgpa ? `CGPA ${Number(row.cgpa).toFixed(2)}/${Number(row.cgpa_scale).toFixed(2)}` : null,
+        row.grades_summary,
         row.grade && `Grade ${row.grade}`,
       ].filter(Boolean).join(' · ')
     : null;
@@ -133,12 +144,34 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
 
       {open && (
         <form onSubmit={save} className="mt-4 space-y-3">
+            {systems.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-700 mb-1">Qualification *</p>
+              <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+                {systems.map(([key, sys]) => (
+                  <button key={key} type="button" onClick={() => setForm((f) => ({ ...f, system: key }))}
+                    className={`px-4 py-2 text-sm border-r border-gray-300 last:border-r-0 ${
+                      currentSystem === key ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}>
+                    {sys.label}
+                  </button>
+                ))}
+              </div>
+              {errors.system && <p className="text-xs text-red-600 mt-1">{errors.system[0]}</p>}
+              {isGrades && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Enter your grades as printed on the result, plus the total and obtained marks from your IBCC equivalence certificate.
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {field('degree_title', 'Degree / Group (e.g. Science, BS Computer Science)')}
             {field('board_university', 'Board / University *')}
             {field('institution', 'School / College / Institute')}
             {field('roll_no', 'Roll Number')}
             {field('passing_year', 'Passing Year *', { type: 'number', min: 1950, max: new Date().getFullYear() })}
+            {!isGrades && (
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Result Type</label>
               <select value={mode} onChange={(e) => setMode(e.target.value)} className={inputCls()}>
@@ -146,11 +179,14 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
                 <option value="cgpa">CGPA</option>
               </select>
             </div>
-            {mode === 'marks' ? (
+            )}
+            {(mode === 'marks' || isGrades) ? (
               <>
-                {field('total_marks', 'Total Marks *', { type: 'number', min: 1 })}
-                {field('obtained_marks', 'Obtained Marks *', { type: 'number', min: 0 })}
-                {field('grade', 'Grade / Division')}
+                {field('total_marks', isGrades ? 'IBCC Equivalent Total Marks *' : 'Total Marks *', { type: 'number', min: 1 })}
+                {field('obtained_marks', isGrades ? 'IBCC Equivalent Obtained Marks *' : 'Obtained Marks *', { type: 'number', min: 0 })}
+                {isGrades
+                  ? field('grades_summary', 'Grades (as on result, e.g. 3 A*, 4 A, 1 B) *')
+                  : field('grade', 'Grade / Division')}
               </>
             ) : (
               <>

@@ -140,14 +140,24 @@ export default function ApplicantProfile({ app, onDownload }) {
                   const levelDocs = docs.filter((d) => docLevels[d.document_type] === e.level);
                   return (
                     <tr key={e.id ?? e.level} className="border-b border-gray-100 last:border-0">
-                      <td className="py-2 pr-4 font-medium text-gray-900">{levels[e.level]?.label ?? e.level}</td>
+                      <td className="py-2 pr-4 font-medium text-gray-900">
+                        {levels[e.level]?.label ?? e.level}
+                        {levels[e.level]?.systems?.[e.system] && (
+                          <span className="block text-xs font-normal text-indigo-600">{levels[e.level].systems[e.system].label}</span>
+                        )}
+                      </td>
                       <td className="py-2 pr-4">{e.degree_title || '—'}</td>
                       <td className="py-2 pr-4">{e.board_university}</td>
                       <td className="py-2 pr-4">{e.institution || '—'}</td>
                       <td className="py-2 pr-4">{e.roll_no || '—'}</td>
                       <td className="py-2 pr-4">{e.passing_year}</td>
-                      <td className="py-2 pr-4 whitespace-nowrap">{result(e)}</td>
-                      <td className="py-2 pr-4">{e.grade || '—'}</td>
+                      <td className="py-2 pr-4 whitespace-nowrap">
+                        {result(e)}
+                        {levels[e.level]?.systems?.[e.system]?.grades && (
+                          <span className="block text-xs text-gray-500">IBCC equivalent</span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4">{e.grades_summary || e.grade || '—'}</td>
                       <td className="py-2">
                         {levelDocs.length ? (
                           <div className="flex flex-col gap-1">

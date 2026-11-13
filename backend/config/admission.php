@@ -6,8 +6,10 @@
 // 'result'   = 'marks' or 'cgpa' – which result fields the form shows first.
 return [
     'education_levels' => [
-        'matric'       => ['label' => 'Matric / SSC',                    'document' => 'matric_certificate', 'result' => 'marks', 'min_age' => 13],
-        'intermediate' => ['label' => 'Intermediate / HSSC',             'document' => 'inter_certificate',  'result' => 'marks', 'min_age' => 15],
+        'matric'       => ['label' => 'Matric / SSC',                    'document' => 'matric_certificate', 'result' => 'marks', 'min_age' => 13,
+                            'systems'      => ['ssc'   => ['label' => 'Matric (SSC)'], 'o_level' => ['label' => 'O Level', 'grades' => true]]],
+        'intermediate' => ['label' => 'Intermediate / HSSC',             'document' => 'inter_certificate',  'result' => 'marks', 'min_age' => 15,
+                           'systems' => ['hssc' => ['label' => 'Intermediate (HSSC)'], 'a_level' => ['label' => 'A Level', 'grades' => true]]],
         'bachelors'    => ['label' => "Bachelor's (14 / 16 years)",      'document' => 'bachelors_degree',   'result' => 'cgpa', 'min_age' => 17],
         'masters'      => ['label' => "Master's (16 years)",             'document' => 'masters_degree',     'result' => 'cgpa', 'min_age' => 19],
         'mphil'        => ['label' => 'M.Phil / MS (18 years)',          'document' => 'mphil_degree',       'result' => 'cgpa', 'min_age' => 21],

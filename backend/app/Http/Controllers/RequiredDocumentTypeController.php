@@ -22,7 +22,12 @@ class RequiredDocumentTypeController extends Controller
             return response()->json([
                 'data' => $rows,
                 'education_levels' => collect(config('admission.education_levels', []))
-                    ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
+                    ->map(fn ($m, $k) => [
+                        'key'     => $k,
+                        'label'   => $m['label'],
+                        'systems' => collect($m['systems'] ?? [])
+                            ->map(fn ($s, $sk) => ['key' => $sk, 'label' => $s['label']])->values(),
+                    ])->values(),
             ]);
         }
         return response()->json($rows);
@@ -36,6 +41,7 @@ class RequiredDocumentTypeController extends Controller
             'is_mandatory'       => 'boolean',
             'is_active'          => 'boolean',
             'education_level'    => ['nullable', Rule::in(array_keys(config('admission.education_levels', [])))],
+            'education_system'   => ['nullable', Rule::in(collect(config('admission.education_levels', []))->flatMap(fn ($m) => array_keys($m['systems'] ?? []))->all())],
             'sort_order'         => 'nullable|integer|min:0',
             'allowed_mime_types' => 'required|string|max:500',   // e.g. "image/jpeg,image/png,application/pdf"
             'max_size_kb'        => 'nullable|integer|min:1|max:20480',
@@ -61,6 +67,7 @@ class RequiredDocumentTypeController extends Controller
             'is_mandatory' => 'boolean',
             'is_active'    => 'boolean',
             'education_level'    => ['nullable', Rule::in(array_keys(config('admission.education_levels', [])))],
+            'education_system'   => ['nullable', Rule::in(collect(config('admission.education_levels', []))->flatMap(fn ($m) => array_keys($m['systems'] ?? []))->all())],
             'sort_order'   => 'nullable|integer|min:0',
             'allowed_mime_types' => 'sometimes|string|max:500',
             'max_size_kb'        => 'nullable|integer|min:1|max:20480',

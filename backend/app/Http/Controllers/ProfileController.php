@@ -88,9 +88,24 @@ class ProfileController extends Controller
             'total_marks'      => 'nullable|required_without:cgpa|integer|min:1',
             'obtained_marks'   => 'nullable|required_with:total_marks|integer|min:0|lte:total_marks',
             'grade'            => 'nullable|string|max:10',
+            // Matric / O Level, Intermediate / A Level ... (config admission.education_levels.*.systems)
+            'system'           => [
+                \Illuminate\Validation\Rule::requiredIf(fn () => !empty($catalog[$request->input('level')]['systems'] ?? [])),
+                'nullable', 'string',
+                \Illuminate\Validation\Rule::in(array_keys($catalog[$request->input('level')]['systems'] ?? [])),
+            ],
+            'grades_summary'   => [
+                \Illuminate\Validation\Rule::requiredIf(fn () => !empty($catalog[$request->input('level')]['systems'][$request->input('system')]['grades'] ?? false)),
+                'nullable', 'string', 'max:255',
+            ],
             'cgpa'             => 'nullable|required_without:total_marks|numeric|min:0|lte:cgpa_scale',
             'cgpa_scale'       => 'nullable|required_with:cgpa|numeric|in:4,5',
         ]);
+
+        // Grades only belong to grade-based systems (O / A Level).
+        if (empty($catalog[$data['level'] ?? '']['systems'][$data['system'] ?? '']['grades'])) {
+            $data['grades_summary'] = null;
+        }
 
         $user = $request->user();
 
