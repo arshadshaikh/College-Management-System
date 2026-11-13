@@ -29,7 +29,12 @@ api.interceptors.response.use(
 
     if (status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Only an expired session inside the portal goes back to login.
+      // Keeps the /cms/<college> prefix; on the login page itself (wrong password) we stay put.
+      const path = window.location.pathname;
+      if (path.includes('/portal')) {
+        window.location.href = path.replace(/\/portal.*$/, '/login');
+      }
     } else if (status === 403) {
       toast.error(message || 'You do not have permission to perform this action');
     } else if (status === 422) {

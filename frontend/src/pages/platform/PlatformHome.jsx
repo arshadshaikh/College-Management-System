@@ -170,10 +170,10 @@ function HeroMock() {
     { label: 'Profile complete', done: true },
     { label: 'Documents verified', done: true },
     { label: 'Application approved', done: true },
-    { label: 'Fee challan issued', done: false },
+    { label: 'Fee challan issued', done: true },
   ];
   return (
-    <div className="relative">
+    <div className="relative select-none" aria-hidden="true">
       <div className="absolute -inset-4 rounded-3xl bg-indigo-100/60 blur-2xl" />
       <div className="relative rounded-2xl bg-white shadow-xl ring-1 ring-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -198,7 +198,7 @@ function HeroMock() {
             <p className="text-xs text-gray-500">Fee challan</p>
             <p className="font-semibold text-gray-900">Due in 7 days</p>
           </div>
-          <span className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold">Download</span>
+          <span className="rounded-full bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1">Unpaid</span>
         </div>
       </div>
     </div>
