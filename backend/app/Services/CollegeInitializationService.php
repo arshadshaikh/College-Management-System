@@ -192,35 +192,10 @@ class CollegeInitializationService
         }
     }
 
-    // ── 3. CMS pages ─────────────────────────────────────────────
+    // ── 3. Public website (starter pages + header menu) ──────────
     private function seedCmsPages(College $college): void
     {
-        $pages = [
-            ['title' => 'Home',       'slug' => 'home',       'sort_order' => 0],
-            ['title' => 'About',      'slug' => 'about',      'sort_order' => 1],
-            ['title' => 'Admissions', 'slug' => 'admissions', 'sort_order' => 2],
-            ['title' => 'Contact',    'slug' => 'contact',    'sort_order' => 3],
-        ];
-
-        foreach ($pages as $page) {
-            $exists = DB::table('cms_pages')
-                ->where('college_id', $college->id)
-                ->where('slug', $page['slug'])
-                ->exists();
-
-            if (!$exists) {
-                DB::table('cms_pages')->insert([
-                    'college_id'   => $college->id,
-                    'title'        => $page['title'],
-                    'slug'         => $page['slug'],
-                    'content'      => "<h1>{$page['title']}</h1><p>Content coming soon.</p>",
-                    'is_published' => true,
-                    'sort_order'   => $page['sort_order'],
-                    'created_at'   => Carbon::now(),
-                    'updated_at'   => Carbon::now(),
-                ]);
-            }
-        }
+        app(DefaultCollegeSite::class)->seed($college);
     }
 
     // ── 4. Settings ───────────────────────────────────────────────
