@@ -6,6 +6,7 @@ import { AppConfigProvider } from './context/AppConfigContext';
 import { AuthProvider } from './context/AuthContext';
 import { getSubdomain } from './config/tenant';
 import App from './App';
+import { FloatingThemeToggle } from './components/ThemeToggle';
 import './index.css';
 
 // const BASENAME = import.meta.env.VITE_BASE_PATH ? `/${import.meta.env.VITE_BASE_PATH}` : '';
@@ -21,9 +22,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <AppConfigProvider>
       <AuthProvider>
         <App />
+        <FloatingThemeToggle />
         <Toaster position="top-right" toastOptions={{
           duration: 4000,
-          style: { borderRadius: '12px', padding: '12px 16px', fontSize: '14px' },
+          style: { borderRadius: '12px', padding: '12px 16px', fontSize: '14px', background: 'var(--toast-bg, #fff)', color: 'var(--toast-fg, #363636)' },
           success: { iconTheme: { primary: '#16a34a', secondary: '#fff' } },
           error: { iconTheme: { primary: '#dc2626', secondary: '#fff' } },
         }} />

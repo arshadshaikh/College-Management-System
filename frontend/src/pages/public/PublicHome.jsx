@@ -218,7 +218,7 @@ export default function PublicHome() {
 
       {/* ── Call to action ─────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-4">
-        <div className="rounded-2xl bg-indigo-700 px-6 py-12 sm:px-12 text-center sm:text-left sm:flex items-center justify-between gap-8">
+        <div className="theme-static rounded-2xl bg-indigo-700 px-6 py-12 sm:px-12 text-center sm:text-left sm:flex items-center justify-between gap-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
               {admissionsOpen ? 'Ready to start your journey?' : 'Get ready for the next admissions'}
@@ -269,7 +269,7 @@ function HeroSlider({ slides, name, admissionsOpen, applyTo }) {
 
   return (
     <section
-      className="relative isolate overflow-hidden bg-gray-900 min-h-[28rem] lg:min-h-[34rem]"
+      className="theme-static relative isolate overflow-hidden bg-gray-900 min-h-[28rem] lg:min-h-[34rem]"
       aria-roledescription={count > 1 ? 'carousel' : undefined}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

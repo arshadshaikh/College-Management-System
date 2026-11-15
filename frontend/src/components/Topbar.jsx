@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PORTAL } from '../config/app';
+import ThemeToggle from './ThemeToggle';
 
 function flattenMenu(items, parentName = '') {
   const result = [];
@@ -142,7 +143,8 @@ export default function Topbar({ onMenuToggle, collapsed, onCollapse }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <ThemeToggle />
         <div className="relative" ref={dropdownRef}>
           <button onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-3 hover:bg-gray-50 rounded-xl px-2 py-1.5 transition">

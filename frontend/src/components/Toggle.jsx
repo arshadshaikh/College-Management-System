@@ -12,7 +12,7 @@ export default function Toggle({ checked, onChange, label, description, disabled
         }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          className={`inline-block h-4 w-4 transform rounded-full bg-[#fff] shadow transition-transform ${
             checked ? 'translate-x-6' : 'translate-x-1'
           }`}
         />

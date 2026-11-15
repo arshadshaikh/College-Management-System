@@ -157,7 +157,7 @@ function CollapsedMenuItem({ item, onClose }) {
         </button>
 
         {showPopup && createPortal(
-          <div ref={popupRef} style={getPos()} className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl min-w-[200px] animate-in fade-in slide-in-from-left-2 duration-150">
+          <div ref={popupRef} style={getPos()} className="theme-static bg-slate-800 border border-slate-700 rounded-lg shadow-2xl min-w-[200px] animate-in fade-in slide-in-from-left-2 duration-150">
             <div className="px-3 py-2 border-b border-slate-700">
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{item.name}</span>
             </div>
@@ -201,7 +201,7 @@ export default function Sidebar({ menu, open, collapsed, onClose, onCollapse }) 
 
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-screen bg-slate-900 text-white flex flex-col
+          theme-static fixed top-0 left-0 z-50 h-screen bg-slate-900 text-white flex flex-col
           transform transition-all duration-300 ease-in-out
           lg:sticky lg:top-0 lg:z-auto lg:translate-x-0
           ${open ? 'translate-x-0' : '-translate-x-full'}

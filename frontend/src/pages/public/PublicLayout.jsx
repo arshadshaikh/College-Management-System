@@ -4,7 +4,7 @@ import api from '../../api';
 import { usePublicSite } from '../../context/PublicSiteContext';
 import { useAuth } from '../../context/AuthContext';
 import { PORTAL } from '../../config/app';
-import { mainSiteUrl } from '../../config/tenant';
+import ThemeToggle from '../../components/ThemeToggle';
 
 // College public-site shell. Colours: AppConfigContext points every indigo-*
 // class at the college's Primary Color, so this file only uses indigo-*.
@@ -19,7 +19,7 @@ const DEFAULT_MENU = [
 ];
 
 export default function PublicLayout() {
-  const { loading, notFound, college, settings, menus } = usePublicSite();
+  const { loading, college, settings, menus } = usePublicSite();
   const { user } = useAuth();
   const [pages, setPages] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,8 +38,6 @@ export default function PublicLayout() {
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400">Loading…</div>;
   }
-
-  if (notFound) return <CollegeNotFound />;
 
   const name = college?.name || 'Our College';
   const admissionsOpen = settings.admission_open === 'true' || settings.admission_open === true;
@@ -93,6 +91,8 @@ export default function PublicLayout() {
             {nav.map((m) => <NavItem key={m.id} item={m} />)}
           </nav>
 
+          <div className="flex items-center gap-1 lg:gap-3">
+          <ThemeToggle />
           <div className="hidden lg:flex items-center gap-3">
             {showLogin && (
               <Link to={user ? PORTAL : '/login'} className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-700">
@@ -119,6 +119,7 @@ export default function PublicLayout() {
                 : <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />}
             </svg>
           </button>
+          </div>
         </div>
 
         {/* Mobile panel */}
@@ -153,7 +154,7 @@ export default function PublicLayout() {
       <main className="flex-1"><Outlet /></main>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 mt-16">
+      <footer className="theme-static bg-gray-900 text-gray-400 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Brand name={name} logo={settings.logo} dark />
@@ -204,31 +205,6 @@ export default function PublicLayout() {
 }
 
 // ── Pieces ─────────────────────────────────────────────────
-
-// Shown when the address names a college that does not exist (or is not approved yet).
-function CollegeNotFound() {
-  useEffect(() => { document.title = 'College not found'; }, []);
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center px-4">
-      <div className="max-w-md text-center">
-        <span className="mx-auto w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-          <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6.5-9.4V16c0 1.1 2.9 3 6.5 3s6.5-1.9 6.5-3v-5.4" />
-          </svg>
-        </span>
-        <p className="mt-6 text-sm font-semibold text-indigo-600">404</p>
-        <h1 className="mt-2 text-3xl font-bold text-gray-900">College not found</h1>
-        <p className="mt-3 text-gray-600">
-          There is no college at this address, or it has not been approved yet. Please check the link, or find your college in the list.
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <a href={`${mainSiteUrl()}colleges`} className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700">Browse colleges</a>
-          <a href={mainSiteUrl()} className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-800 font-semibold hover:bg-gray-50">Go to main site</a>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Icon({ d }) {
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
 import api from '../../api';
+import ThemeToggle from '../../components/ThemeToggle';
 
 // Main-domain site shell. Content comes from the PLATFORM tenant's CMS
 // (super admin → CMS → Menus / Pages / Site Settings).
@@ -41,6 +42,8 @@ export default function PlatformLayout() {
             {menus.map((m) => <NavItem key={m.id} item={m} />)}
           </nav>
 
+          <div className="flex items-center gap-1 lg:gap-3">
+          <ThemeToggle />
           <div className="hidden lg:flex items-center gap-3">
             <Link to="/register-college" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-700">
               Register college
@@ -65,6 +68,7 @@ export default function PlatformLayout() {
                 : <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />}
             </svg>
           </button>
+          </div>
         </div>
 
         {/* Mobile panel */}
@@ -92,7 +96,7 @@ export default function PlatformLayout() {
       <main className="flex-1"><Outlet /></main>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400">
+      <footer className="theme-static bg-gray-900 text-gray-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Brand name={site.name} logo={settings.logo} dark />

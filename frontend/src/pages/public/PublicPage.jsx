@@ -107,7 +107,7 @@ export default function PublicPage() {
 
         {/* ── Sidebar ───────────────────────────────────── */}
         <aside className="space-y-6">
-          <div className="rounded-2xl bg-indigo-700 p-6 text-white">
+          <div className="theme-static rounded-2xl bg-indigo-700 p-6 text-white">
             <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-100">
               <span className={`w-2 h-2 rounded-full ${admissionsOpen ? 'bg-green-400' : 'bg-gray-300'}`} />
               {admissionsOpen ? 'Admissions open' : 'Admissions closed'}

@@ -134,7 +134,7 @@ export default function PlatformHome() {
 
       {/* ── CTA band ───────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
-        <div className="rounded-3xl bg-indigo-600 px-6 py-12 sm:px-12 flex flex-col lg:flex-row items-center justify-between gap-6 text-center lg:text-left">
+        <div className="theme-static rounded-3xl bg-indigo-600 px-6 py-12 sm:px-12 flex flex-col lg:flex-row items-center justify-between gap-6 text-center lg:text-left">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">Run your next admission cycle online</h2>
             <p className="mt-2 text-indigo-100">Register your college. Once approved, your website and portal are ready to use.</p>
