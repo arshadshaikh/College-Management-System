@@ -203,6 +203,7 @@ class CollegeInitializationService
     {
         $settings = [
             ['key' => 'logo',           'value' => null,            'group' => 'branding'],
+            ['key' => 'favicon',        'value' => null,            'group' => 'branding'],
             ['key' => 'primary_color',  'value' => '#1e40af',       'group' => 'branding'],
             ['key' => 'contact_email',  'value' => $college->email, 'group' => 'contact'],
             ['key' => 'contact_phone',  'value' => $college->phone, 'group' => 'contact'],

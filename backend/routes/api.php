@@ -32,23 +32,33 @@ Route::get('/app-config', function () {
         'icon'          => config('site.icon'),
         'primary_color' => config('site.primary_color'),
         'logo_url'      => null,
+        'favicon_url'   => null,
         'is_college'    => false,
     ];
 
     $college = app()->bound('current_college') ? app('current_college') : null;
-    if (!$college || $college->is_platform) {
+    if (!$college) {
         return response()->json($base);
     }
 
     $settings = \App\Models\Setting::where('college_id', $college->id)
-        ->whereIn('key', ['primary_color', 'logo'])
+        ->whereIn('key', ['primary_color', 'logo', 'favicon'])
         ->pluck('value', 'key');
+
+    // Browser-tab icon: the chosen favicon, else the logo, else the built-in default (null).
+    $favicon = ($settings['favicon'] ?? null) ?: (($settings['logo'] ?? null) ?: null);
+
+    // Main site: platform defaults, plus the favicon the super admin picked in Site Settings.
+    if ($college->is_platform) {
+        return response()->json(array_merge($base, ['favicon_url' => $favicon]));
+    }
 
     return response()->json(array_merge($base, [
         'name'          => $college->name,
         'short_name'    => $college->slug ? strtoupper($college->slug) : $base['short_name'],
         'primary_color' => ($settings['primary_color'] ?? null) ?: $base['primary_color'],
         'logo_url'      => ($settings['logo'] ?? null) ?: null,   // a Media Library URL chosen in Settings
+        'favicon_url'   => $favicon,
         'is_college'    => true,
     ]));
 });

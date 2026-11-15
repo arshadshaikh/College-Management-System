@@ -7,6 +7,7 @@ const DEFAULTS = {
   icon: 'shield',
   primary_color: '#4f46e5',
   logo_url: null,
+  favicon_url: null,
   is_college: false,
 };
 
@@ -31,6 +32,19 @@ function applyBrandColor(color) {
   root.setProperty('--color-indigo-800', shade(70));
 }
 
+// Browser-tab icon from Settings → Branding → Favicon (falls back to the logo on the server).
+function applyFavicon(url) {
+  if (!url) return;
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  link.removeAttribute('type'); // the default is an SVG; an uploaded icon is usually PNG/ICO
+  link.href = url;
+}
+
 export function AppConfigProvider({ children }) {
   const [config, setConfig] = useState(DEFAULTS);
 
@@ -40,6 +54,7 @@ export function AppConfigProvider({ children }) {
       setConfig(merged);
       document.title = merged.name || DEFAULTS.name;
       if (merged.is_college) applyBrandColor(merged.primary_color);
+      applyFavicon(merged.favicon_url);
     }).catch(() => {});
   }, []);
 

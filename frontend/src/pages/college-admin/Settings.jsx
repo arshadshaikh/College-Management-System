@@ -5,8 +5,8 @@ import Toggle from '../../components/Toggle';
 import { Link } from 'react-router-dom';
 import { PORTAL } from '../../config/app';
 
-// Picks the college logo from the Media Library (images only). Stores the image URL in the `logo` setting.
-function LogoPicker({ value, onChange }) {
+// Picks an image from the Media Library (images only) and stores its URL in a setting (`logo`, `favicon`).
+function LogoPicker({ value, onChange, label = 'Logo', help, small = false }) {
   const [open, setOpen] = useState(false);
   const [images, setImages] = useState(null);
 
@@ -21,10 +21,10 @@ function LogoPicker({ value, onChange }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
-          {value ? <img src={value} alt="Logo" className="w-full h-full object-contain" />
+        <div className={`${small ? 'w-10 h-10 rounded-lg' : 'w-16 h-16 rounded-xl'} border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden`}>
+          {value ? <img src={value} alt={label} className="w-full h-full object-contain" />
                  : <span className="text-xs text-gray-400">None</span>}
         </div>
         <div className="flex gap-2">
@@ -39,14 +39,14 @@ function LogoPicker({ value, onChange }) {
         </div>
       </div>
       <p className="text-xs text-gray-400 mt-1">
-        Shown on the login, sign-up and portal pages. A square PNG with a transparent background looks best.
+        {help ?? 'Shown on the login, sign-up and portal pages. A square PNG with a transparent background looks best.'}
       </p>
 
       {open && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Choose a logo</h3>
+              <h3 className="font-semibold text-gray-900">Choose {label.toLowerCase()}</h3>
               <button type="button" onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
             </div>
             <div className="p-5 overflow-y-auto">
@@ -125,6 +125,7 @@ export default function Settings() {
         settings: {
           primary_color: values.primary_color ?? '',
           logo: values.logo ?? '',
+          favicon: values.favicon ?? '',
           contact_email: values.contact_email ?? '',
           contact_phone: values.contact_phone ?? '',
           admission_open: values.admission_open ?? 'false',
@@ -186,6 +187,14 @@ export default function Settings() {
           </div>
           <LogoPicker value={values.logo ?? ''} onChange={(url) => set('logo', url)} />
           {err('logo') && <p className="text-xs text-red-600 mt-1">{err('logo')}</p>}
+          <LogoPicker
+            label="Favicon"
+            small
+            value={values.favicon ?? ''}
+            onChange={(url) => set('favicon', url)}
+            help="The small icon in the browser tab. Use a square PNG or ICO (for example 64 × 64). If none is chosen, the logo is used."
+          />
+          {err('favicon') && <p className="text-xs text-red-600 mt-1">{err('favicon')}</p>}
         </section>
 
         {/* Contact */}

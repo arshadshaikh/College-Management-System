@@ -27,6 +27,7 @@ class SettingsBackfillSeeder extends Seeder
         $defaults = [
             'primary_color'             => ['value' => '#1e40af',     'group' => 'branding'],
             'logo'                      => ['value' => null,          'group' => 'branding'],
+            'favicon'                   => ['value' => null,          'group' => 'branding'],
             'contact_email'             => ['value' => null,          'group' => 'contact'],
             'contact_phone'             => ['value' => null,          'group' => 'contact'],
             'admission_open'            => ['value' => 'false',       'group' => 'admission'],

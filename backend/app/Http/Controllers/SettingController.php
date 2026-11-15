@@ -61,6 +61,11 @@ class SettingController extends Controller
                     $fail("Choose an image from this college's Media Library.");
                 }
             }],
+            'settings.favicon' => ['nullable', 'string', 'max:500', function ($attr, $value, $fail) {
+                if (filled($value) && !\App\Models\Media::where('public_url', $value)->where('media_type', 'image')->exists()) {
+                    $fail("Choose an image from this college's Media Library.");
+                }
+            }],
         ]);
 
         $incoming = $request->input('settings', []);
