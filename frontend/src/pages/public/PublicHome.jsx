@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api';
 import { usePublicSite } from '../../context/PublicSiteContext';
@@ -50,7 +50,9 @@ export default function PublicHome() {
   const name = college?.name || 'our college';
   const admissionsOpen = settings.admission_open === 'true' || settings.admission_open === true;
   const applyTo = user ? `${PORTAL}/apply` : '/register';
-  const hero = banners[0];
+  // Banners with an image become hero slides (sorted by the CMS sort order).
+  const slides = banners.filter((b) => b.image_url);
+  const hero = slides[0];
   const levels = [...new Set(programs.map((p) => p.degree_level))];
   const totalSeats = programs.reduce((sum, p) => sum + (Number(p.total_seats) || 0), 0);
   const featured = programs.slice(0, 6);
@@ -59,24 +61,8 @@ export default function PublicHome() {
   return (
     <div>
       {/* ── Hero ───────────────────────────────────────── */}
-      {hero?.image_url ? (
-        <section className="relative isolate overflow-hidden">
-          <img src={hero.image_url} alt={hero.title || name} className="absolute inset-0 -z-10 w-full h-full object-cover" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/20" />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-24 lg:py-32 text-white">
-            <div className="max-w-2xl">
-              <AdmissionBadge open={admissionsOpen} dark />
-              <h1 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">{hero.title || `Welcome to ${name}`}</h1>
-              {hero.subtitle && <p className="mt-5 text-lg text-gray-200 leading-8">{hero.subtitle}</p>}
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                {hero.button_text && hero.link_url
-                  ? <SmartLink href={hero.link_url} className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold text-center shadow-sm hover:bg-indigo-700">{hero.button_text}</SmartLink>
-                  : admissionsOpen && <Link to={applyTo} className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold text-center shadow-sm hover:bg-indigo-700">Apply now</Link>}
-                <Link to="/programs" className="px-6 py-3 rounded-lg bg-white/10 border border-white/30 text-white font-semibold text-center hover:bg-white/20">Explore programs</Link>
-              </div>
-            </div>
-          </div>
-        </section>
+      {hero ? (
+        <HeroSlider slides={slides} name={name} admissionsOpen={admissionsOpen} applyTo={applyTo} />
       ) : (
         <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50 via-white to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
@@ -195,7 +181,7 @@ export default function PublicHome() {
       </section>
 
       {/* ── How to apply (shown here when a banner replaced the hero card) ── */}
-      {hero?.image_url && (
+      {hero && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-20">
           <SectionHead eyebrow="Admissions" title="How to apply" center />
           <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -254,6 +240,108 @@ export default function PublicHome() {
 
 // ── Pieces ─────────────────────────────────────────────────
 
+const SLIDE_MS = 6000;
+
+// Full-width hero. One banner = a static hero; several = a crossfading slider
+// with arrows, dots, swipe, auto-play (paused on hover/focus and when the user
+// prefers reduced motion).
+function HeroSlider({ slides, name, admissionsOpen, applyTo }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [touchX, setTouchX] = useState(null);
+  const count = slides.length;
+
+  const go = useCallback((i) => setIndex(((i % count) + count) % count), [count]);
+
+  useEffect(() => {
+    if (count < 2 || paused) return undefined;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const t = setTimeout(() => go(index + 1), SLIDE_MS);
+    return () => clearTimeout(t);
+  }, [index, paused, count, go]);
+
+  const onTouchEnd = (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+    setTouchX(null);
+  };
+
+  return (
+    <section
+      className="relative isolate overflow-hidden bg-gray-900 min-h-[28rem] lg:min-h-[34rem]"
+      aria-roledescription={count > 1 ? 'carousel' : undefined}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
+      onTouchEnd={onTouchEnd}
+    >
+      {slides.map((s, i) => {
+        const active = i === index;
+        return (
+          <div
+            key={s.id ?? i}
+            className={`absolute inset-0 flex items-center transition-opacity duration-700 ease-in-out ${active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
+            aria-hidden={!active}
+            aria-roledescription={count > 1 ? 'slide' : undefined}
+            aria-label={count > 1 ? `${i + 1} of ${count}` : undefined}
+          >
+            <img
+              src={s.image_url}
+              alt=""
+              className={`absolute inset-0 -z-10 w-full h-full object-cover transition-transform duration-[7000ms] ease-out ${active ? 'scale-105' : 'scale-100'}`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/20" />
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-20 text-white">
+              <div className="max-w-2xl">
+                <AdmissionBadge open={admissionsOpen} dark />
+                {i === 0
+                  ? <h1 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">{s.title || `Welcome to ${name}`}</h1>
+                  : <h2 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">{s.title || `Welcome to ${name}`}</h2>}
+                {s.subtitle && <p className="mt-5 text-lg text-gray-200 leading-8">{s.subtitle}</p>}
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  {s.button_text && s.link_url
+                    ? <SmartLink href={s.link_url} tabIndex={active ? 0 : -1} className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold text-center shadow-sm hover:bg-indigo-700">{s.button_text}</SmartLink>
+                    : admissionsOpen && <Link to={applyTo} tabIndex={active ? 0 : -1} className="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold text-center shadow-sm hover:bg-indigo-700">Apply now</Link>}
+                  <Link to="/programs" tabIndex={active ? 0 : -1} className="px-6 py-3 rounded-lg bg-white/10 border border-white/30 text-white font-semibold text-center hover:bg-white/20">Explore programs</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {count > 1 && (
+        <>
+          <button type="button" onClick={() => go(index - 1)} aria-label="Previous slide"
+            className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white items-center justify-center backdrop-blur">
+            <Svg d="M15 19l-7-7 7-7" />
+          </button>
+          <button type="button" onClick={() => go(index + 1)} aria-label="Next slide"
+            className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white items-center justify-center backdrop-blur">
+            <Svg d="M9 5l7 7-7 7" />
+          </button>
+          <div className="absolute bottom-6 inset-x-0 z-20 flex justify-center gap-2">
+            {slides.map((s, i) => (
+              <button
+                key={s.id ?? i}
+                type="button"
+                onClick={() => go(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={i === index}
+                className={`h-2 rounded-full transition-all ${i === index ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function Svg({ d, className = 'w-5 h-5' }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
@@ -295,7 +383,7 @@ function SectionHead({ eyebrow, title, text, action, center = false }) {
 }
 
 // Banner links: in-site paths go through the router (keeps the /cms/<college> base), others open normally.
-function SmartLink({ href, className, children }) {
-  if (href.startsWith('/')) return <Link to={href} className={className}>{children}</Link>;
-  return <a href={href} className={className} target="_blank" rel="noopener noreferrer">{children}</a>;
+function SmartLink({ href, className, children, ...rest }) {
+  if (href.startsWith('/')) return <Link to={href} className={className} {...rest}>{children}</Link>;
+  return <a href={href} className={className} target="_blank" rel="noopener noreferrer" {...rest}>{children}</a>;
 }

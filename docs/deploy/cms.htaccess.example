@@ -36,6 +36,9 @@
     # 2. API requests -> Laravel
     RewriteRule ^api/ backend/public/index.php [L,QSA]
 
-    # 3. Everything else -> React SPA (client-side routing)
+    # 3. Public uploads (banners, logos, media) -> Laravel's public disk
+    RewriteRule ^storage/(.*)$ backend/storage/app/public/$1 [L]
+
+    # 4. Everything else -> React SPA (client-side routing)
     RewriteRule ^ index.html [L]
 </IfModule>
