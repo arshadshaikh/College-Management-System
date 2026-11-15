@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\CmsMenu;
 use App\Models\CmsPage;
 use App\Models\College;
+use App\Services\DefaultCollegeSite;
 use Illuminate\Database\Seeder;
 
 // Starter pages + header menu for the main platform site (the is_platform tenant).
@@ -90,6 +91,16 @@ HTML],
                 ]
             );
 
+            // A page that still holds the old "Content coming soon." text gets the real starter content.
+            if (!$page->wasRecentlyCreated && DefaultCollegeSite::isPlaceholder($page->content)) {
+                $page->update([
+                    'title'            => $title,
+                    'content'          => trim($content),
+                    'meta_title'       => $page->meta_title ?: $title,
+                    'meta_description' => $page->meta_description ?: $summary,
+                ]);
+            }
+
             if ($inMenu) {
                 CmsMenu::withoutGlobalScopes()->firstOrCreate(
                     ['college_id' => $platform->id, 'page_id' => $page->id],
@@ -99,6 +110,16 @@ HTML],
                 $menuOrder++;
             }
         }
+
+        // Placeholder pages the platform does not use (e.g. "admissions" from the college starter set) → unpublish.
+        $ours = array_column($pages, 0);
+        CmsPage::withoutGlobalScopes()
+            ->where('college_id', $platform->id)
+            ->whereNotIn('slug', array_merge($ours, ['home']))
+            ->where('is_published', true)
+            ->get()
+            ->filter(fn ($p) => DefaultCollegeSite::isPlaceholder($p->content))
+            ->each(fn ($p) => $p->update(['is_published' => false]));
 
         $this->command->info('PlatformPageSeeder done.');
     }

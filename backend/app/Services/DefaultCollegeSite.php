@@ -70,7 +70,7 @@ class DefaultCollegeSite
     }
 
     // The text CollegeInitializationService used to seed: "<h1>Title</h1><p>Content coming soon.</p>"
-    private function isPlaceholder(?string $content): bool
+    public static function isPlaceholder(?string $content): bool
     {
         $text = trim(preg_replace('/\s+/', ' ', strip_tags((string) preg_replace('#<h1>.*?</h1>#is', '', (string) $content))));
         return $text === '' || strcasecmp($text, 'Content coming soon.') === 0;
