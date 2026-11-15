@@ -37,6 +37,7 @@ class SettingController extends Controller
             'settings.contact_email' => 'nullable|email|max:255',
             'settings.contact_phone' => 'nullable|string|max:50',
             'settings.admission_open'=> 'nullable|in:true,false',
+            'settings.show_login_link' => 'nullable|in:true,false',
             'settings.allow_multiple_admissions' => 'nullable|in:true,false',
             'settings.auto_generate_challan' => 'nullable|in:true,false',
             'settings.late_fee_mode'         => 'nullable|in:off,flat,per_week,per_month',
@@ -126,7 +127,7 @@ class SettingController extends Controller
 
     public function publicIndex()
     {
-        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone', 'admission_open'];
+        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone', 'admission_open', 'show_login_link'];
         $settings = Setting::whereIn('key', $keys)->pluck('value', 'key');
         $college = app('current_college');
         return response()->json([

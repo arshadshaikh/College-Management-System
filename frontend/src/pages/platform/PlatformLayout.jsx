@@ -25,6 +25,8 @@ export default function PlatformLayout() {
   }, [pathname]);
 
   const { settings } = site;
+  // Site Settings → "Show login link on the public website" (default on).
+  const showLogin = settings.show_login_link !== 'false';
   const footerPages = pages.filter((p) => p.slug !== 'home');
 
   return (
@@ -43,9 +45,11 @@ export default function PlatformLayout() {
             <Link to="/register-college" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-700">
               Register college
             </Link>
-            <Link to="/login" className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">
-              Portal login
-            </Link>
+            {showLogin && (
+              <Link to="/login" className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">
+                Portal login
+              </Link>
+            )}
           </div>
 
           <button
@@ -76,9 +80,9 @@ export default function PlatformLayout() {
                   ))}
                 </div>
               ))}
-              <div className="pt-3 mt-3 border-t border-gray-100 grid grid-cols-2 gap-3">
+              <div className={`pt-3 mt-3 border-t border-gray-100 grid gap-3 ${showLogin ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 <Link to="/register-college" className="text-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium">Register college</Link>
-                <Link to="/login" className="text-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Portal login</Link>
+                {showLogin && <Link to="/login" className="text-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Portal login</Link>}
               </div>
             </div>
           </div>
@@ -100,7 +104,7 @@ export default function PlatformLayout() {
           <FooterCol title="Platform">
             <FooterLink to="/">Home</FooterLink>
             <FooterLink to="/colleges">Browse colleges</FooterLink>
-            <FooterLink to="/login">Portal login</FooterLink>
+            {showLogin && <FooterLink to="/login">Portal login</FooterLink>}
           </FooterCol>
 
           <FooterCol title="For colleges">

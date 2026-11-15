@@ -51,6 +51,8 @@ export default function PublicLayout() {
 
   const footerPages = pages.filter((p) => p.slug !== 'home');
   const applyTo = user ? `${PORTAL}/apply` : '/register';
+  // Site Settings → "Show login link on the public website" (default on). Signed-in users always see "My portal".
+  const showLogin = !!user || settings.show_login_link !== 'false';
 
   return (
     <div className="min-h-screen bg-white flex flex-col text-gray-900">
@@ -89,9 +91,11 @@ export default function PublicLayout() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
-            <Link to={user ? PORTAL : '/login'} className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-700">
-              {user ? 'My portal' : 'Portal login'}
-            </Link>
+            {showLogin && (
+              <Link to={user ? PORTAL : '/login'} className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-700">
+                {user ? 'My portal' : 'Portal login'}
+              </Link>
+            )}
             {admissionsOpen && (
               <Link to={applyTo} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">
                 Apply now
@@ -128,10 +132,12 @@ export default function PublicLayout() {
                   ))}
                 </div>
               ))}
-              <div className={`pt-3 mt-3 border-t border-gray-100 grid gap-3 ${admissionsOpen ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                <Link to={user ? PORTAL : '/login'} className="text-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium">
-                  {user ? 'My portal' : 'Portal login'}
-                </Link>
+              <div className={`pt-3 mt-3 border-t border-gray-100 grid gap-3 ${admissionsOpen && showLogin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {showLogin && (
+                  <Link to={user ? PORTAL : '/login'} className="text-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium">
+                    {user ? 'My portal' : 'Portal login'}
+                  </Link>
+                )}
                 {admissionsOpen && (
                   <Link to={applyTo} className="text-center px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Apply now</Link>
                 )}
@@ -166,7 +172,7 @@ export default function PublicLayout() {
             </li>
             {admissionsOpen && <FooterLink to={applyTo}>Apply online</FooterLink>}
             {!user && <FooterLink to="/register">Create an account</FooterLink>}
-            <FooterLink to={user ? PORTAL : '/login'}>{user ? 'My portal' : 'Portal login'}</FooterLink>
+            {showLogin && <FooterLink to={user ? PORTAL : '/login'}>{user ? 'My portal' : 'Portal login'}</FooterLink>}
           </FooterCol>
 
           <FooterCol title="Contact us">

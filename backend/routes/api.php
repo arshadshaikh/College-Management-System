@@ -48,9 +48,17 @@ Route::get('/app-config', function () {
     // Browser-tab icon: the chosen favicon, else the logo, else the built-in default (null).
     $favicon = ($settings['favicon'] ?? null) ?: (($settings['logo'] ?? null) ?: null);
 
-    // Main site: platform defaults, plus the favicon the super admin picked in Site Settings.
+    // Main site (super admin portal): the platform's own name and logo from Site Settings,
+    // instead of the generic config('site.name') "Admin Panel". Colours stay the defaults.
     if ($college->is_platform) {
-        return response()->json(array_merge($base, ['favicon_url' => $favicon]));
+        $initials = collect(preg_split('/\s+/', trim($college->name)))->filter()
+            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(3)->implode('');
+        return response()->json(array_merge($base, [
+            'name'        => $college->name ?: $base['name'],
+            'short_name'  => $initials ?: $base['short_name'],
+            'logo_url'    => ($settings['logo'] ?? null) ?: null,
+            'favicon_url' => $favicon,
+        ]));
     }
 
     return response()->json(array_merge($base, [

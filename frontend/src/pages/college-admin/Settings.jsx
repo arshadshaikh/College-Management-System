@@ -126,6 +126,7 @@ export default function Settings() {
           primary_color: values.primary_color ?? '',
           logo: values.logo ?? '',
           favicon: values.favicon ?? '',
+          show_login_link: values.show_login_link ?? 'true',
           contact_email: values.contact_email ?? '',
           contact_phone: values.contact_phone ?? '',
           admission_open: values.admission_open ?? 'false',
@@ -195,6 +196,12 @@ export default function Settings() {
             help="The small icon in the browser tab. Use a square PNG or ICO (for example 64 × 64). If none is chosen, the logo is used."
           />
           {err('favicon') && <p className="text-xs text-red-600 mt-1">{err('favicon')}</p>}
+          <Toggle
+            checked={values.show_login_link !== 'false'}
+            onChange={(on) => set('show_login_link', on ? 'true' : 'false')}
+            label="Show login link on the public website"
+            description="When off, the Portal login button is hidden from the website header and footer. The login page still works at /login for anyone who knows the address."
+          />
         </section>
 
         {/* Contact */}
