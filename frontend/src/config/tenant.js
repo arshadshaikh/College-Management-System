@@ -45,6 +45,15 @@ export function getSubdomain() {
 
 export const IS_MAIN_DOMAIN = getSubdomain() === null;
 
+// Link to the main (platform) site: /cms/ on the server, the bare host locally (uos.localhost → localhost).
+export function mainSiteUrl() {
+  if (BASE_PATH) return `/${BASE_PATH}/`;
+  const { protocol, hostname, port } = window.location;
+  const host = hostname.split('.').slice(1).join('.') || hostname;
+  return `${protocol}//${host}${port ? `:${port}` : ''}/`;
+}
+
+
 // Link to a college's public site: subdomain locally, /cms/<slug>/ on the server.
 export function collegeUrl(slug) {
   if (BASE_PATH) return `/${BASE_PATH}/${slug}/`;

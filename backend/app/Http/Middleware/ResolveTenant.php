@@ -68,6 +68,7 @@ class ResolveTenant
         if (!$college) {
             return response()->json([
                 'message' => "College '{$slug}' not found or not yet approved.",
+                'error'   => 'college_not_found',   // the frontend shows a "College not found" page for this
             ], 404);
         }
 

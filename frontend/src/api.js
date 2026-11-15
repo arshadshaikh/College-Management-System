@@ -27,6 +27,12 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const message = err.response?.data?.message;
 
+    // Unknown college address: the public site shows a "College not found" page instead of toasts.
+    if (err.response?.data?.error === 'college_not_found') {
+      return Promise.reject(err);
+    }
+
+
     if (status === 401) {
       localStorage.removeItem('token');
       // Only an expired session inside the portal goes back to login.
