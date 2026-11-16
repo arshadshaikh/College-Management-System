@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
+import RichTextEditor from '../../components/RichTextEditor';
 
 const EMPTY = {
   title: '', slug: '', content: '',
@@ -96,10 +97,16 @@ export default function CmsPageForm() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Content <span className="text-red-500">*</span></label>
-          <textarea rows={10} value={form.content} onChange={set('content')}
-            placeholder="HTML content…" className={`font-mono ${inputCls(errors.content)}`} />
+          <RichTextEditor
+            value={form.content}
+            invalid={!!errors.content}
+            onChange={(html) => {
+              setForm((f) => ({ ...f, content: html }));
+              setErrors((er) => ({ ...er, content: undefined }));
+            }}
+          />
           {errors.content && <p className="text-xs text-red-600 mt-1">{errors.content[0]}</p>}
-          <p className="text-xs text-gray-400 mt-1">HTML is allowed. A rich editor can be added later.</p>
+          <p className="text-xs text-gray-400 mt-1">Scripts and unsafe code are removed when the page is saved.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

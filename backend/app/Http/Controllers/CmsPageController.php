@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CmsPage;
+use App\Services\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -56,10 +57,16 @@ class CmsPageController extends Controller
             'sort_order'       => 'nullable|integer|min:0',
         ]);
 
-        $page = CmsPage::create($request->only([
+        $data = $request->only([
             'title', 'slug', 'content', 'meta_title',
             'meta_description', 'is_published', 'sort_order',
-        ]));
+        ]);
+        // Strip scripts, event handlers and unsafe links before saving.
+        if (array_key_exists('content', $data)) {
+            $data['content'] = HtmlSanitizer::clean($data['content']);
+        }
+
+        $page = CmsPage::create($data);
 
         return response()->json($page, 201);
     }
@@ -84,10 +91,16 @@ class CmsPageController extends Controller
             'sort_order'       => 'nullable|integer|min:0',
         ]);
 
-        $cmsPage->update($request->only([
+        $data = $request->only([
             'title', 'slug', 'content', 'meta_title',
             'meta_description', 'is_published', 'sort_order',
-        ]));
+        ]);
+        // Strip scripts, event handlers and unsafe links before saving.
+        if (array_key_exists('content', $data)) {
+            $data['content'] = HtmlSanitizer::clean($data['content']);
+        }
+
+        $cmsPage->update($data);
 
         return response()->json($cmsPage->fresh());
     }

@@ -14,7 +14,9 @@ const CONTENT = [
   '[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mt-8 [&_h3]:mb-2',
   '[&_p]:my-4 [&_a]:text-indigo-600 [&_a]:underline [&_strong]:text-gray-900',
   '[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_li]:my-1.5',
-  '[&_img]:rounded-xl [&_img]:my-6 [&_table]:w-full [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2',
+  '[&_img]:mx-auto [&_img]:rounded-xl [&_img]:my-6',
+  '[&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_td]:border [&_th]:border [&_td]:border-gray-200 [&_th]:border-gray-200',
+  '[&_td]:p-2 [&_th]:p-2 [&_th]:bg-gray-50 [&_th]:text-left [&_th]:font-semibold [&_th]:text-gray-900 [&_td>p]:my-0 [&_th>p]:my-0 [&_td]:align-top',
   '[&_blockquote]:border-l-4 [&_blockquote]:border-indigo-200 [&_blockquote]:pl-4 [&_blockquote]:italic',
   '[&>*:first-child]:mt-0 [&>h1:first-child+*]:mt-0',
 ].join(' ');
