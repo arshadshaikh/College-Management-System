@@ -231,3 +231,9 @@
   :where(.dark) .from-slate-900:where(:not(.theme-static, .theme-static *)) { --tw-gradient-from: oklch(13% 0.028 261.692); }
   :where(.dark) .to-slate-800:where(:not(.theme-static, .theme-static *)) { --tw-gradient-to: oklch(17% 0.03 263); }
 }
+
+.dark select option,
+.dark select optgroup {
+  background-color: var(--surface);
+  color: #e5e7eb;
+}

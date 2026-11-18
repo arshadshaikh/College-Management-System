@@ -135,6 +135,11 @@ class CollegeInitializationService
                 'cms.banners.update', 'cms.banners.destroy',
                 'cms.media.index', 'cms.media.store', 'cms.media.show', 'cms.media.destroy',
                 'audit-logs.index',
+                // Timetable
+                'courses.index', 'courses.store', 'courses.update', 'courses.destroy',
+                'timetable.index', 'timetable.save', 'timetable.destroy', 'menu.timetable',
+                'applications.shift',
+                'timetable.copy',
                 // ── MENU (navigation) privileges — REQUIRED or the sidebar is empty ──
                 'menu.programs', 'menu.applications', 'menu.challans', 'menu.students',
                 'menu.cms',
@@ -155,6 +160,7 @@ class CollegeInitializationService
                 'cms.media.index', 'cms.media.show',
                 // ── MENU (navigation) privileges for students ──
                 'menu.student.profile', 'menu.student.programs', 'menu.student.applications', 'menu.student.challans',
+                'timetable.my', 'menu.student.timetable',
             ],
         ];
 
@@ -216,6 +222,8 @@ class CollegeInitializationService
             ['key' => 'require_complete_profile', 'value' => 'true', 'group' => 'admission'],
             ['key' => 'late_fee_amount',       'value' => '0',     'group' => 'fees'],
             ['key' => 'late_fee_partial',      'value' => 'from_day_one', 'group' => 'fees'],
+            ['key' => 'timetable_days',        'value' => '1,2,3,4,5',   'group' => 'timetable'],
+            ['key' => 'shifts',                'value' => 'morning',     'group' => 'timetable'],
         ];
 
         foreach ($settings as $s) {

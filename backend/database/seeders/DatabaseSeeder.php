@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             CollegePrivilegeSeeder::class,  // college approve/reject/suspend privileges
             ProgramPrivilegeSeeder::class,  // programs + applications privileges
             ProfilePrivilegeSeeder::class,  // applicant profile (student side)
+            TimetablePrivilegeSeeder::class, // courses + class timetable
             ChallanPrivilegeSeeder::class,  // fee/challan privileges
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student

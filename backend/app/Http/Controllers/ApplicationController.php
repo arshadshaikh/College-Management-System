@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Services\ApplicantProfileService;
 use App\Services\ChallanService;
 use App\Services\PolicyService;
+use App\Services\TimetableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -100,6 +101,10 @@ class ApplicationController extends Controller
             'program_id'     => 'required|exists:programs,id',
             'semester_no'    => 'required|integer|min:1',
             'admission_year' => 'required|integer|min:2020|max:2099',
+            // Shift the student wants to study in (Settings → Timetable). Optional when only one shift runs.
+            'shift'          => ['nullable', 'string', \Illuminate\Validation\Rule::in(app(TimetableService::class)->enabledShifts())],
+        ], [
+            'shift.in' => 'Choose one of the shifts this college runs.',
         ]);
 
         $college = app('current_college');
@@ -145,6 +150,7 @@ class ApplicationController extends Controller
             'program_id'     => $program->id,
             'semester_no'    => $request->semester_no,
             'admission_year' => $request->admission_year,
+            'shift'          => $request->shift ?: app(TimetableService::class)->enabledShifts()[0],
             'status'         => 'submitted',
             'profile_snapshot' => $profiles->snapshot($student),
             'submitted_at'     => now(),
@@ -176,6 +182,36 @@ class ApplicationController extends Controller
             'profile_changes' => $application->profile_snapshot
                 ? app(ApplicantProfileService::class)->changesSince($application->profile_snapshot, $application->student)
                 : [],
+            // Shifts this college runs, for the Shift row (label + change dropdown).
+            'shift_options' => app(TimetableService::class)->shiftOptions(),
+        ]);
+    }
+
+    // ── College admin: move a student to another shift ────────────
+    // PUT /api/applications/{application}/shift
+    public function updateShift(Request $request, Application $application)
+    {
+        $request->validate([
+            'shift' => ['required', 'string', \Illuminate\Validation\Rule::in(app(TimetableService::class)->enabledShifts())],
+        ], [
+            'shift.in' => 'Choose one of the shifts this college runs.',
+        ]);
+
+        if (in_array($application->status, ['rejected', 'withdrawn'])) {
+            return response()->json(['message' => 'This application is closed.'], 422);
+        }
+
+        $old = $application->shift;
+        if ($old !== $request->shift) {
+            DB::transaction(function () use ($application, $request, $old) {
+                $application->update(['shift' => $request->shift]);
+                AuditLog::record('application.shift_changed', $application, ['shift' => $request->shift], ['shift' => $old]);
+            });
+        }
+
+        return response()->json([
+            'message' => 'Shift updated.',
+            'shift'   => $application->shift,
         ]);
     }
 

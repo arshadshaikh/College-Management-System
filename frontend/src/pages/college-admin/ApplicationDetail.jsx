@@ -160,6 +160,9 @@ export default function ApplicationDetail() {
             <Row label="Program"   value={app.program?.name} />
             <Row label="Code"      value={app.program?.code} />
             <Row label="Level"     value={app.program?.degree_level} />
+            {(app.shift_options?.length > 1 || (app.shift && app.shift !== 'morning')) && (
+              <Row label="Shift" value={<ShiftPicker app={app} canChange={hasPrv('applications.shift')} onChanged={load} />} />
+            )}
             <Row label="Semester"  value={app.semester_no} />
             <Row label="Year"      value={app.admission_year} />
             <Row label="Submitted" value={new Date(app.created_at).toLocaleString()} />
@@ -272,6 +275,36 @@ export default function ApplicationDetail() {
         </div>
       )}
     </div>
+  );
+}
+
+// Shows the application's shift; admins with applications.shift can move the student.
+function ShiftPicker({ app, canChange, onChanged }) {
+  const [saving, setSaving] = useState(false);
+  const options = app.shift_options ?? [];
+  const label = options.find((o) => o.key === app.shift)?.label ?? app.shift;
+  const closed = ['rejected', 'withdrawn'].includes(app.status);
+
+  if (!canChange || closed || options.length < 2) return label;
+
+  const change = async (e) => {
+    const shift = e.target.value;
+    if (shift === app.shift) return;
+    setSaving(true);
+    try {
+      await api.put(`/applications/${app.id}/shift`, { shift });
+      toast.success('Shift updated.');
+      onChanged();
+    } catch { /* api.js shows the error */ }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <select value={app.shift} onChange={change} disabled={saving}
+      className="px-2 py-1 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+      {!options.some((o) => o.key === app.shift) && <option value={app.shift}>{label} (not running)</option>}
+    </select>
   );
 }
 

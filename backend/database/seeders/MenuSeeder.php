@@ -30,6 +30,7 @@ class MenuSeeder extends Seeder
             ['slug'=>'menu.programs',     'name'=>'Programs',     'route'=>'/programs',     'icon'=>'fa-graduation-cap', 'roles'=>['college_admin']],
             ['slug'=>'menu.applications', 'name'=>'Applications', 'route'=>'/applications', 'icon'=>'fa-file-alt',       'roles'=>['college_admin']],
             ['slug'=>'menu.challans',     'name'=>'Challans',     'route'=>'/challans',     'icon'=>'fa-receipt',        'roles'=>['college_admin']],
+            ['slug'=>'menu.timetable',    'name'=>'Timetable',    'route'=>'/timetable',    'icon'=>'fa-calendar-alt',   'roles'=>['college_admin']],
             ['slug'=>'menu.cms',          'name'=>'CMS',          'route'=>null,            'icon'=>'fa-globe',          'roles'=>['college_admin','super_admin'], 'children'=>[
                 ['slug'=>'menu.cms.pages',         'name'=>'Pages',         'route'=>'/cms/pages',         'icon'=>'fa-file'],
                 ['slug'=>'menu.cms.menus',         'name'=>'Menus',         'route'=>'/cms/menus',         'icon'=>'fa-bars'],
@@ -44,6 +45,7 @@ class MenuSeeder extends Seeder
             ['slug'=>'menu.student.programs',     'name'=>'Programs',         'route'=>'/programs',         'icon'=>'fa-graduation-cap', 'roles'=>['student']],
             ['slug'=>'menu.student.applications', 'name'=>'My Applications',  'route'=>'/my-applications',  'icon'=>'fa-file-alt',       'roles'=>['student']],
             ['slug'=>'menu.student.challans',     'name'=>'My Challans',      'route'=>'/my-challans',      'icon'=>'fa-receipt',        'roles'=>['student']],
+            ['slug'=>'menu.student.timetable',    'name'=>'My Timetable',     'route'=>'/my-timetable',     'icon'=>'fa-calendar-alt',   'roles'=>['student']],
 
             // ── Shared ───────────────────────────────────────────
             ['slug'=>'menu.audit-logs', 'name'=>'Audit Logs', 'route'=>'/audit-logs', 'icon'=>'fa-history', 'roles'=>['super_admin','college_admin']],

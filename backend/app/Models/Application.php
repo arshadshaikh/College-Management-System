@@ -14,7 +14,7 @@ class Application extends Model
     protected $fillable = [
         'application_no', 'college_id', 'student_id',
         'program_id', 'status', 'rejection_reason',
-        'reviewed_by', 'reviewed_at', 'semester_no', 'admission_year',
+        'reviewed_by', 'reviewed_at', 'semester_no', 'shift', 'admission_year',
         'correction_note', 'profile_snapshot', 'submitted_at',
     ];
 

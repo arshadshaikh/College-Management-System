@@ -4,6 +4,7 @@ import api from '../../api';
 import Toggle from '../../components/Toggle';
 import { Link } from 'react-router-dom';
 import { PORTAL } from '../../config/app';
+import TimetableSettings, { withKeys } from './TimetableSettings';
 
 // Picks an image from the Media Library (images only) and stores its URL in a setting (`logo`, `favicon`).
 function LogoPicker({ value, onChange, label = 'Logo', help, small = false }) {
@@ -81,6 +82,10 @@ export default function Settings() {
   const [values, setValues] = useState({});
   const [levels, setLevels] = useState([]);   // education level catalog (config/admission.php)
   const [docTypes, setDocTypes] = useState([]); // applicant documents: master list + this college's choices
+  const [periods, setPeriods] = useState([]);   // timetable periods (all shifts)
+  const [terms, setTerms] = useState([]);       // academic terms
+  const [shiftOptions, setShiftOptions] = useState([]);
+  const [dayOptions, setDayOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -91,6 +96,10 @@ export default function Settings() {
         setValues(data.settings ?? {});
         setLevels(data.education_levels ?? []);
         setDocTypes(data.document_types ?? []);
+        setPeriods(withKeys(data.timetable_periods ?? []));
+        setTerms(withKeys(data.academic_terms ?? []));
+        setShiftOptions(data.shift_options ?? []);
+        setDayOptions(data.day_options ?? []);
       })
       .catch(() => toast.error('Could not load settings.'))
       .finally(() => setLoading(false));
@@ -137,7 +146,15 @@ export default function Settings() {
           late_fee_mode: values.late_fee_mode ?? 'off',
           late_fee_amount: values.late_fee_amount ?? '0',
           late_fee_partial: values.late_fee_partial ?? 'from_day_one',
+          shifts: values.shifts || 'morning',
+          timetable_days: values.timetable_days ?? '',
         },
+        // Timetable periods of every shift (the full list; removed rows are deleted).
+        timetable_periods: periods.map(({ id, shift, name, start_time, end_time, is_break }) =>
+          ({ id, shift, name, start_time, end_time, is_break: !!is_break })),
+        // Academic terms (the full list; removed rows are deleted with their timetables).
+        academic_terms: terms.map(({ id, name, start_date, end_date, is_current }) =>
+          ({ id, name, start_date, end_date, is_current: !!is_current })),
         // Every applicant document, certificates included (Required / Optional / Not asked).
         document_types: docTypes
           .map(({ id, is_active, is_required }) => ({ id, is_active, is_required })),
@@ -145,6 +162,8 @@ export default function Settings() {
       };
       const { data } = await api.put('/settings', payload);
       setValues(data.settings ?? values);
+      if (data.timetable_periods) setPeriods(withKeys(data.timetable_periods));
+      if (data.academic_terms) setTerms(withKeys(data.academic_terms));
       toast.success('Settings saved.');
     } catch (err) {
       if (err.response?.status === 422) {
@@ -349,6 +368,14 @@ export default function Settings() {
             </>
           )}
         </section>
+
+        <TimetableSettings
+          values={values} set={set}
+          periods={periods} setPeriods={setPeriods}
+          terms={terms} setTerms={setTerms}
+          shiftOptions={shiftOptions} dayOptions={dayOptions}
+          errors={errors}
+        />
 
         <div className="flex gap-3">
           <button type="submit" disabled={saving}

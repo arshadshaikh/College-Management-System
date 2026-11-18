@@ -28,6 +28,8 @@ import ProgramList from './pages/college-admin/ProgramList';
 import ProgramForm from './pages/college-admin/ProgramForm';
 import ProgramDetail from './pages/college-admin/ProgramDetail';
 import ProgramFees from './pages/college-admin/ProgramFees';
+import ProgramCourses from './pages/college-admin/ProgramCourses';
+import Timetable from './pages/college-admin/Timetable';
 import ApplicationList from './pages/college-admin/ApplicationList';
 import ApplicationDetail from './pages/college-admin/ApplicationDetail';
 import StudentList from './pages/college-admin/StudentList';
@@ -50,6 +52,7 @@ import CmsBannerList from './pages/college-admin/CmsBannerList';
 import CmsBannerForm from './pages/college-admin/CmsBannerForm';
 import MediaLibrary from './pages/college-admin/MediaLibrary';
 import MyApplications from './pages/student/MyApplications';
+import MyTimetable from './pages/student/MyTimetable';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
@@ -134,6 +137,9 @@ export default function App() {
         <Route path="programs/:id/edit" element={<PrivilegeRoute slug="programs.update"><ProgramForm /></PrivilegeRoute>} />
 
         <Route path="programs/:id/fees" element={<PrivilegeRoute slug="programs.fee-structures"><ProgramFees /></PrivilegeRoute>} />
+        <Route path="programs/:id/courses" element={<PrivilegeRoute slug="courses.index"><ProgramCourses /></PrivilegeRoute>} />
+
+        <Route path="timetable" element={<PrivilegeRoute slug="timetable.index"><Timetable /></PrivilegeRoute>} />
 
         {/* Applications */}
         <Route path="applications" element={<PrivilegeRoute slug="applications.index"><ApplicationList /></PrivilegeRoute>} />
@@ -179,6 +185,7 @@ export default function App() {
         {/* Student Routes */}
         <Route path="my-profile" element={<PrivilegeRoute slug="profile.show"><MyProfile /></PrivilegeRoute>} />
         <Route path="my-applications" element={<PrivilegeRoute slug="applications.my"><MyApplications /></PrivilegeRoute>} />
+        <Route path="my-timetable" element={<PrivilegeRoute slug="timetable.my"><MyTimetable /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
         <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />

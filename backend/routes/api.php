@@ -12,6 +12,8 @@ use App\Http\Controllers\PrivilegeGroupController;
 use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ChallanController;
@@ -189,6 +191,19 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::put('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'updateFeeStructure']);
     Route::delete('programs/{program}/fee-structures/{feeStructure}', [ProgramController::class, 'destroyFeeStructure']);
 
+    // Courses per program semester (timetable)
+    Route::get('programs/{program}/courses', [CourseController::class, 'index']);
+    Route::post('programs/{program}/courses', [CourseController::class, 'store']);
+    Route::put('courses/{course}', [CourseController::class, 'update']);
+    Route::delete('courses/{course}', [CourseController::class, 'destroy']);
+    
+    // Class timetable (admin editor)
+    Route::get('timetable', [TimetableController::class, 'index']);
+    Route::post('timetable', [TimetableController::class, 'save']);
+    Route::post('timetable/copy', [TimetableController::class, 'copy']);
+    Route::get('timetable/my', [TimetableController::class, 'my']);
+    Route::delete('timetable/{entry}', [TimetableController::class, 'destroy']);
+
     // Applicant profile (student, own data only)
     Route::get('profile', [ProfileController::class, 'show']);
     Route::put('profile', [ProfileController::class, 'update']);
@@ -208,6 +223,7 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('applications/{application}/reject', [ApplicationController::class, 'reject']);
     Route::post('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
     Route::post('applications/{application}/return', [ApplicationController::class, 'returnForCorrection']);
+    Route::put('applications/{application}/shift', [ApplicationController::class, 'updateShift']);
     Route::post('applications/{application}/resubmit', [ApplicationController::class, 'resubmit']);
 
     // Student

@@ -75,6 +75,7 @@ class StudentAuthController extends Controller
                     'programs.index', 'programs.show',
                     'applications.my', 'applications.store', 'applications.withdraw', 'applications.resubmit',
                     'challans.my', 'challans.upload-slip', 'challans.pdf',
+                    'timetable.my',
                     'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download', 'profile.documents.destroy',
                 ])->pluck('id');
 

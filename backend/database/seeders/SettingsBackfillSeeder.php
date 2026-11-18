@@ -39,6 +39,8 @@ class SettingsBackfillSeeder extends Seeder
             'late_fee_partial'          => ['value' => 'from_day_one','group' => 'fees'],
             'required_education_levels' => ['value' => 'matric,intermediate', 'group' => 'admission'],
             'require_complete_profile'  => ['value' => 'true', 'group' => 'admission'],
+            'timetable_days'            => ['value' => '1,2,3,4,5',   'group' => 'timetable'],
+            'shifts'                    => ['value' => 'morning',     'group' => 'timetable'],
         ];
 
         // withoutGlobalScopes: run in CLI with no "current college", so we must

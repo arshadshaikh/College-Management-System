@@ -14,7 +14,8 @@ export default function ApplyForm() {
   const [searchParams] = useSearchParams();   // ?program=ID from the public "Apply now" button
   const [programs, setPrograms] = useState([]);
   const [completeness, setCompleteness] = useState(null);
-  const [form, setForm] = useState({ program_id: searchParams.get('program') ?? '', semester_no: 1, admission_year: new Date().getFullYear() });
+  const [form, setForm] = useState({ program_id: searchParams.get('program') ?? '', semester_no: 1, admission_year: new Date().getFullYear(), shift: '' });
+  const [shifts, setShifts] = useState([]);   // shifts the college runs (Settings → Timetable)
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState(null);   // full profile payload, shown on the review step
@@ -31,6 +32,13 @@ export default function ApplyForm() {
         .filter((a) => a.status !== 'withdrawn' && a.status !== 'rejected')
         .map((a) => String(a.program_id))))
       .catch(() => {});
+    api.get('/public/settings')
+      .then(({ data }) => {
+        const keys = (data.settings?.shifts || 'morning').split(',').map((s) => s.trim()).filter(Boolean);
+        setShifts(keys);
+        if (keys.length === 1) setForm((f) => ({ ...f, shift: keys[0] }));
+      })
+      .catch(() => {});
     api.get('/profile')
       .then(({ data }) => { setCompleteness(data.completeness); setProfile(data); })
       .catch(() => {});
@@ -41,6 +49,10 @@ export default function ApplyForm() {
     e.preventDefault();
     if (!form.program_id) {
       setErrors({ program_id: ['Please choose a program.'] });
+      return;
+    }
+    if (shifts.length > 1 && !form.shift) {
+      setErrors({ shift: ['Please choose a shift.'] });
       return;
     }
     setErrors({});
@@ -110,6 +122,7 @@ export default function ApplyForm() {
 
       {step === 'review' && selected && (
         <ReviewCard program={selected} form={form} profile={profile}
+          showShift={shifts.length > 1}
           agree={agree} setAgree={setAgree} saving={saving}
           onBack={() => setStep('form')} onSubmit={submit} />
       )}
@@ -131,6 +144,24 @@ export default function ApplyForm() {
             <p className="text-xs text-gray-500 mt-2">Eligibility: {selected.eligibility_criteria}</p>
           )}
         </div>
+
+        {shifts.length > 1 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Shift <span className="text-red-500">*</span></label>
+            <div className="flex flex-wrap gap-2">
+              {shifts.map((key) => (
+                <button type="button" key={key}
+                  onClick={() => { setForm({ ...form, shift: key }); setErrors({ ...errors, shift: undefined }); }}
+                  className={`px-4 py-2 rounded-lg text-sm border ${form.shift === key
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
+                  {shiftLabel(key)}
+                </button>
+              ))}
+            </div>
+            {errors.shift && <p className="text-xs text-red-600 mt-1">{errors.shift[0]}</p>}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -160,6 +191,8 @@ export default function ApplyForm() {
   );
 }
 
+const shiftLabel = (key) => (key ? key.charAt(0).toUpperCase() + key.slice(1) : '');
+
 const Row = ({ label, value }) => (
   <div className="flex justify-between gap-4 py-1.5 text-sm">
     <span className="text-gray-500">{label}</span>
@@ -168,7 +201,7 @@ const Row = ({ label, value }) => (
 );
 
 // One-page summary of what the college will receive, plus a declaration.
-function ReviewCard({ program, form, profile, agree, setAgree, saving, onBack, onSubmit }) {
+function ReviewCard({ program, form, profile, showShift, agree, setAgree, saving, onBack, onSubmit }) {
   const u = profile?.user ?? {};
   const p = profile?.profile ?? {};
   const levelLabel = (k) => profile?.levels?.find((l) => l.key === k)?.label ?? k;
@@ -186,6 +219,7 @@ function ReviewCard({ program, form, profile, agree, setAgree, saving, onBack, o
         <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Program</h3>
         <div className="divide-y divide-gray-100">
           <Row label="Program" value={`${program.name} (${program.code})`} />
+          {showShift && <Row label="Shift" value={shiftLabel(form.shift)} />}
           <Row label="Semester" value={form.semester_no} />
           <Row label="Admission year" value={form.admission_year} />
         </div>

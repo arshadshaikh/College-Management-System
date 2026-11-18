@@ -6,6 +6,9 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use App\Models\CollegeDocumentType;
 use App\Models\RequiredDocumentType;
+use App\Models\TimetablePeriod;
+use App\Models\AcademicTerm;
+use Illuminate\Support\Facades\DB;
 use App\Services\ApplicantProfileService;
 
 class SettingController extends Controller
@@ -24,6 +27,12 @@ class SettingController extends Controller
             'education_levels' => collect(config('admission.education_levels', []))
                 ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
             'document_types' => $this->collegeDocumentTypes(),
+            // Timetable: the college's daily periods (working days are the setting timetable_days).
+            'timetable_periods' => $this->timetablePeriods(),
+            'academic_terms'    => $this->academicTerms(),
+            // Catalogs for the Timetable section (choices live in config/timetable.php).
+            'shift_options' => collect(config('timetable.shifts'))->map(fn ($l, $k) => ['key' => $k, 'label' => $l])->values(),
+            'day_options'   => collect(config('timetable.days'))->map(fn ($l, $k) => ['key' => $k, 'label' => $l])->values(),
         ]);
     }
 
@@ -50,6 +59,31 @@ class SettingController extends Controller
                     if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
                 }
             }],
+            // Timetable working days: CSV of ISO day numbers, 1 = Monday ... 7 = Sunday.
+            'settings.timetable_days' => ['nullable', 'string', 'regex:/^[1-7](,[1-7])*$/'],
+            // Shifts the college runs: CSV of keys from config/timetable.php, at least one.
+            'settings.shifts' => ['nullable', 'string', function ($attr, $value, $fail) {
+                $keys = array_filter(array_map('trim', explode(',', (string) $value)));
+                if (!$keys) $fail('Choose at least one shift.');
+                foreach ($keys as $k) {
+                    if (!array_key_exists($k, config('timetable.shifts'))) $fail("Unknown shift: {$k}.");
+                }
+            }],
+            // Timetable periods: the FULL list (rows missing from it are deleted).
+            'timetable_periods'              => 'nullable|array|max:20',
+            'timetable_periods.*.id'         => 'nullable|integer',
+            'timetable_periods.*.shift'      => ['required', 'string', \Illuminate\Validation\Rule::in(array_keys(config('timetable.shifts')))],
+            'timetable_periods.*.name'       => 'required|string|max:50',
+            'timetable_periods.*.start_time' => 'required|date_format:H:i',
+            'timetable_periods.*.end_time'   => 'required|date_format:H:i',
+            'timetable_periods.*.is_break'   => 'required|boolean',
+            // Academic terms: the FULL list (rows missing from it are deleted with their timetables).
+            'academic_terms'              => 'nullable|array|max:50',
+            'academic_terms.*.id'         => 'nullable|integer',
+            'academic_terms.*.name'       => 'required|string|max:50|distinct:ignore_case',
+            'academic_terms.*.start_date' => 'required|date',
+            'academic_terms.*.end_date'   => 'required|date',
+            'academic_terms.*.is_current' => 'required|boolean',
             'document_types'               => 'nullable|array',
             'document_types.*.id'          => 'required|integer|exists:required_document_types,id',
             'document_types.*.is_active'   => 'required|boolean',
@@ -68,6 +102,19 @@ class SettingController extends Controller
                 }
             }],
         ]);
+
+        if ($request->has('timetable_periods')) {
+            $this->validatePeriodTimes($request->input('timetable_periods', []));
+        }
+        $terms = $request->input('academic_terms', []);
+        foreach ($terms as $i => $t) {
+            if (strtotime($t['end_date']) <= strtotime($t['start_date'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages(["academic_terms.{$i}.end_date" => "\"{$t['name']}\" must end after it starts."]);
+            }
+        }
+        if ($request->has('academic_terms') && count($terms) && collect($terms)->where('is_current', true)->count() !== 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['academic_terms' => 'Mark exactly one term as current.']);
+        }
 
         $incoming = $request->input('settings', []);
         $updated  = [];
@@ -91,13 +138,145 @@ class SettingController extends Controller
             );
         }
 
+        // Only when the screen sent the list, so older callers never wipe periods.
+        if ($request->has('timetable_periods')) {
+            $this->syncTimetablePeriods($request->input('timetable_periods', []));
+        }
+        if ($request->has('academic_terms')) {
+            $this->syncAcademicTerms($request->input('academic_terms', []));
+        }
+
         $settings = Setting::all(['key', 'value', 'group']);
 
         return response()->json([
             'message'      => 'Settings updated.',
             'updated_keys' => $updated,
             'settings'     => $settings->pluck('value', 'key'),
+            'timetable_periods' => $this->timetablePeriods(),
+            'academic_terms'    => $this->academicTerms(),
         ]);
+    }
+
+    // ── Academic terms ───────────────────────────────────────────
+
+    private function academicTerms(): array
+    {
+        return AcademicTerm::withCount('timetableEntries')
+            ->orderByDesc('start_date')->get()
+            ->map(fn ($t) => [
+                'id'            => $t->id,
+                'name'          => $t->name,
+                'start_date'    => $t->start_date?->format('Y-m-d'),
+                'end_date'      => $t->end_date?->format('Y-m-d'),
+                'is_current'    => $t->is_current,
+                'entries_count' => $t->timetable_entries_count,   // classes on this term's timetables
+            ])
+            ->values()
+            ->all();
+    }
+
+    // Same pattern as periods: keep sent ids, create new rows, delete the rest
+    // (a deleted term takes its timetables with it).
+    private function syncAcademicTerms(array $rows): void
+    {
+        DB::transaction(function () use ($rows) {
+            $keep = [];
+            foreach ($rows as $row) {
+                $data = [
+                    'name'       => trim($row['name']),
+                    'start_date' => $row['start_date'],
+                    'end_date'   => $row['end_date'],
+                    'is_current' => (bool) $row['is_current'],
+                ];
+                $term = !empty($row['id']) ? AcademicTerm::find($row['id']) : null;
+                if ($term) {
+                    $term->update($data);
+                } else {
+                    $term = AcademicTerm::create($data);
+                }
+                $keep[] = $term->id;
+            }
+
+            AcademicTerm::whereNotIn('id', $keep)->get()->each->delete();
+        });
+    }
+
+    // ── Timetable periods ────────────────────────────────────────
+
+    private function timetablePeriods(): array
+    {
+        // Tenant scope limits this to the current college.
+        return TimetablePeriod::withCount('entries')
+            ->orderBy('sort_order')->orderBy('start_time')->get()
+            ->map(fn ($p) => [
+                'id'            => $p->id,
+                'shift'         => $p->shift,
+                'name'          => $p->name,
+                'start_time'    => substr($p->start_time, 0, 5),   // "08:30"
+                'end_time'      => substr($p->end_time, 0, 5),
+                'is_break'      => $p->is_break,
+                'entries_count' => $p->entries_count,             // classes placed in this period
+            ])
+            ->values()
+            ->all();
+    }
+
+    // End after start, and no two periods of the SAME shift overlap
+    // (morning and evening plans are separate, so they may share clock times).
+    private function validatePeriodTimes(array $rows): void
+    {
+        $errors = [];
+        $byShift = collect($rows)->map(fn ($r, $i) => $r + ['_i' => $i])->groupBy('shift');
+
+        foreach ($byShift as $shiftRows) {
+            $sorted = $shiftRows->sortBy('start_time')->values();
+            foreach ($sorted as $n => $row) {
+                if ($row['end_time'] <= $row['start_time']) {
+                    $errors["timetable_periods.{$row['_i']}.end_time"] = "\"{$row['name']}\" must end after it starts.";
+                }
+                $next = $sorted[$n + 1] ?? null;
+                if ($next && $next['start_time'] < $row['end_time']) {
+                    $errors["timetable_periods.{$next['_i']}.start_time"] = "\"{$next['name']}\" overlaps \"{$row['name']}\".";
+                }
+            }
+        }
+
+        if ($errors) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+        }
+    }
+
+    // Replace this college's periods with the submitted list, keeping the ids that were sent
+    // (so classes already placed in a period stay). Deleting a period deletes its classes.
+    private function syncTimetablePeriods(array $rows): void
+    {
+        DB::transaction(function () use ($rows) {
+            $keep = [];
+            // Saved in time order, so sort_order follows the clock.
+            $sorted = collect($rows)->sortBy('start_time')->values();
+
+            foreach ($sorted as $order => $row) {
+                $data = [
+                    'shift'      => $row['shift'],
+                    'name'       => trim($row['name']),
+                    'start_time' => $row['start_time'],
+                    'end_time'   => $row['end_time'],
+                    'is_break'   => (bool) $row['is_break'],
+                    'sort_order' => $order + 1,
+                ];
+
+                // Tenant scope: an id from another college is not found, so a new row is made.
+                $period = !empty($row['id']) ? TimetablePeriod::find($row['id']) : null;
+                if ($period) {
+                    $period->update($data);
+                } else {
+                    $period = TimetablePeriod::create($data);
+                }
+                $keep[] = $period->id;
+            }
+
+            TimetablePeriod::whereNotIn('id', $keep)->get()->each->delete();
+        });
     }
 
     // Applicant document types for the Settings screen: master list + this college's choices.
@@ -127,7 +306,7 @@ class SettingController extends Controller
 
     public function publicIndex()
     {
-        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone', 'admission_open', 'show_login_link'];
+        $keys = ['logo', 'primary_color', 'contact_email', 'contact_phone', 'admission_open', 'show_login_link', 'shifts'];
         $settings = Setting::whereIn('key', $keys)->pluck('value', 'key');
         $college = app('current_college');
         return response()->json([
