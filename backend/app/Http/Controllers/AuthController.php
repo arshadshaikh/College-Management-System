@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,7 @@ class AuthController extends Controller
         $user = User::where('cnic_no', $request->cnic_no)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            $this->logFailedLogin($request, $user ? 'wrong_password' : 'unknown_cnic');
             return response()->json(['message' => 'Invalid CNIC or password'], 401);
         }
 
@@ -34,17 +36,20 @@ class AuthController extends Controller
             if ($college) {
                 // On a college subdomain: user must belong to THIS college.
                 if ((int) $user->college_id !== (int) $college->id) {
+                    $this->logFailedLogin($request, 'wrong_college');
                     return response()->json(['message' => 'Invalid CNIC or password'], 401);
                 }
             } else {
                 // On the main domain: only super admins allowed (handled by the
                 // outer !isSuperAdmin guard — a non-super-admin here is rejected).
+                $this->logFailedLogin($request, 'wrong_college');
                 return response()->json(['message' => 'Invalid CNIC or password'], 401);
             }
         }
         // ───────────────────────────────────────────────────────────────────
 
         if (!$user->is_active) {
+            $this->logFailedLogin($request, 'account_deactivated');
             return response()->json(['message' => 'Account is deactivated'], 403);
         }
 
@@ -56,12 +61,28 @@ class AuthController extends Controller
 
         $token = JWTAuth::fromUser($user);
 
+        // Auth has no user yet on this request, so pass actor + tenant explicitly.
+        AuditLog::record('auth.login', $user, [], [], $user->id, $user->college_id);
+
         return response()->json([
             'access_token' => $token,
             'token_type'   => 'bearer',
             'expires_in'   => config('jwt.ttl') * 60,
             'user'         => $user->load('activeRole', 'activeRoles', 'college'),
             'college'      => $user->college,
+        ]);
+    }
+
+    /**
+     * Failed login attempt. Never links to an account (no user_id) so one
+     * college cannot learn about another college's users; the typed CNIC is
+     * kept so admins can spot repeated attempts.
+     */
+    private function logFailedLogin(Request $request, string $reason): void
+    {
+        AuditLog::record('auth.login_failed', null, [
+            'cnic_no' => $request->cnic_no,
+            'reason'  => $reason,
         ]);
     }
 
@@ -79,8 +100,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
+        $user = $request->user();
+        AuditLog::record('auth.logout', $user, [], [], $user->id, $user->college_id);
+
         JWTAuth::invalidate(JWTAuth::getToken());
 
         return response()->json(['message' => 'Logged out successfully']);
@@ -111,6 +135,7 @@ class AuthController extends Controller
         }
 
         $user->update(['password' => $request->password]);
+        AuditLog::record('auth.password_changed', $user, [], [], $user->id, $user->college_id);
 
         // Invalidate current token so user must re-login
         JWTAuth::invalidate(JWTAuth::getToken());
@@ -148,7 +173,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'You do not have access to this role.'], 403);
         }
 
+        $oldRole = $user->activeRole?->name;
         $user->update(['active_role_id' => $request->role_id]);
+        AuditLog::record('auth.role_switched', $user, ['role' => $role->name], ['role' => $oldRole], $user->id, $user->college_id);
         // $user->load('activeRole', 'activeRoles');
         $user->load('activeRole', 'activeRoles', 'college');
 

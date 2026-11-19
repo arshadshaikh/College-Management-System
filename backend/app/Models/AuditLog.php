@@ -29,17 +29,21 @@ class AuditLog extends Model
      * @param Model|null $subject  the model acted upon
      * @param array $newValues  optional context / changed values
      * @param array $oldValues  optional prior values
+     * @param int|null $userId     actor override (login: Auth has no user yet)
+     * @param int|null $collegeId  tenant override (login: use the user's college)
      */
     public static function record(
         string $action,
         ?Model $subject = null,
         array $newValues = [],
-        array $oldValues = []
+        array $oldValues = [],
+        ?int $userId = null,
+        ?int $collegeId = null
     ): self {
         return self::create([
             // Tenant from the resolved college; null on the main domain.
-            'college_id'     => app()->bound('current_college') ? app('current_college')->id : null,
-            'user_id'        => Auth::id(),
+            'college_id'     => $collegeId ?? (app()->bound('current_college') ? app('current_college')->id : null),
+            'user_id'        => $userId ?? Auth::id(),
             'action'         => $action,
             'auditable_type' => $subject ? get_class($subject) : null,
             'auditable_id'   => $subject?->getKey(),
