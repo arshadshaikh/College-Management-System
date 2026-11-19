@@ -220,6 +220,7 @@ class CollegeInitializationService
             ['key' => 'late_fee_mode',         'value' => 'off',   'group' => 'fees'],
             ['key' => 'required_education_levels', 'value' => 'matric,intermediate', 'group' => 'admission'],
             ['key' => 'require_complete_profile', 'value' => 'true', 'group' => 'admission'],
+            ['key' => 'post_approval_editable_fields', 'value' => 'phone,email,present_address,emergency_contact', 'group' => 'admission'],
             ['key' => 'late_fee_amount',       'value' => '0',     'group' => 'fees'],
             ['key' => 'late_fee_partial',      'value' => 'from_day_one', 'group' => 'fees'],
             ['key' => 'timetable_days',        'value' => '1,2,3,4,5',   'group' => 'timetable'],

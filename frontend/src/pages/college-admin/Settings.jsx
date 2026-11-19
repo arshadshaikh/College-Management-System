@@ -81,6 +81,7 @@ function LogoPicker({ value, onChange, label = 'Logo', help, small = false }) {
 export default function Settings() {
   const [values, setValues] = useState({});
   const [levels, setLevels] = useState([]);   // education level catalog (config/admission.php)
+  const [openFieldOptions, setOpenFieldOptions] = useState([]); // profile fields a college may reopen after approval
   const [docTypes, setDocTypes] = useState([]); // applicant documents: master list + this college's choices
   const [periods, setPeriods] = useState([]);   // timetable periods (all shifts)
   const [terms, setTerms] = useState([]);       // academic terms
@@ -95,6 +96,7 @@ export default function Settings() {
       .then(({ data }) => {
         setValues(data.settings ?? {});
         setLevels(data.education_levels ?? []);
+        setOpenFieldOptions(data.post_approval_field_options ?? []);
         setDocTypes(data.document_types ?? []);
         setPeriods(withKeys(data.timetable_periods ?? []));
         setTerms(withKeys(data.academic_terms ?? []));
@@ -116,6 +118,14 @@ export default function Settings() {
   const toggleLevel = (key, on) => {
     const next = on ? [...requiredLevels, key] : requiredLevels.filter((k) => k !== key);
     set('required_education_levels', levels.map((l) => l.key).filter((k) => next.includes(k)).join(','));
+  };
+
+  // post_approval_editable_fields: comma list of profile field keys, in catalog order.
+  const openFields = (values.post_approval_editable_fields ?? '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+  const toggleOpenField = (key, on) => {
+    const next = on ? [...openFields, key] : openFields.filter((k) => k !== key);
+    set('post_approval_editable_fields', openFieldOptions.map((f) => f.key).filter((k) => next.includes(k)).join(','));
   };
 
   // One dropdown per document: off / optional / required.
@@ -142,6 +152,7 @@ export default function Settings() {
           allow_multiple_admissions: values.allow_multiple_admissions ?? 'false',
           require_complete_profile: values.require_complete_profile ?? 'true',
           required_education_levels: values.required_education_levels ?? '',
+          post_approval_editable_fields: values.post_approval_editable_fields ?? '',
           auto_generate_challan: values.auto_generate_challan ?? 'true',
           late_fee_mode: values.late_fee_mode ?? 'off',
           late_fee_amount: values.late_fee_amount ?? '0',
@@ -283,6 +294,24 @@ export default function Settings() {
               ))}
             </div>
             {err('required_education_levels') && <p className="text-xs text-red-600 mt-1">{err('required_education_levels')}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Editable after approval</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Once a student's application is approved, their profile is locked except these fields. Changes are recorded in the audit log. Untick all to lock everything.
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {openFieldOptions.map((f) => (
+                <label key={f.key} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" className="h-4 w-4"
+                    checked={openFields.includes(f.key)}
+                    onChange={(e) => toggleOpenField(f.key, e.target.checked)} />
+                  {f.label}
+                </label>
+              ))}
+            </div>
+            {err('post_approval_editable_fields') && <p className="text-xs text-red-600 mt-1">{err('post_approval_editable_fields')}</p>}
           </div>
 
           <div>

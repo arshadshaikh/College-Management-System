@@ -33,10 +33,20 @@ class ProfileController extends Controller
     }
 
     // PUT /api/profile
+    // After approval only the fields in post_approval_editable_fields are saved (and audited).
     public function update(Request $request)
     {
-        $this->ensureEditable($request->user());
-        $data = $request->validate([
+        $user    = $request->user();
+        $college = app('current_college');
+        $open    = app(ApplicantProfileService::class)->postApprovalFields($user, $college->id);
+        
+        if ($open === null) {
+            $this->ensureEditable($user);          // 423 while under review / shortlisted
+        } elseif (!$open) {
+            return response()->json(['message' => 'Your application is approved and this college does not allow profile changes. Contact the admissions office.'], 423);
+        }
+        
+        $rules = [
             'name'              => 'required|string|max:255',
             'phone'             => 'nullable|string|max:20',
             'email'             => 'nullable|email|max:255',
@@ -52,25 +62,58 @@ class ProfileController extends Controller
             'permanent_address' => 'nullable|string|max:1000',
             'present_address'   => 'nullable|string|max:1000',
             'emergency_contact' => 'nullable|string|max:255',
-        ]);
+        ];
+        
+        if ($open !== null) {
+            // Locked fields in the request are ignored, not saved.
+            $rules = array_intersect_key($rules, array_flip($open));
+        }
+        
+        $data = $request->validate($rules);
+        
+        if ($open !== null) {
+            $data = array_intersect_key($data, array_flip($open));
+        }
 
-        $user = $request->user();
         $accountKeys = ['name', 'phone', 'email'];
-
-        DB::transaction(function () use ($user, $data, $accountKeys) {
-            $user->forceFill(array_intersect_key($data, array_flip($accountKeys)))->save();
-
+        
+        DB::transaction(function () use ($user, $data, $accountKeys, $college, $open) {
             $profile = StudentProfile::firstOrNew(['user_id' => $user->id]);
+            // Old values, for the audit log after approval.
+            $old = [];
+            foreach ($data as $k => $v) {
+                $old[$k] = in_array($k, $accountKeys) ? $user->{$k} : $profile->{$k};
+            }
+            
+            $user->forceFill(array_intersect_key($data, array_flip($accountKeys)))->save();
             $profile->fill(array_diff_key($data, array_flip($accountKeys)));
+            
             if (!$profile->exists) {
-                $profile->college_id = app('current_college')->id;
+                $profile->college_id = $college->id;
                 $profile->cnic       = $user->cnic_no;
             }
+            
             $profile->save();
+            
+            if ($open !== null) {
+                $changedNew = [];
+                $changedOld = [];
+                foreach ($data as $k => $v) {
+                    if ((string) $old[$k] !== (string) $v) {
+                        $changedNew[$k] = $v;
+                        $changedOld[$k] = $old[$k];
+                    }
+                }
+                
+                if ($changedNew) {
+                    \App\Models\AuditLog::record('profile.updated_after_approval', $user, $changedNew, $changedOld);
+                }
+            }
         });
-
+        
         return response()->json(['message' => 'Profile saved.'] + $this->payload($user->fresh()));
     }
+
 
     // PUT /api/profile/educations   (body: level + fields)
     public function saveEducation(Request $request)
@@ -307,6 +350,9 @@ class ProfileController extends Controller
                 ? ['application_no' => $lock->application_no, 'status' => $lock->status,
                    'status_label' => str_replace('_', ' ', $lock->status)]
                 : null,
+            // Non-null only after approval: the fields the student may still edit.
+            'editable_fields' => app(ApplicantProfileService::class)
+                ->postApprovalFields($user, app('current_college')->id),
             'returned' => \App\Models\Application::with('program:id,name')
                 ->where('student_id', $user->id)
                 ->where('status', 'returned')

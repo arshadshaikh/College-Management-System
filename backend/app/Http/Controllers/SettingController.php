@@ -26,6 +26,9 @@ class SettingController extends Controller
             // Level catalog for the "Required Education Levels" checkboxes.
             'education_levels' => collect(config('admission.education_levels', []))
                 ->map(fn ($m, $k) => ['key' => $k, 'label' => $m['label']])->values(),
+            // Catalog for the "Editable after approval" checkboxes.
+            'post_approval_field_options' => collect(config('admission.post_approval_field_options', []))
+                ->map(fn ($label, $k) => ['key' => $k, 'label' => $label])->values(),
             'document_types' => $this->collegeDocumentTypes(),
             // Timetable: the college's daily periods (working days are the setting timetable_days).
             'timetable_periods' => $this->timetablePeriods(),
@@ -57,6 +60,13 @@ class SettingController extends Controller
                 $known = array_keys(config('admission.education_levels', []));
                 foreach (array_filter(array_map('trim', explode(',', (string) $value))) as $k) {
                     if (!in_array($k, $known)) $fail("Unknown education level: {$k}.");
+                }
+            }],
+            // Profile fields approved students may still edit: CSV of config keys, empty = none.
+            'settings.post_approval_editable_fields' => ['nullable', 'string', function ($attr, $value, $fail) {
+                $known = array_keys(config('admission.post_approval_field_options', []));
+                foreach (array_filter(array_map('trim', explode(',', (string) $value))) as $k) {
+                    if (!in_array($k, $known)) $fail("Unknown profile field: {$k}.");
                 }
             }],
             // Timetable working days: CSV of ISO day numbers, 1 = Monday ... 7 = Sunday.

@@ -117,18 +117,30 @@ export default function MyProfile() {
     setSaving(true);
     setErrors({});
     try {
-      const { data: d } = await api.put('/profile', personal);
+      // After approval send only the open fields (the server ignores the rest anyway).
+      const body = partial
+        ? Object.fromEntries(Object.entries(personal).filter(([k]) => openFields.includes(k)))
+        : personal;
+      const { data: d } = await api.put('/profile', body);
+
       apply(d);
       toast.success(d.message ?? 'Profile saved.');
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
         toast.error('Please fix the highlighted fields.');
+      } else {
+        toast.error(err.response?.data?.message ?? 'Could not save your profile.');
       }
     } finally {
       setSaving(false);
     }
   };
+
+  // After approval the server sends editable_fields: only those stay open.
+  const openFields = data?.editable_fields ?? null;
+  const partial = !!data?.locked && openFields?.length > 0;
+  const fieldLocked = (key) => partial && !openFields.includes(key);
 
   const inputCls = (error) =>
     `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
@@ -148,11 +160,23 @@ export default function MyProfile() {
 
       {data.locked && (
         <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl px-4 py-3 text-sm">
-          <p className="font-medium">Your profile is locked while application {data.locked.application_no} is {data.locked.status_label}.</p>
-          <p className="mt-0.5 text-blue-800">
-            This keeps what the admissions office is reviewing unchanged. If something needs correcting,
-            contact the admissions office; they can return your application to you for correction.
-          </p>
+          {partial ? (
+            <>
+              <p className="font-medium">Application {data.locked.application_no} is approved. Most of your profile is now locked.</p>
+              <p className="mt-0.5 text-blue-800">
+                You can still update: {openFields.map(labelFor).join(', ')}.
+                For anything else, contact the admissions office.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium">Your profile is locked while application {data.locked.application_no} is {data.locked.status_label}.</p>
+              <p className="mt-0.5 text-blue-800">
+                This keeps what the admissions office is reviewing unchanged. If something needs correcting,
+                contact the admissions office; they can return your application to you for correction.
+              </p>
+            </>
+          )}
         </div>
       )}
 
@@ -164,7 +188,7 @@ export default function MyProfile() {
       <Completeness c={data.completeness} />
 
       {/* A disabled fieldset disables every input and button inside it. */}
-      <fieldset disabled={!!data.locked} className="space-y-6 min-w-0 disabled:opacity-75">
+      <fieldset disabled={!!data.locked && !partial} className="space-y-6 min-w-0 disabled:opacity-75">
 
       {/* ── Personal ─────────────────────────────────────────── */}
       <form id="section-personal" onSubmit={savePersonal} className="bg-white rounded-xl shadow-sm p-6 space-y-4 scroll-mt-4">
@@ -180,14 +204,14 @@ export default function MyProfile() {
                 {(f.required || data.required_personal?.includes(f.key)) && <span className="text-red-500">*</span>}
               </label>
               {f.options ? (
-                <select value={personal[f.key] ?? ''} onChange={setField(f.key)} className={inputCls(errors[f.key])}>
+                <select value={personal[f.key] ?? ''} onChange={setField(f.key)} disabled={fieldLocked(f.key)} className={`${inputCls(errors[f.key])} disabled:bg-gray-100 disabled:text-gray-500`}>
                   <option value="">Select…</option>
                   {f.options.map((o) => <option key={o} value={o}>{cap(o)}</option>)}
                 </select>
               ) : f.textarea ? (
-                <textarea rows={2} value={personal[f.key] ?? ''} onChange={setField(f.key)} className={inputCls(errors[f.key])} />
+                <textarea rows={2} value={personal[f.key] ?? ''} onChange={setField(f.key)} disabled={fieldLocked(f.key)} className={`${inputCls(errors[f.key])} disabled:bg-gray-100 disabled:text-gray-500`} />
               ) : (
-                <input type={f.type ?? 'text'} value={personal[f.key] ?? ''} onChange={setField(f.key)} className={inputCls(errors[f.key])} />
+                <input type={f.type ?? 'text'} value={personal[f.key] ?? ''} onChange={setField(f.key)} disabled={fieldLocked(f.key)} className={`${inputCls(errors[f.key])} disabled:bg-gray-100 disabled:text-gray-500`} />
               )}
               {errors[f.key] && <p className="text-xs text-red-600 mt-1">{errors[f.key][0]}</p>}
             </div>

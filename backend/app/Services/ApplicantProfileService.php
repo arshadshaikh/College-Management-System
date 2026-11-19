@@ -260,4 +260,25 @@ class ApplicantProfileService
             ->latest('id')
             ->first();
     }
+
+     
+    /**
+     * After approval: the profile fields this student may still edit
+     * (college setting post_approval_editable_fields), or null when the normal rules apply
+     * (no lock at all = everything editable; under_review / shortlisted = fully locked).
+     */
+    public function postApprovalFields(User $user, int $collegeId): ?array
+    {
+        $apps = \App\Models\Application::where('student_id', $user->id);
+        $fullLock = array_diff(config('admission.lock_profile_statuses', []), ['approved']);
+        if ((clone $apps)->whereIn('status', $fullLock)->exists()) return null;
+        if (!(clone $apps)->where('status', 'approved')->exists()) return null;
+        $value = Setting::where('college_id', $collegeId)
+            ->where('key', 'post_approval_editable_fields')->value('value');
+        $known = array_keys(config('admission.post_approval_field_options', []));
+        
+        return array_values(array_intersect($known, array_map('trim', explode(',', (string) $value))));
+    
+    }
+
 }
