@@ -99,6 +99,9 @@ class PasswordResetController extends Controller
         }
 
         $user->update(['password' => $request->password]);
+        
+        // Nobody is logged in here, so name the user explicitly.
+        \App\Models\AuditLog::record('auth.password_reset', $user, [], [], $user->id, $user->college_id);
 
         // Delete the used token
         DB::table('password_reset_tokens')->where('cnic_no', $request->cnic_no)->delete();

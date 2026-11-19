@@ -93,6 +93,7 @@ class UserController extends Controller
 
         $newRoleIds = collect($request->role_ids);
         $existingRoles = $user->roles()->pluck('roles.id');
+        $rolesBefore = $user->activeRoles()->orderBy('roles.name')->pluck('roles.name')->all();
 
         // Deactivate roles not in the new list
         $toDeactivate = $existingRoles->diff($newRoleIds);
@@ -119,6 +120,17 @@ class UserController extends Controller
             }
         }
 
+        $rolesAfter = $user->activeRoles()->orderBy('roles.name')->pluck('roles.name')->all();
+        if ($rolesBefore !== $rolesAfter) {
+            \App\Models\AuditLog::record('user.roles_changed', $user,
+                ['_label' => $user->name, 'roles' => implode(', ', $rolesAfter)],
+                ['roles' => implode(', ', $rolesBefore)],
+                null,
+                $user->college_id
+            );
+        }
+        
         return response()->json($user->load('activeRoles'));
+        
     }
 }

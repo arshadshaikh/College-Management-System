@@ -75,7 +75,18 @@ class RoleController extends Controller
             'privilege_ids.*' => 'exists:privileges,id',
         ]);
 
-        $role->privileges()->sync($request->privilege_ids);
+        $result = $role->privileges()->sync($request->privilege_ids);
+        
+        // Pivot changes fire no model events, so log them here.
+        if ($result['attached'] || $result['detached']) {
+            $slugs = fn ($ids) => \App\Models\Privilege::whereIn('id', $ids)->orderBy('slug')->pluck('slug')->all();
+            \App\Models\AuditLog::record('role.privileges_changed', $role,
+                ['_label' => $role->name, 'added'   => $slugs($result['attached'])],
+                ['removed' => $slugs($result['detached'])],
+                null,
+                $role->college_id
+            );
+        }
 
         return response()->json($role->load('privileges'));
     }
