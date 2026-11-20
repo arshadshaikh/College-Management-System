@@ -120,6 +120,9 @@ class CollegeInitializationService
                 'applications.approve', 'applications.reject', 'applications.return', 'documents.download',
                 'students.import.template', 'students.import',
                 'students.index', 'students.store', 'students.show', 'students.update',
+                // Affiliated colleges
+                'affiliated-colleges.index', 'affiliated-colleges.store',
+                'affiliated-colleges.update', 'affiliated-colleges.destroy',
                 // Challans (admin side)
                 'challans.index', 'challans.store', 'challans.show', 'challans.cancel',
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
@@ -142,7 +145,7 @@ class CollegeInitializationService
                 'applications.shift',
                 'timetable.copy',
                 // ── MENU (navigation) privileges — REQUIRED or the sidebar is empty ──
-                'menu.programs', 'menu.applications', 'menu.challans', 'menu.students',
+                'menu.programs', 'menu.applications', 'menu.challans', 'menu.students', 'menu.affiliated-colleges',
                 'menu.cms',
                 'menu.cms.pages', 'menu.cms.menus', 'menu.cms.banners',
                 'menu.cms.announcements', 'menu.cms.media', 'menu.cms.settings',
