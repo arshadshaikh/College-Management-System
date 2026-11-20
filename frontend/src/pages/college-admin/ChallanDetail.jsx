@@ -109,6 +109,8 @@ export default function ChallanDetail() {
   };
 
   // ── Line-item actions ───────────────────────────────────────────
+  // Item calls return only the challan + items, so keep the student/program/payments already shown.
+  const keepDetails = (fresh) => setChallan((c) => ({ ...c, items: fresh.items, total_amount: fresh.total_amount, status: fresh.status ?? c.status }));
   const addItem = async () => {
     if (!itemForm.label.trim()) { toast.error('Enter a label.'); return; }
     if (itemForm.amount === '' || isNaN(Number(itemForm.amount))) { toast.error('Enter a valid amount.'); return; }
@@ -119,7 +121,7 @@ export default function ChallanDetail() {
         amount: Number(itemForm.amount),
         type: itemForm.type,
       });
-      setChallan(data.challan);
+      keepDetails(data.challan);
       setItemForm({ label: '', amount: '', type: 'fee' });
       setShowAddItem(false);
       toast.success('Line-item added.');
@@ -128,12 +130,23 @@ export default function ChallanDetail() {
     } finally { setBusy(false); }
   };
 
+  // Move a line up/down (PUT .../items/{id} with move; privilege challans.items.update).
+  const moveItem = async (itemId, move) => {
+    setBusy(true);
+    try {
+      const { data } = await api.put(`/challans/${id}/items/${itemId}`, { move });
+      keepDetails(data.challan);
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? 'Could not move the line.');
+    } finally { setBusy(false); }
+  };
+
   const removeItem = async (itemId) => {
     if (!window.confirm('Remove this line-item?')) return;
     setBusy(true);
     try {
       const { data } = await api.delete(`/challans/${id}/items/${itemId}`);
-      setChallan(data.challan);
+      keepDetails(data.challan);
       toast.success('Line-item removed.');
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Could not remove line-item.');
@@ -203,12 +216,23 @@ export default function ChallanDetail() {
           <div className="space-y-2 text-sm">
             {useItems ? (
               items.map((it) => {
+                const canMove = editable && hasPrv('challans.items.update') && it.type !== 'late_fee';
+                const movable = items.filter((x) => x.type !== 'late_fee');
+                const pos = movable.findIndex((x) => x.id === it.id);
                 const meta = ITEM_TYPE_META[it.type] ?? ITEM_TYPE_META.fee;
                 const amt = Number(it.amount);
                 const negative = amt < 0;
                 return (
                   <div key={it.id} className="flex justify-between items-center group">
                     <span className="flex items-center gap-2">
+                      {canMove && (
+                        <span className="flex flex-col leading-none">
+                          <button type="button" onClick={() => moveItem(it.id, 'up')} disabled={busy || pos === 0}
+                            className="text-[10px] text-gray-400 hover:text-gray-900 disabled:opacity-30" aria-label="Move up" title="Move up">▲</button>
+                          <button type="button" onClick={() => moveItem(it.id, 'down')} disabled={busy || pos === movable.length - 1}
+                            className="text-[10px] text-gray-400 hover:text-gray-900 disabled:opacity-30" aria-label="Move down" title="Move down">▼</button>
+                        </span>
+                      )}
                       <span className="text-gray-700">{it.label}</span>
                       {it.type !== 'fee' && (
                         <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${meta.badge}`}>{meta.label}</span>

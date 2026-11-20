@@ -465,6 +465,34 @@ class ChallanController extends Controller
         );
     }
 
+    // Swap a line with its neighbour. Lines are renumbered 1..n first so equal
+    // sort_order values never block a move. The late fee line stays last (999).
+    private function moveItem(Challan $challan, ChallanItem $item, string $dir): void
+    {
+        if ($item->type === 'late_fee') {
+            return;
+        }
+
+        DB::transaction(function () use ($challan, $item, $dir) {
+            $lines = $challan->items()->where('type', '!=', 'late_fee')->orderBy('sort_order')->orderBy('id')->get()->values();
+            $i = $lines->search(fn ($l) => $l->id === $item->id);
+            $j = $dir === 'up' ? $i - 1 : $i + 1;
+            if ($i === false || $j < 0 || $j >= $lines->count()) {
+                return;   // already first/last
+            }
+
+            $ordered = $lines->all();
+            [$ordered[$i], $ordered[$j]] = [$ordered[$j], $ordered[$i]];
+            foreach ($ordered as $n => $line) {
+                if ($line->sort_order !== $n + 1) {
+                    $line->update(['sort_order' => $n + 1]);
+                }
+            }
+        });
+
+        $item->refresh();
+    }
+
     // ── College admin: add a line-item to a challan ───────────────
     // POST /api/challans/{challan}/items
     public function addItem(Request $request, Challan $challan)
@@ -525,7 +553,13 @@ class ChallanController extends Controller
             'label'  => 'sometimes|string|max:255',
             'amount' => 'sometimes|numeric',
             'type'   => 'sometimes|in:fee,discount,late_fee,conditional',
+            'move'   => 'sometimes|in:up,down',   // reorder: swap with the line above/below
         ]);
+
+        if (isset($validated['move'])) {
+            $this->moveItem($challan, $item, $validated['move']);
+            unset($validated['move']);
+        }
 
         $item->update($validated);
         $challan->recomputeTotal();

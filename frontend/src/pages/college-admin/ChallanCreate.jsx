@@ -103,8 +103,13 @@ export default function ChallanCreate() {
       && types.includes(f.fee_type)
       && (f.effective_from ?? '').slice(0, 10) <= now
       && (!f.effective_to || f.effective_to.slice(0, 10) >= now)
-      && (f.semester_no == null || (semesterNo && Number(f.semester_no) === Number(semesterNo))));
-  }, [program, types, semesterNo]);
+      && (f.semester_no == null || (semesterNo && Number(f.semester_no) === Number(semesterNo))))
+      // Same order as the saved challan: Settings fee type order, then part, then oldest first.
+      .sort((a, b) => {
+        const rank = (f) => { const i = feeTypes.findIndex((t) => t.slug === f.fee_type); return i < 0 ? 9999 : i; };
+        return rank(a) - rank(b) || (a.semester_no ?? 0) - (b.semester_no ?? 0) || a.id - b.id;
+      });
+  }, [program, types, semesterNo, feeTypes]);
 
   const extraTotal = items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
   const total = matchedFees.reduce((s, f) => s + Number(f.amount), 0) + extraTotal;

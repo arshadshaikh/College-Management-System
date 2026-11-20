@@ -234,6 +234,10 @@ class ChallanService
             ]);
         }
 
+        // Line order = fee type order from Settings -> Fees & Challans, then part, then oldest first.
+        $typeOrder = FeeType::withoutTenantScope()->where('college_id', $owner['college_id'])->pluck('sort_order', 'slug');
+        $fees = $fees->sortBy(fn ($f) => [$typeOrder[$f->fee_type] ?? 9999, $f->semester_no ?? 0, $f->id])->values();
+
         return DB::transaction(function () use (
             $owner, $fees, $challanType, $title,
             $semesterNo, $installmentNo, $scope, $dueDate, $fallbackLabel, $extraItems
