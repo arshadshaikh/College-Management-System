@@ -62,7 +62,7 @@ export default function ProgramDetail() {
         <dl className="grid grid-cols-2 gap-y-3 text-sm">
           <Row label="Code" value={program.code} />
           <Row label="Degree Level" value={program.degree_level} />
-          <Row label="Duration" value={`${program.duration_years} yr / ${program.total_semesters} sem`} />
+          <Row label="Duration" value={`${program.duration_years} yr / ${program.total_semesters} ${program.scheme === 'annual' ? 'parts' : 'sem'}`} />
           <Row label="Total Seats" value={program.total_seats} />
           <Row label="Available Seats" value={`${program.available_seats ?? '—'} / ${program.total_seats}`} />
           <Row label="Status" value={program.is_active ? 'Active' : 'Inactive'} />

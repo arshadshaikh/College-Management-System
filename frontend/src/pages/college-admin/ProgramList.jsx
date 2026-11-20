@@ -15,8 +15,8 @@ export default function ProgramList() {
       render: (r) => <span className="capitalize">{r.degree_level}</span> },
     
     { key: 'duration_years', label: 'Duration', sortable: true,
-      render: (r) => `${r.duration_years} yr / ${r.total_semesters} sem`,
-      csv:    (r) => `${r.duration_years} yr / ${r.total_semesters} sem` },
+      render: (r) => `${r.duration_years} yr / ${r.total_semesters} ${r.scheme === 'annual' ? 'parts' : 'sem'}`,
+      csv:    (r) => `${r.duration_years} yr / ${r.total_semesters} ${r.scheme === 'annual' ? 'parts' : 'sem'}` },
     { key: 'student', label: 'Student',
       render: (r) => (<div>...</div>),
       csv:    (r) => `${r.student?.name ?? ''} (${r.student?.cnic_no ?? ''})` },

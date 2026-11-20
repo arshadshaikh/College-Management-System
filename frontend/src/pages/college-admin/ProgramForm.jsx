@@ -13,7 +13,7 @@ const DEGREE_LABELS = {
 
 const EMPTY = {
   name: '', code: '', degree_level: 'bachelor',
-  duration_years: 4, total_semesters: 8, total_seats: 60,
+  duration_years: 4, total_semesters: 8, total_seats: 60, scheme: 'semester',
   eligibility_criteria: '', description: '', is_active: true,
   required_education_levels: '',
 };
@@ -126,11 +126,18 @@ export default function ProgramForm() {
           </Field>
         </div>
 
+        <Field label="Exam Scheme" error={errors.scheme} required>
+          <select value={form.scheme} onChange={set('scheme')} className={inputCls(errors.scheme)}>
+            <option value="semester">Semester (fees and exams per semester)</option>
+            <option value="annual">Annual (fees and exams per Part / year)</option>
+          </select>
+        </Field>
+
         <div className="grid grid-cols-3 gap-4">
           <Field label="Duration (years)" error={errors.duration_years} required>
             <input type="number" min="1" max="10" value={form.duration_years} onChange={set('duration_years')} className={inputCls(errors.duration_years)} />
           </Field>
-          <Field label="Total Semesters" error={errors.total_semesters} required>
+          <Field label={form.scheme === 'annual' ? 'Total Parts' : 'Total Semesters'} error={errors.total_semesters} required>
             <input type="number" min="1" max="20" value={form.total_semesters} onChange={set('total_semesters')} className={inputCls(errors.total_semesters)} />
           </Field>
           <Field label="Total Seats" error={errors.total_seats} required>

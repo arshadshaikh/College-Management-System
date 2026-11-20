@@ -65,7 +65,7 @@ class ProgramController extends Controller
             ->orderBy('name')
             ->get([
                 'id', 'name', 'code', 'degree_level', 'duration_years',
-                'total_semesters', 'total_seats', 'eligibility_criteria', 'description',
+                'total_semesters', 'total_seats', 'scheme', 'eligibility_criteria', 'description',
             ]);
 
         return response()->json($programs);
@@ -83,6 +83,7 @@ class ProgramController extends Controller
                                         ->where('college_id', app('current_college')->id),
             ],
             'degree_level'        => 'required|in:certificate,diploma,associate,bachelor,master,phd',
+            'scheme'              => 'required|in:semester,annual',
             'duration_years'      => 'required|integer|min:1|max:10',
             'total_semesters'     => 'required|integer|min:1|max:20',
             'total_seats'         => 'required|integer|min:1|max:1000',
@@ -99,7 +100,7 @@ class ProgramController extends Controller
 
         $program = Program::create($request->only([
             'name', 'code', 'degree_level', 'duration_years',
-            'total_semesters', 'total_seats',
+            'total_semesters', 'total_seats', 'scheme',
             'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
         ]));
 
@@ -131,6 +132,7 @@ class ProgramController extends Controller
                                         ->ignore($program->id),
             ],
             'degree_level'        => 'sometimes|in:certificate,diploma,associate,bachelor,master,phd',
+            'scheme'              => 'sometimes|in:semester,annual',
             'duration_years'      => 'sometimes|integer|min:1|max:10',
             'total_semesters'     => 'sometimes|integer|min:1|max:20',
             'total_seats'         => 'sometimes|integer|min:1|max:1000',
@@ -147,7 +149,7 @@ class ProgramController extends Controller
 
         $program->update($request->only([
             'name', 'code', 'degree_level', 'duration_years',
-            'total_semesters', 'total_seats',
+            'total_semesters', 'total_seats', 'scheme',
             'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
         ]));
 

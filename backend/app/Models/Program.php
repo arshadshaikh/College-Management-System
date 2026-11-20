@@ -14,6 +14,7 @@ class Program extends Model
         'college_id', 'name', 'code', 'degree_level',
         'duration_years', 'total_semesters', 'total_seats',
         'eligibility_criteria', 'description', 'is_active', 'required_education_levels',
+        'scheme',
     ];
 
     protected $casts = [
@@ -22,6 +23,13 @@ class Program extends Model
         'total_semesters' => 'integer',
         'total_seats'     => 'integer',
     ];
+
+    // 'semester' or 'annual'. Annual programs call each year a "Part" (1, 2, 3 ...);
+    // fee structures and challans keep using semester_no as the part number.
+    public function termLabel(): string
+    {
+        return $this->scheme === 'annual' ? 'Part' : 'Semester';
+    }
 
     public function college()
     {
