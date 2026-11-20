@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
+import api from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const STATUSES = ['', 'unpaid', 'paid', 'overdue', 'cancelled'];
-const TYPES    = ['', 'admission', 'semester', 'exam', 'arrears', 'other'];
 
 const STATUS_STYLES = {
   unpaid:    'bg-amber-50 text-amber-700',
@@ -16,6 +17,16 @@ const STATUS_STYLES = {
 export default function ChallanList() {
   const [status, setStatus] = useState('');
   const [type, setType]     = useState('');
+  const [feeTypes, setFeeTypes] = useState([]);   // college fee types (Settings), for names + filter
+  const { hasPrv } = useAuth();
+
+  useEffect(() => {
+    api.get('/settings').then(({ data }) => setFeeTypes(data.fee_types ?? [])).catch(() => {});
+  }, []);
+
+  // challan_type is a fee type slug (or 'other' for mixed challans).
+  const typeName = (slug) => feeTypes.find((t) => t.slug === slug)?.name ?? (slug ?? '').replace(/_/g, ' ');
+  const typeOptions = [...feeTypes.map((t) => t.slug), ...(feeTypes.some((t) => t.slug === 'other') ? [] : ['other'])];
 
   const columns = [
     { key: 'challan_no', label: 'Challan #', sortable: true },
@@ -28,7 +39,8 @@ export default function ChallanList() {
       ),
       csv: (r) => `${r.student?.name ?? ''} (${r.student?.cnic_no ?? ''})` },
     { key: 'challan_type', label: 'Type', sortable: true,
-      render: (r) => <span className="capitalize">{r.challan_type}</span> },
+      render: (r) => <span className="capitalize">{typeName(r.challan_type)}</span>,
+      csv: (r) => typeName(r.challan_type) },
     { key: 'total_amount', label: 'Amount', sortable: true,
       render: (r) => `Rs. ${Number(r.total_amount).toLocaleString()}`,
       csv: (r) => r.total_amount },
@@ -60,11 +72,16 @@ export default function ChallanList() {
       headerActions={
         <>
           <select value={type} onChange={(e) => setType(e.target.value)} className={selectCls}>
-            {TYPES.map((t) => <option key={t} value={t}>{t === '' ? 'All types' : t}</option>)}
+            <option value="">All types</option>
+            {typeOptions.map((t) => <option key={t} value={t}>{typeName(t)}</option>)}
           </select>
           <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectCls}>
             {STATUSES.map((s) => <option key={s} value={s}>{s === '' ? 'All statuses' : s}</option>)}
           </select>
+          {hasPrv('challans.store') && (
+            <Link to={`${PORTAL}/challans/create`}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">+ New Challan</Link>
+          )}
         </>
       }
     />

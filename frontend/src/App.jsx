@@ -41,6 +41,7 @@ import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
 import ChallanDetail from './pages/college-admin/ChallanDetail';
+import ChallanCreate from './pages/college-admin/ChallanCreate';
 import Settings from './pages/college-admin/Settings';
 import CmsPageList from './pages/college-admin/CmsPageList';
 import CmsPageForm from './pages/college-admin/CmsPageForm';
@@ -154,6 +155,7 @@ export default function App() {
 
         {/* Challans */}
         <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
+        <Route path="challans/create" element={<PrivilegeRoute slug="challans.store"><ChallanCreate /></PrivilegeRoute>} />
         <Route path="challans/:id" element={<PrivilegeRoute slug="challans.show"><ChallanDetail /></PrivilegeRoute>} />
 
         {/* College Settings */}

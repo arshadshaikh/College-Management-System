@@ -181,7 +181,10 @@ export default function ChallanDetail() {
             <Row label="Student" value={challan.student?.name} />
             <Row label="CNIC" value={challan.student?.cnic_no} />
             <Row label="Application" value={challan.application?.application_no} />
-            <Row label="Program" value={challan.application?.program?.name} />
+            <Row label="Program" value={(challan.program ?? challan.application?.program)?.name} />
+            {challan.semester_no != null && (
+              <Row label={(challan.program ?? challan.application?.program)?.scheme === 'annual' ? 'Part' : 'Semester'} value={challan.semester_no} />
+            )}
             <Row label="Type" value={challan.challan_type} />
             {challan.installment_no != null && <Row label="Installment" value={`#${challan.installment_no}`} />}
             <Row label="Issue Date" value={new Date(challan.issue_date).toLocaleDateString()} />

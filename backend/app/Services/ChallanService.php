@@ -126,7 +126,10 @@ class ChallanService
                 ->get();
         }
 
-        $names = FeeType::whereIn('slug', $feeTypes)->orderBy('sort_order')->pluck('name')->all();
+        // Title and type come from the fee types that actually produced lines, not every chip tapped.
+        $used  = $fees->pluck('fee_type')->unique()->values()->all();
+        $names = FeeType::whereIn('slug', $used)->orderBy('sort_order')->pluck('name')->all();
+
         $defaultTitle = $names ? implode(' + ', $names) . ' Fee' : 'Fee Challan';
         if ($semesterNo && $programId) {
             $defaultTitle .= ' (' . Program::find($programId)?->termLabel() . ' ' . $semesterNo . ')';
@@ -140,7 +143,7 @@ class ChallanService
                 'student_id'     => $student->id,
             ],
             fees:          $fees,
-            challanType:   count($feeTypes) === 1 ? $feeTypes[0] : 'other',
+            challanType:   count($used) === 1 ? $used[0] : 'other',
             title:         $title ?: $defaultTitle,
             semesterNo:    $semesterNo,
             installmentNo: null,

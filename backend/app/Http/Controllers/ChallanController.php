@@ -41,6 +41,16 @@ class ChallanController extends Controller
             $query->where('student_id', $request->student_id);
         }
 
+        // Search box: challan no, title (e.g. "Hostel"), student name or CNIC.
+        if ($request->filled('search')) {
+            $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $query->where(function ($q) use ($s) {
+                $q->where('challan_no', 'like', "%{$s}%")
+                  ->orWhere('title', 'like', "%{$s}%")
+                  ->orWhereHas('student', fn ($u) => $u->where('name', 'like', "%{$s}%")->orWhere('cnic_no', 'like', "%{$s}%"));
+            });
+        }
+
         // return response()->json($query->latest()->paginate(15));
 
         $sortable = ['challan_no', 'challan_type', 'total_amount', 'status', 'issue_date', 'due_date', 'created_at'];
