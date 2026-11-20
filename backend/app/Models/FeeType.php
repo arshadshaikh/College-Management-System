@@ -14,10 +14,11 @@ class FeeType extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['college_id', 'slug', 'name', 'is_active', 'sort_order'];
+    protected $fillable = ['college_id', 'slug', 'name', 'is_active', 'service_amount', 'sort_order'];
 
     protected $casts = [
         'is_active'  => 'boolean',
+        'service_amount' => 'decimal:2', // set = students can request it from the portal
         'sort_order' => 'integer',
     ];
 

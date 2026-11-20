@@ -20,7 +20,7 @@ export default function FeeTypesEditor({ feeTypes, setFeeTypes, errors }) {
 
   const remove = (k) => setFeeTypes((list) => list.filter((t) => t._k !== k));
 
-  const add = () => setFeeTypes((list) => [...list, ...withKeys([{ id: null, name: '', is_active: true, in_use: 0 }])]);
+  const add = () => setFeeTypes((list) => [...list, ...withKeys([{ id: null, name: '', is_active: true, service_amount: null, in_use: 0 }])]);
 
   return (
     <div>
@@ -28,6 +28,8 @@ export default function FeeTypesEditor({ feeTypes, setFeeTypes, errors }) {
       <p className="text-xs text-gray-500 mb-2">
         The kinds of fees students pay, such as Tuition, Exam, Hostel, Transport, Transcript or Fine.
         They appear in this order in the Fee Type dropdown of every program.
+        Tick "Students can request this" for services like Transcript or Duplicate ID Card,
+        so students can make the challan themselves from the portal at that fixed amount.
       </p>
 
       {feeTypes.length === 0 ? (
@@ -63,8 +65,31 @@ export default function FeeTypesEditor({ feeTypes, setFeeTypes, errors }) {
                     className="shrink-0 px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove</button>
                 )}
               </div>
+              <div className="flex flex-wrap items-center gap-2 pl-9 pr-3 pt-1 text-sm text-gray-600">
+                <label className="flex items-center gap-1.5">
+                  <input type="checkbox" className="h-4 w-4"
+                    checked={t.service_amount != null}
+                    onChange={(e) => update(t._k, 'service_amount', e.target.checked ? '' : null)} />
+                  Students can request this
+                </label>
+                {t.service_amount != null && (
+                  <span className="flex items-center gap-1">
+                    for Rs.
+                    <input type="number" min="1" step="1" value={t.service_amount} placeholder="500"
+                      onChange={(e) => update(t._k, 'service_amount', e.target.value)}
+                      className={`w-28 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                        err(`fee_types.${i}.service_amount`) ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-indigo-500'}`} />
+                  </span>
+                )}
+                {t.service_amount === '' && (
+                  <span className="text-xs text-amber-600">Enter an amount, or students won't see it.</span>
+                )}
+              </div>
               {err(`fee_types.${i}.name`) && (
                 <p className="text-xs text-red-600 mt-1 ml-1">{err(`fee_types.${i}.name`)}</p>
+              )}
+              {err(`fee_types.${i}.service_amount`) && (
+                <p className="text-xs text-red-600 mt-1 ml-1">{err(`fee_types.${i}.service_amount`)}</p>
               )}
             </div>
           ))}

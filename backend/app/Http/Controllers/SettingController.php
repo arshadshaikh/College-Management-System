@@ -101,6 +101,7 @@ class SettingController extends Controller
             'fee_types.*.id'        => 'nullable|integer',
             'fee_types.*.name'      => 'required|string|max:100|distinct:ignore_case',
             'fee_types.*.is_active' => 'required|boolean',
+            'fee_types.*.service_amount' => 'nullable|numeric|min:1|max:9999999',
             'document_types'               => 'nullable|array',
             'document_types.*.id'          => 'required|integer|exists:required_document_types,id',
             'document_types.*.is_active'   => 'required|boolean',
@@ -188,6 +189,7 @@ class SettingController extends Controller
                 'slug'      => $t->slug,
                 'name'      => $t->name,
                 'is_active' => $t->is_active,
+                'service_amount' => $t->service_amount,   // null = students cannot request it
                 'in_use'    => $t->usageCount(),   // fee lines using it; such a type is never deleted
             ])
             ->values()
@@ -202,7 +204,12 @@ class SettingController extends Controller
         DB::transaction(function () use ($rows) {
             $keep = [];
             foreach (array_values($rows) as $i => $row) {
-                $data = ['name' => trim($row['name']), 'is_active' => (bool) $row['is_active'], 'sort_order' => $i + 1];
+                $data = [
+                    'name'           => trim($row['name']),
+                    'is_active'      => (bool) $row['is_active'],
+                    'service_amount' => isset($row['service_amount']) && $row['service_amount'] !== '' ? $row['service_amount'] : null,
+                    'sort_order'     => $i + 1,
+                ];
                 $type = !empty($row['id']) ? FeeType::find($row['id']) : null;
                 if ($type) {
                     $type->update($data);

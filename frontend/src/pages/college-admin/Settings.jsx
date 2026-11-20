@@ -170,7 +170,8 @@ export default function Settings() {
         academic_terms: terms.map(({ id, name, start_date, end_date, is_current }) =>
           ({ id, name, start_date, end_date, is_current: !!is_current })),
         // Fee types (the full list, in display order; unused removed rows are deleted, used ones switched off).
-        fee_types: feeTypes.map(({ id, name, is_active }) => ({ id, name, is_active: !!is_active })),
+        fee_types: feeTypes.map(({ id, name, is_active, service_amount }) =>
+          ({ id, name, is_active: !!is_active, service_amount: service_amount === '' || service_amount == null ? null : service_amount })),
         // Every applicant document, certificates included (Required / Optional / Not asked).
         document_types: docTypes
           .map(({ id, is_active, is_required }) => ({ id, is_active, is_required })),
