@@ -46,6 +46,8 @@ class ProgramPrivilegeSeeder extends Seeder
             ['slug' => 'programs.update',             'name' => 'Update program',           'route' => '/api/programs/{id}',                      'method' => 'PUT'],
             ['slug' => 'programs.destroy',            'name' => 'Delete program',           'route' => '/api/programs/{id}',                      'method' => 'DELETE'],
             ['slug' => 'programs.fee-structures',     'name' => 'Add fee structure',        'route' => '/api/programs/{id}/fee-structures',       'method' => 'POST'],
+            ['slug' => 'programs.fee-structures.update',  'name' => 'Update fee structure', 'route' => '/api/programs/{id}/fee-structures/{id}', 'method' => 'PUT'],
+            ['slug' => 'programs.fee-structures.destroy', 'name' => 'Remove fee structure', 'route' => '/api/programs/{id}/fee-structures/{id}', 'method' => 'DELETE'],
 
             // Applications — admin side
             ['slug' => 'applications.index',          'name' => 'List applications',        'route' => '/api/applications',                       'method' => 'GET'],
@@ -67,7 +69,7 @@ class ProgramPrivilegeSeeder extends Seeder
         $adminPrivilegeIds     = [];
         $studentPrivilegeIds   = [];
 
-        $adminSlugs  = ['programs.index','programs.store','programs.show','programs.update','programs.destroy','programs.fee-structures','applications.index','applications.show','applications.review','applications.approve','applications.reject','applications.return','documents.download'];
+        $adminSlugs  = ['programs.index','programs.store','programs.show','programs.update','programs.destroy','programs.fee-structures','programs.fee-structures.update','programs.fee-structures.destroy','applications.index','applications.show','applications.review','applications.approve','applications.reject','applications.return','documents.download'];
         $studentSlugs = ['programs.index','programs.show','applications.my','applications.store','applications.withdraw','applications.resubmit'];
 
         foreach ($privileges as $priv) {

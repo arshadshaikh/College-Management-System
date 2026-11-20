@@ -116,8 +116,15 @@
 
             <div class="field"><span class="fl">Candidate Name:</span><span class="fv"><?= e($student->name) ?></span></div>
             <div class="field"><span class="fl">CNIC:</span><span class="fv"><?= e($student->cnic_no) ?></span></div>
+            <?php if ($program): ?>
             <div class="field"><span class="fl">Program:</span><span class="fv"><?= e($program->name) ?><?= $program->code ? ' ('.e($program->code).')' : '' ?></span></div>
+            <?php endif; ?>
+            <?php if ($challan->semester_no && $program): ?>
+            <div class="field"><span class="fl"><?= e($program->termLabel()) ?>:</span><span class="fv"><?= (int) $challan->semester_no ?></span></div>
+            <?php endif; ?>
+            <?php if ($challan->application): ?>
             <div class="field"><span class="fl">Application:</span><span class="fv"><?= e($challan->application->application_no) ?></span></div>
+            <?php endif; ?>
 
             <table class="items">
                 <thead><tr><th>Purpose of Payment</th><th class="amt">Amount (Rs.)</th></tr></thead>

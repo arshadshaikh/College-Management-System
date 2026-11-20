@@ -6,6 +6,9 @@ use App\Models\Application;
 use App\Models\Challan;
 use App\Models\ChallanItem;
 use App\Models\Payment;
+use App\Models\Program;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 use App\Models\AuditLog;
 use App\Services\ChallanService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,7 +27,7 @@ class ChallanController extends Controller
     // GET /api/challans
     public function index(Request $request)
     {
-        $query = Challan::with(['student', 'application.program']);
+        $query = Challan::with(['student', 'application.program', 'program']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -53,7 +56,7 @@ class ChallanController extends Controller
     // GET /api/challans/my
     public function myChallans(Request $request)
     {
-        $challans = Challan::with(['application.program', 'payments'])
+        $challans = Challan::with(['application.program', 'program', 'payments'])
             ->where('student_id', $request->user()->id)
             ->latest()
             ->paginate(15);
@@ -70,7 +73,7 @@ class ChallanController extends Controller
         $this->challanService->applyLateFee($challan);
 
         return response()->json(
-            $challan->load(['items', 'student', 'application.program', 'payments.recordedBy'])
+            $challan->load(['items', 'student', 'application.program', 'program', 'payments.recordedBy'])
         );
     }
 
@@ -78,6 +81,11 @@ class ChallanController extends Controller
     // POST /api/challans
     public function store(Request $request)
     {
+        // No application_id = a challan for any student (hostel, transcript, exam, fines ...).
+        if (!$request->filled('application_id')) {
+            return $this->storeForStudent($request);
+        }
+
         $request->validate([
             'application_id' => 'required|exists:applications,id',
             'scope'          => 'required|in:semester,year,program',
@@ -121,7 +129,76 @@ class ChallanController extends Controller
 
         return response()->json([
             'message' => 'Challan generated successfully.',
-            'challan' => $challan->load('items', 'application.program', 'student'),
+            'challan' => $challan->load('items', 'application.program', 'program', 'student'),
+        ], 201);
+    }
+
+    // POST /api/challans without application_id. Same route and privilege (challans.store).
+    private function storeForStudent(Request $request)
+    {
+        $collegeId = app('current_college')->id;
+
+        $request->validate([
+            'student_id'     => ['required', 'integer', Rule::exists('users', 'id')
+                                    ->where('college_id', $collegeId)->where('user_type', 'student')],
+            'program_id'     => ['nullable', 'integer', Rule::exists('programs', 'id')->where('college_id', $collegeId)],
+            'fee_types'      => 'nullable|array',
+            'fee_types.*'    => ['string', Rule::exists('fee_types', 'slug')->where('college_id', $collegeId)->where('is_active', true)],
+            'semester_no'    => 'nullable|integer|min:1|max:20',
+            'items'          => 'nullable|array|max:20',
+            'items.*.label'  => 'required|string|max:255',
+            'items.*.amount' => 'required|numeric|min:1',
+            'due_date'       => 'required|date|after:today',
+            'title'          => 'nullable|string|max:255',
+        ]);
+
+        $feeTypes = array_values(array_unique($request->input('fee_types', [])));
+        if (!$feeTypes && !$request->input('items')) {
+            return response()->json([
+                'message' => 'Choose at least one fee type or add an item.',
+                'errors'  => ['fee_types' => ['Choose at least one fee type or add an item.']],
+            ], 422);
+        }
+        if ($feeTypes && !$request->filled('program_id')) {
+            return response()->json([
+                'message' => 'Choose the program whose fees to bill.',
+                'errors'  => ['program_id' => ['Choose the program whose fees to bill.']],
+            ], 422);
+        }
+        if ($request->filled('program_id') && $request->filled('semester_no')) {
+            $program = Program::find($request->program_id);
+            if ($request->semester_no > $program->total_semesters) {
+                $label = $program->termLabel();
+                return response()->json([
+                    'message' => "{$program->name} has {$program->total_semesters} {$label}s.",
+                    'errors'  => ['semester_no' => ["{$label} must be between 1 and {$program->total_semesters}."]],
+                ], 422);
+            }
+        }
+
+        $challan = DB::transaction(function () use ($request, $feeTypes) {
+            $challan = $this->challanService->generateForStudent(
+                student:    User::findOrFail($request->student_id),
+                programId:  $request->program_id ? (int) $request->program_id : null,
+                feeTypes:   $feeTypes,
+                semesterNo: $request->semester_no ? (int) $request->semester_no : null,
+                dueDate:    Carbon::parse($request->due_date),
+                title:      $request->title,
+                extraItems: $request->input('items', []),
+            );
+
+            AuditLog::record('challan.generated', $challan, [
+                'challan_no' => $challan->challan_no,
+                'scope'      => 'custom',
+                'fee_types'  => $feeTypes,
+            ]);
+
+            return $challan;
+        });
+
+        return response()->json([
+            'message' => 'Challan generated successfully.',
+            'challan' => $challan->load('items', 'program', 'student'),
         ], 201);
     }
 
@@ -152,6 +229,10 @@ class ChallanController extends Controller
 
         if ($challan->status === 'cancelled') {
             return response()->json(['message' => 'Cannot mark a cancelled challan as paid.'], 422);
+        }
+
+        if ((float) $challan->total_amount <= 0) {
+            return response()->json(['message' => 'This challan has no amount to pay. Add a fee line first.'], 422);
         }
 
         $request->validate([
@@ -322,7 +403,7 @@ class ChallanController extends Controller
     // GET /api/challans/{challan}/pdf
     public function pdf(Challan $challan)
     {
-        $challan->load(['items', 'student', 'application.program', 'college']);
+        $challan->load(['items', 'student', 'application.program', 'program', 'college']);
 
         // Generate a verification QR as a base64 PNG data URI (DomPDF embeds it inline).
         $verifyText = ($challan->college->name ?? '')
@@ -353,7 +434,7 @@ class ChallanController extends Controller
             'challan'  => $challan,
             'college'  => $challan->college,
             'student'  => $challan->student,
-            'program'  => $challan->application->program,
+            'program'  => $challan->program ?? $challan->application?->program,   // either may be null
             'qrData'   => $qrData,
             'logoData' => $logoData,
         ])->setPaper('a4', 'landscape');
@@ -370,7 +451,7 @@ class ChallanController extends Controller
         }
 
         return response()->json(
-            $challan->load(['application.program', 'payments'])
+            $challan->load(['application.program', 'program', 'payments'])
         );
     }
 

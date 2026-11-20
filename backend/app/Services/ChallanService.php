@@ -5,6 +5,10 @@ namespace App\Services;
 use App\Models\Application;
 use App\Models\Challan;
 use App\Models\FeeStructure;
+use App\Models\FeeType;
+use App\Models\Program;
+use App\Models\User;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +23,17 @@ class ChallanService
      * (registration, etc.) are NOT swept in automatically — the admin adds those
      * deliberately. Everything here is editable afterward by the admin.
      */
-    public function generateFirstChallan(Application $application): Challan
+    public function generateFirstChallan(Application $application): ?Challan
     {
         $fees = $this->feesForSemester($application->program_id, 1);
 
+        // No semester-1 fees set up: approve without a challan (never a Rs. 0 challan).
+        if ($fees->isEmpty()) {
+            return null;
+        }
+
         return $this->createChallan(
-            application:   $application,
+            owner:         $this->ownerFromApplication($application),
             fees:          $fees,
             challanType:   'semester',
             title:         'First Semester Installment Fee',
@@ -70,7 +79,7 @@ class ChallanService
         };
 
         return $this->createChallan(
-            application:   $application,
+            owner:         $this->ownerFromApplication($application),
             fees:          $fees,
             challanType:   'semester',
             title:         $title ?? $defaultTitle,
@@ -80,6 +89,76 @@ class ChallanService
             dueDate:       $dueDate,
             fallbackLabel: $defaultTitle,
         );
+    }
+
+    /**
+     * Challan for ANY student, no admission application needed (hostel,
+     * transcript, exam, fines ...).
+     *
+     *   $feeTypes   fee type slugs; their active fee lines are taken from the
+     *               program's fee structure (needs $programId)
+     *   $semesterNo part/semester: lines for that part + lines with no part.
+     *               null = only lines with no part (one-time fees)
+     *   $extraItems [['label' => ..., 'amount' => ...]] typed in by the admin
+     *
+     * Refuses (422) when nothing adds up to more than Rs. 0.
+     */
+    public function generateForStudent(
+        User $student,
+        ?int $programId,
+        array $feeTypes,
+        ?int $semesterNo,
+        Carbon $dueDate,
+        ?string $title = null,
+        array $extraItems = [],
+    ): Challan {
+        $fees = collect();
+        if ($programId && $feeTypes) {
+            $fees = $this->baseFeeQuery($programId)
+                ->whereIn('fee_type', $feeTypes)
+                ->where(function ($q) use ($semesterNo) {
+                    $q->whereNull('semester_no');
+                    if ($semesterNo) {
+                        $q->orWhere('semester_no', $semesterNo);
+                    }
+                })
+                ->orderByRaw('semester_no IS NULL')->orderBy('id')
+                ->get();
+        }
+
+        $names = FeeType::whereIn('slug', $feeTypes)->orderBy('sort_order')->pluck('name')->all();
+        $defaultTitle = $names ? implode(' + ', $names) . ' Fee' : 'Fee Challan';
+        if ($semesterNo && $programId) {
+            $defaultTitle .= ' (' . Program::find($programId)?->termLabel() . ' ' . $semesterNo . ')';
+        }
+
+        return $this->createChallan(
+            owner:         [
+                'college_id'     => $student->college_id,
+                'application_id' => null,
+                'program_id'     => $programId,
+                'student_id'     => $student->id,
+            ],
+            fees:          $fees,
+            challanType:   count($feeTypes) === 1 ? $feeTypes[0] : 'other',
+            title:         $title ?: $defaultTitle,
+            semesterNo:    $semesterNo,
+            installmentNo: null,
+            scope:         'custom',
+            dueDate:       $dueDate,
+            fallbackLabel: $defaultTitle,
+            extraItems:    $extraItems,
+        );
+    }
+
+    private function ownerFromApplication(Application $application): array
+    {
+        return [
+            'college_id'     => $application->college_id,
+            'application_id' => $application->id,
+            'program_id'     => $application->program_id,
+            'student_id'     => $application->student_id,
+        ];
     }
 
     // ------------------------------------------------------------------
@@ -133,7 +212,7 @@ class ChallanService
      * @param  Collection<int,FeeStructure>  $fees
      */
     private function createChallan(
-        Application $application,
+        array $owner,               // college_id, application_id (nullable), program_id, student_id
         Collection $fees,
         string $challanType,
         string $title,
@@ -142,15 +221,21 @@ class ChallanService
         string $scope,
         Carbon $dueDate,
         string $fallbackLabel,
+        array $extraItems = [],     // [['label' => ..., 'amount' => ...]] typed in by the admin
     ): Challan {
+        // Never create a Rs. 0 challan: something must be billed.
+        $total = (float) $fees->sum('amount') + (float) collect($extraItems)->sum('amount');
+        if ($total <= 0) {
+            throw ValidationException::withMessages([
+                'fee_types' => 'No fees to bill. Set up active fees for this program (Programs -> Fees) or add an item with an amount.',
+            ]);
+        }
+
         return DB::transaction(function () use (
-            $application, $fees, $challanType, $title,
-            $semesterNo, $installmentNo, $scope, $dueDate, $fallbackLabel
+            $owner, $fees, $challanType, $title,
+            $semesterNo, $installmentNo, $scope, $dueDate, $fallbackLabel, $extraItems
         ) {
-            $challan = Challan::create([
-                'college_id'     => $application->college_id,
-                'application_id' => $application->id,
-                'student_id'     => $application->student_id,
+            $challan = Challan::create($owner + [
                 'challan_type'   => $challanType,
                 'title'          => $title,
                 'semester_no'    => $semesterNo,
@@ -168,26 +253,24 @@ class ChallanService
                 ])->values()->all(),
             ]);
 
-            if ($fees->isEmpty()) {
-                // No matching fee structures: create a single zero line so the
-                // challan is a valid record the admin can then fill in.
+            $order = 0;
+            foreach ($fees as $fee) {
                 $challan->items()->create([
-                    'label'      => $fallbackLabel,
-                    'amount'     => 0,
-                    'type'       => 'fee',
-                    'sort_order' => 0,
+                    'label'            => $fee->label,
+                    'amount'           => $fee->amount,
+                    'type'             => 'fee',
+                    'fee_structure_id' => $fee->id,
+                    'sort_order'       => $order++,
                 ]);
-            } else {
-                $order = 0;
-                foreach ($fees as $fee) {
-                    $challan->items()->create([
-                        'label'            => $fee->label,
-                        'amount'           => $fee->amount,
-                        'type'             => 'fee',
-                        'fee_structure_id' => $fee->id,
-                        'sort_order'       => $order++,
-                    ]);
-                }
+            }
+            // Admin-typed lines (e.g. "Duplicate ID card"), billed as conditional charges.
+            foreach ($extraItems as $item) {
+                $challan->items()->create([
+                    'label'      => $item['label'] ?: $fallbackLabel,
+                    'amount'     => $item['amount'],
+                    'type'       => 'conditional',
+                    'sort_order' => $order++,
+                ]);
             }
 
             // total_amount = SUM(items). Single source of truth.
