@@ -15,6 +15,7 @@ class CollegeInitializationService
         $this->seedRolePrivileges($college);   // ← NEW: assign privileges to the roles
         $this->seedCmsPages($college);
         $this->seedSettings($college);
+        \App\Models\FeeType::seedDefaults($college->id);   // starter fee types (Settings -> Fees & Challans)
     }
 
     // ── 1. Roles ─────────────────────────────────────────────────

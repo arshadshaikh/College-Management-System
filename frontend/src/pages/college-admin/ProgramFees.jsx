@@ -5,10 +5,8 @@ import api from '../../api';
 import { PORTAL } from '../../config/app';
 import Toggle from '../../components/Toggle';
 
-const FEE_TYPES = ['admission', 'semester', 'exam', 'library', 'sports', 'security_deposit', 'arrears', 'other'];
-
 const today = () => new Date().toISOString().slice(0, 10);
-const EMPTY = { fee_type: 'admission', label: '', amount: '', semester_no: '', effective_from: today(), effective_to: '', is_active: true };
+const EMPTY = { fee_type: '', label: '', amount: '', semester_no: '', effective_from: today(), effective_to: '', is_active: true };
 
 export default function ProgramFees() {
   const { id } = useParams();
@@ -19,6 +17,14 @@ export default function ProgramFees() {
   const [editingId, setEditingId] = useState(null);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [feeTypes, setFeeTypes] = useState([]);   // Settings -> Fees & Challans -> Fee Types
+
+  // This college's fee types (slug + name, in the order set in Settings).
+  useEffect(() => {
+    api.get('/settings')
+      .then(({ data }) => setFeeTypes(data.fee_types ?? []))
+      .catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -51,6 +57,12 @@ export default function ProgramFees() {
   };
 
   const resetForm = () => { setEditingId(null); setForm(EMPTY); setErrors({}); };
+
+  // Dropdown: active types, plus the edited fee's own type even if it was switched off.
+  const typeOptions = feeTypes.filter((t) => t.is_active || t.slug === form.fee_type);
+  const typeName = (slug) => feeTypes.find((t) => t.slug === slug)?.name ?? slug.replace(/_/g, ' ');
+  const annual = program?.scheme === 'annual';
+  const termShort = annual ? 'Part' : 'Sem';
 
   const submit = async (e) => {
     e.preventDefault();
@@ -95,7 +107,6 @@ export default function ProgramFees() {
   if (loading) return <div className="py-20 text-center text-gray-400">Loading…</div>;
 
   const inputCls = (err) => `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${err ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-indigo-500'}`;
-  const label = (s) => s.replace(/_/g, ' ');
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -115,7 +126,7 @@ export default function ProgramFees() {
               <div key={f.id} className="flex items-center justify-between py-3">
                 <div>
                   <div className="font-medium text-gray-900">
-                    {f.label} <span className="text-xs text-gray-400 capitalize">· {label(f.fee_type)}{f.semester_no ? ` · Sem ${f.semester_no}` : ''}</span>
+                    {f.label} <span className="text-xs text-gray-400 capitalize">· {typeName(f.fee_type)}{f.semester_no ? ` · ${termShort} ${f.semester_no}` : ''}</span>
                     {!f.is_active && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactive</span>}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -142,8 +153,13 @@ export default function ProgramFees() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type <span className="text-red-500">*</span></label>
             <select value={form.fee_type} onChange={set('fee_type')} className={inputCls(errors.fee_type)}>
-              {FEE_TYPES.map((t) => <option key={t} value={t} className="capitalize">{label(t)}</option>)}
+              <option value="">Choose a fee type</option>
+              {typeOptions.map((t) => <option key={t.slug} value={t.slug}>{t.name}{t.is_active ? '' : ' (switched off)'}</option>)}
             </select>
+            {errors.fee_type && <p className="text-xs text-red-600 mt-1">{errors.fee_type[0]}</p>}
+            <p className="text-xs text-gray-400 mt-1">
+              Manage the list in <Link to={`${PORTAL}/cms/settings`} className="text-indigo-600 hover:underline">Settings → Fees &amp; Challans</Link>.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Label <span className="text-red-500">*</span></label>
@@ -159,7 +175,7 @@ export default function ProgramFees() {
             {errors.amount && <p className="text-xs text-red-600 mt-1">{errors.amount[0]}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Semester <span className="font-normal text-gray-400">(optional)</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{annual ? 'Part' : 'Semester'} <span className="font-normal text-gray-400">(optional)</span></label>
             <input type="number" min="1" max="20" value={form.semester_no} onChange={set('semester_no')} placeholder="e.g. 1" className={inputCls(errors.semester_no)} />
           </div>
         </div>

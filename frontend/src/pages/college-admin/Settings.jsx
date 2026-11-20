@@ -5,6 +5,7 @@ import Toggle from '../../components/Toggle';
 import { Link } from 'react-router-dom';
 import { PORTAL } from '../../config/app';
 import TimetableSettings, { withKeys } from './TimetableSettings';
+import FeeTypesEditor from './FeeTypesEditor';
 
 // Picks an image from the Media Library (images only) and stores its URL in a setting (`logo`, `favicon`).
 function LogoPicker({ value, onChange, label = 'Logo', help, small = false }) {
@@ -85,6 +86,7 @@ export default function Settings() {
   const [docTypes, setDocTypes] = useState([]); // applicant documents: master list + this college's choices
   const [periods, setPeriods] = useState([]);   // timetable periods (all shifts)
   const [terms, setTerms] = useState([]);       // academic terms
+  const [feeTypes, setFeeTypes] = useState([]); // this college's fee types
   const [shiftOptions, setShiftOptions] = useState([]);
   const [dayOptions, setDayOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +102,7 @@ export default function Settings() {
         setDocTypes(data.document_types ?? []);
         setPeriods(withKeys(data.timetable_periods ?? []));
         setTerms(withKeys(data.academic_terms ?? []));
+        setFeeTypes(withKeys(data.fee_types ?? []));
         setShiftOptions(data.shift_options ?? []);
         setDayOptions(data.day_options ?? []);
       })
@@ -166,6 +169,8 @@ export default function Settings() {
         // Academic terms (the full list; removed rows are deleted with their timetables).
         academic_terms: terms.map(({ id, name, start_date, end_date, is_current }) =>
           ({ id, name, start_date, end_date, is_current: !!is_current })),
+        // Fee types (the full list, in display order; unused removed rows are deleted, used ones switched off).
+        fee_types: feeTypes.map(({ id, name, is_active }) => ({ id, name, is_active: !!is_active })),
         // Every applicant document, certificates included (Required / Optional / Not asked).
         document_types: docTypes
           .map(({ id, is_active, is_required }) => ({ id, is_active, is_required })),
@@ -175,6 +180,7 @@ export default function Settings() {
       setValues(data.settings ?? values);
       if (data.timetable_periods) setPeriods(withKeys(data.timetable_periods));
       if (data.academic_terms) setTerms(withKeys(data.academic_terms));
+      if (data.fee_types) setFeeTypes(withKeys(data.fee_types));
       toast.success('Settings saved.');
     } catch (err) {
       if (err.response?.status === 422) {
@@ -341,6 +347,8 @@ export default function Settings() {
         {/* Fees */}
         <section className="bg-white rounded-xl shadow-sm p-6 space-y-5">
           <h2 className="font-semibold text-gray-900">Fees &amp; Challans</h2>
+
+          <FeeTypesEditor feeTypes={feeTypes} setFeeTypes={setFeeTypes} errors={errors} />
 
           <Toggle
             checked={values.auto_generate_challan === 'true'}

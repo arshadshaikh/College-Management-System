@@ -175,10 +175,12 @@ class ProgramController extends Controller
     public function storeFeeStructure(Request $request, Program $program)
     {
         $request->validate([
-            'fee_type'       => 'required|in:admission,semester,exam,library,sports,security_deposit,arrears,other',
+            // Must be one of this college's ACTIVE fee types (Settings -> Fees & Challans).
+            'fee_type'       => ['required', 'string', Rule::exists('fee_types', 'slug')
+                                    ->where('college_id', app('current_college')->id)->where('is_active', true)],
             'label'          => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0',
-            'semester_no'    => 'nullable|integer|min:1|max:20',
+            'semester_no'    => 'nullable|integer|min:1|max:' . $program->total_semesters,
             'effective_from' => 'required|date',
             'effective_to'   => 'nullable|date|after:effective_from',
             'is_active'      => 'boolean',
@@ -204,10 +206,12 @@ class ProgramController extends Controller
         }
 
         $request->validate([
-            'fee_type'       => 'sometimes|in:admission,semester,exam,library,sports,security_deposit,arrears,other',
+            // Any of this college's fee types; a switched-off type may stay on an existing line.
+            'fee_type'       => ['sometimes', 'string', Rule::exists('fee_types', 'slug')
+                                    ->where('college_id', app('current_college')->id)],
             'label'          => 'sometimes|string|max:255',
             'amount'         => 'sometimes|numeric|min:0',
-            'semester_no'    => 'nullable|integer|min:1|max:20',
+            'semester_no'    => 'nullable|integer|min:1|max:' . $program->total_semesters,
             'effective_from' => 'sometimes|date',
             'effective_to'   => 'nullable|date|after:effective_from',
             'is_active'      => 'boolean',

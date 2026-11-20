@@ -8,6 +8,8 @@ use App\Models\CollegeDocumentType;
 use App\Models\RequiredDocumentType;
 use App\Models\TimetablePeriod;
 use App\Models\AcademicTerm;
+use App\Models\FeeType;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Services\ApplicantProfileService;
 
@@ -33,6 +35,7 @@ class SettingController extends Controller
             // Timetable: the college's daily periods (working days are the setting timetable_days).
             'timetable_periods' => $this->timetablePeriods(),
             'academic_terms'    => $this->academicTerms(),
+            'fee_types'         => $this->feeTypes(),
             // Catalogs for the Timetable section (choices live in config/timetable.php).
             'shift_options' => collect(config('timetable.shifts'))->map(fn ($l, $k) => ['key' => $k, 'label' => $l])->values(),
             'day_options'   => collect(config('timetable.days'))->map(fn ($l, $k) => ['key' => $k, 'label' => $l])->values(),
@@ -94,6 +97,10 @@ class SettingController extends Controller
             'academic_terms.*.start_date' => 'required|date',
             'academic_terms.*.end_date'   => 'required|date',
             'academic_terms.*.is_current' => 'required|boolean',
+            'fee_types'             => 'nullable|array|max:100',
+            'fee_types.*.id'        => 'nullable|integer',
+            'fee_types.*.name'      => 'required|string|max:100|distinct:ignore_case',
+            'fee_types.*.is_active' => 'required|boolean',
             'document_types'               => 'nullable|array',
             'document_types.*.id'          => 'required|integer|exists:required_document_types,id',
             'document_types.*.is_active'   => 'required|boolean',
@@ -155,6 +162,9 @@ class SettingController extends Controller
         if ($request->has('academic_terms')) {
             $this->syncAcademicTerms($request->input('academic_terms', []));
         }
+        if ($request->has('fee_types')) {
+            $this->syncFeeTypes($request->input('fee_types', []));
+        }
 
         $settings = Setting::all(['key', 'value', 'group']);
 
@@ -164,7 +174,53 @@ class SettingController extends Controller
             'settings'     => $settings->pluck('value', 'key'),
             'timetable_periods' => $this->timetablePeriods(),
             'academic_terms'    => $this->academicTerms(),
+            'fee_types'         => $this->feeTypes(),
         ]);
+    }
+
+    // ── Fee types ────────────────────────────────────────────────
+
+    private function feeTypes(): array
+    {
+        return FeeType::orderBy('sort_order')->orderBy('name')->get()
+            ->map(fn ($t) => [
+                'id'        => $t->id,
+                'slug'      => $t->slug,
+                'name'      => $t->name,
+                'is_active' => $t->is_active,
+                'in_use'    => $t->usageCount(),   // fee lines using it; such a type is never deleted
+            ])
+            ->values()
+            ->all();
+    }
+
+    // Keep sent ids (rename / switch on-off), create new rows (slug from the name),
+    // and for rows not sent: delete if unused, otherwise just switch them off.
+    // A slug never changes, so fee lines that use it keep working after a rename.
+    private function syncFeeTypes(array $rows): void
+    {
+        DB::transaction(function () use ($rows) {
+            $keep = [];
+            foreach (array_values($rows) as $i => $row) {
+                $data = ['name' => trim($row['name']), 'is_active' => (bool) $row['is_active'], 'sort_order' => $i + 1];
+                $type = !empty($row['id']) ? FeeType::find($row['id']) : null;
+                if ($type) {
+                    $type->update($data);
+                } else {
+                    $base = Str::slug($data['name'], '_') ?: 'fee';
+                    $slug = $base;
+                    for ($n = 2; FeeType::where('slug', $slug)->exists(); $n++) {
+                        $slug = $base . '_' . $n;
+                    }
+                    $type = FeeType::create($data + ['slug' => $slug]);
+                }
+                $keep[] = $type->id;
+            }
+
+            FeeType::whereNotIn('id', $keep)->get()->each(function ($t) {
+                $t->usageCount() ? $t->update(['is_active' => false]) : $t->delete();
+            });
+        });
     }
 
     // ── Academic terms ───────────────────────────────────────────
