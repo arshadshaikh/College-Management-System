@@ -199,6 +199,9 @@ export default function ChallanDetail() {
               <Row label={(challan.program ?? challan.application?.program)?.scheme === 'annual' ? 'Part' : 'Semester'} value={challan.semester_no} />
             )}
             <Row label="Type" value={challan.challan_type} />
+            {challan.candidate_type && (
+              <Row label="Candidate / Exam" value={[challan.candidate_type, challan.exam_type].map((v) => (v ? v[0].toUpperCase() + v.slice(1) : '')).join(' / ')} />
+            )}
             {challan.installment_no != null && <Row label="Installment" value={`#${challan.installment_no}`} />}
             <Row label="Issue Date" value={new Date(challan.issue_date).toLocaleDateString()} />
             <Row label="Due Date" value={new Date(challan.due_date).toLocaleDateString()} />
