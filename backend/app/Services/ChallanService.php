@@ -111,10 +111,12 @@ class ChallanService
         Carbon $dueDate,
         ?string $title = null,
         array $extraItems = [],
+        string $candidateType = 'regular',   // regular | private
+        string $examType = 'regular',        // regular | failure
     ): Challan {
         $fees = collect();
         if ($programId && $feeTypes) {
-            $fees = $this->baseFeeQuery($programId)
+            $fees = $this->baseFeeQuery($programId, $candidateType, $examType)
                 ->whereIn('fee_type', $feeTypes)
                 ->where(function ($q) use ($semesterNo) {
                     $q->whereNull('semester_no');
@@ -134,6 +136,11 @@ class ChallanService
         if ($semesterNo && $programId) {
             $defaultTitle .= ' (' . Program::find($programId)?->termLabel() . ' ' . $semesterNo . ')';
         }
+        // Mark non-default candidates/exams in the title, e.g. "Exam Fee (Part 2) - Private, Failure".
+        $flags = array_filter([$candidateType === 'private' ? 'Private' : null, $examType === 'failure' ? 'Failure' : null]);
+        if ($flags) {
+            $defaultTitle .= ' - ' . implode(', ', $flags);
+        }
 
         return $this->createChallan(
             owner:         [
@@ -141,6 +148,8 @@ class ChallanService
                 'application_id' => null,
                 'program_id'     => $programId,
                 'student_id'     => $student->id,
+                'candidate_type' => $candidateType,
+                'exam_type'      => $examType,
             ],
             fees:          $fees,
             challanType:   count($used) === 1 ? $used[0] : 'other',
@@ -168,9 +177,14 @@ class ChallanService
     // Fee selection helpers — all respect active + effective-date window.
     // ------------------------------------------------------------------
 
-    private function baseFeeQuery(int $programId)
+    // Active, in-date lines of a program that apply to this candidate and exam:
+    // lines marked 'any' plus lines for exactly this candidate/exam type.
+    // Admission/semester challans bill as a regular candidate in a regular exam.
+    private function baseFeeQuery(int $programId, string $candidateType = 'regular', string $examType = 'regular')
     {
         return FeeStructure::where('program_id', $programId)
+            ->whereIn('candidate_type', ['any', $candidateType])
+            ->whereIn('exam_type', ['any', $examType])
             ->where('is_active', true)
             ->where('effective_from', '<=', now())
             ->where(function ($q) {

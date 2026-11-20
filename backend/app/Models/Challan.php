@@ -18,7 +18,7 @@ class Challan extends Model
 
     protected $fillable = [
         'challan_no', 'college_id', 'application_id', 'program_id', 'student_id',
-        'challan_type', 'title', 'semester_no', 'installment_no', 'scope',
+        'challan_type', 'title', 'semester_no', 'candidate_type', 'exam_type', 'installment_no', 'scope',
         'total_amount', 'issue_date', 'due_date', 'status', 'fee_breakdown',
     ];
 

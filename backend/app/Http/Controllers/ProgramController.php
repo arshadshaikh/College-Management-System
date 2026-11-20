@@ -181,6 +181,8 @@ class ProgramController extends Controller
             'label'          => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0',
             'semester_no'    => 'nullable|integer|min:1|max:' . $program->total_semesters,
+            'candidate_type' => 'sometimes|in:any,regular,private',   // who pays this line
+            'exam_type'      => 'sometimes|in:any,regular,failure',   // which exam it is for
             'effective_from' => 'required|date',
             'effective_to'   => 'nullable|date|after:effective_from',
             'is_active'      => 'boolean',
@@ -188,7 +190,7 @@ class ProgramController extends Controller
 
         $fee = FeeStructure::create(array_merge(
             $request->only([
-                'fee_type', 'label', 'amount', 'semester_no',
+                'fee_type', 'label', 'amount', 'semester_no', 'candidate_type', 'exam_type',
                 'effective_from', 'effective_to', 'is_active',
             ]),
             ['program_id' => $program->id]
@@ -212,13 +214,15 @@ class ProgramController extends Controller
             'label'          => 'sometimes|string|max:255',
             'amount'         => 'sometimes|numeric|min:0',
             'semester_no'    => 'nullable|integer|min:1|max:' . $program->total_semesters,
+            'candidate_type' => 'sometimes|in:any,regular,private',
+            'exam_type'      => 'sometimes|in:any,regular,failure',
             'effective_from' => 'sometimes|date',
             'effective_to'   => 'nullable|date|after:effective_from',
             'is_active'      => 'boolean',
         ]);
 
         $feeStructure->update($request->only([
-            'fee_type', 'label', 'amount', 'semester_no',
+            'fee_type', 'label', 'amount', 'semester_no', 'candidate_type', 'exam_type',
             'effective_from', 'effective_to', 'is_active',
         ]));
 

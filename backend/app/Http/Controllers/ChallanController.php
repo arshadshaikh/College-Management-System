@@ -160,6 +160,8 @@ class ChallanController extends Controller
             'items.*.amount' => 'required|numeric|min:1',
             'due_date'       => 'required|date|after:today',
             'title'          => 'nullable|string|max:255',
+            'candidate_type' => 'nullable|in:regular,private',
+            'exam_type'      => 'nullable|in:regular,failure',
         ]);
 
         $feeTypes = array_values(array_unique($request->input('fee_types', [])));
@@ -195,6 +197,8 @@ class ChallanController extends Controller
                 dueDate:    Carbon::parse($request->due_date),
                 title:      $request->title,
                 extraItems: $request->input('items', []),
+                candidateType: $request->input('candidate_type') ?: 'regular',
+                examType:      $request->input('exam_type') ?: 'regular',
             );
 
             AuditLog::record('challan.generated', $challan, [

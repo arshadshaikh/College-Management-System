@@ -122,6 +122,9 @@
             <?php if ($challan->semester_no && $program): ?>
             <div class="field"><span class="fl"><?= e($program->termLabel()) ?>:</span><span class="fv"><?= (int) $challan->semester_no ?></span></div>
             <?php endif; ?>
+            <?php if ($challan->candidate_type && ($challan->candidate_type !== 'regular' || $challan->exam_type !== 'regular')): ?>
+            <div class="field"><span class="fl">Candidate / Exam:</span><span class="fv"><?= e(ucfirst($challan->candidate_type)) ?> / <?= e(ucfirst($challan->exam_type)) ?></span></div>
+            <?php endif; ?>
             <?php if ($challan->application): ?>
             <div class="field"><span class="fl">Application:</span><span class="fv"><?= e($challan->application->application_no) ?></span></div>
             <?php endif; ?>

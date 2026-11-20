@@ -35,6 +35,8 @@ export default function ChallanCreate() {
   const [programId, setProgramId] = useState('');
   const [types, setTypes] = useState([]);              // chosen fee type slugs
   const [semesterNo, setSemesterNo] = useState('');
+  const [candidateType, setCandidateType] = useState('regular');   // regular | private
+  const [examType, setExamType] = useState('regular');             // regular | failure
   const [items, setItems] = useState([]);              // [{label, amount}]
   const [dueDate, setDueDate] = useState(inDays(14));
   const [title, setTitle] = useState('');
@@ -103,13 +105,15 @@ export default function ChallanCreate() {
       && types.includes(f.fee_type)
       && (f.effective_from ?? '').slice(0, 10) <= now
       && (!f.effective_to || f.effective_to.slice(0, 10) >= now)
+      && ['any', candidateType].includes(f.candidate_type ?? 'any')
+      && ['any', examType].includes(f.exam_type ?? 'any')
       && (f.semester_no == null || (semesterNo && Number(f.semester_no) === Number(semesterNo))))
       // Same order as the saved challan: Settings fee type order, then part, then oldest first.
       .sort((a, b) => {
         const rank = (f) => { const i = feeTypes.findIndex((t) => t.slug === f.fee_type); return i < 0 ? 9999 : i; };
         return rank(a) - rank(b) || (a.semester_no ?? 0) - (b.semester_no ?? 0) || a.id - b.id;
       });
-  }, [program, types, semesterNo, feeTypes]);
+  }, [program, types, semesterNo, feeTypes, candidateType, examType]);
 
   const extraTotal = items.reduce((s, i) => s + (Number(i.amount) || 0), 0);
   const total = matchedFees.reduce((s, f) => s + Number(f.amount), 0) + extraTotal;
@@ -132,6 +136,8 @@ export default function ChallanCreate() {
         program_id: programId ? Number(programId) : null,
         fee_types: types,
         semester_no: semesterNo ? Number(semesterNo) : null,
+        candidate_type: candidateType,
+        exam_type: examType,
         items: items.filter((i) => i.label || i.amount).map((i) => ({ label: i.label, amount: Number(i.amount) })),
         due_date: dueDate,
         title: title || null,
@@ -225,6 +231,25 @@ export default function ChallanCreate() {
               {err('semester_no') && <p className="text-xs text-red-600 mt-1">{err('semester_no')}</p>}
             </div>
           </div>
+
+          {programId && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Candidate</Label>
+                <select value={candidateType} onChange={(e) => setCandidateType(e.target.value)} className={inputCls('candidate_type')}>
+                  <option value="regular">Regular</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
+              <div>
+                <Label>Exam</Label>
+                <select value={examType} onChange={(e) => setExamType(e.target.value)} className={inputCls('exam_type')}>
+                  <option value="regular">Regular</option>
+                  <option value="failure">Failure (supplementary)</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           {programId && (
             <div>

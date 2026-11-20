@@ -11,7 +11,7 @@ class FeeStructure extends Model
 
     protected $fillable = [
         'college_id', 'program_id', 'fee_type', 'label',
-        'amount', 'semester_no', 'effective_from',
+        'amount', 'semester_no', 'candidate_type', 'exam_type', 'effective_from',
         'effective_to', 'is_active',
     ];
 
