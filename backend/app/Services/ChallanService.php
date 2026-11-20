@@ -113,6 +113,7 @@ class ChallanService
         array $extraItems = [],
         string $candidateType = 'regular',   // regular | private
         string $examType = 'regular',        // regular | failure
+        ?string $challanType = null,         // default: the single fee type used, else 'other'
     ): Challan {
         $fees = collect();
         if ($programId && $feeTypes) {
@@ -152,7 +153,7 @@ class ChallanService
                 'exam_type'      => $examType,
             ],
             fees:          $fees,
-            challanType:   count($used) === 1 ? $used[0] : 'other',
+            challanType:   $challanType ?? (count($used) === 1 ? $used[0] : 'other'),
             title:         $title ?: $defaultTitle,
             semesterNo:    $semesterNo,
             installmentNo: null,

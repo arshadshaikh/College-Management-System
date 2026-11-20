@@ -37,6 +37,7 @@ class SettingsBackfillSeeder extends Seeder
             'late_fee_mode'             => ['value' => 'off',         'group' => 'fees'],
             'late_fee_amount'           => ['value' => '0',           'group' => 'fees'],
             'late_fee_partial'          => ['value' => 'from_day_one','group' => 'fees'],
+            'service_challan_due_days'  => ['value' => '7',           'group' => 'fees'],
             'required_education_levels' => ['value' => 'matric,intermediate', 'group' => 'admission'],
             'require_complete_profile'  => ['value' => 'true', 'group' => 'admission'],
             'post_approval_editable_fields' => ['value' => 'phone,email,present_address,emergency_contact', 'group' => 'admission'],

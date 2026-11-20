@@ -160,6 +160,7 @@ export default function Settings() {
           late_fee_mode: values.late_fee_mode ?? 'off',
           late_fee_amount: values.late_fee_amount ?? '0',
           late_fee_partial: values.late_fee_partial ?? 'from_day_one',
+          service_challan_due_days: values.service_challan_due_days ?? '7',
           shifts: values.shifts || 'morning',
           timetable_days: values.timetable_days ?? '',
         },
@@ -372,6 +373,18 @@ export default function Settings() {
             {err('late_fee_mode') && <p className="text-xs text-red-600 mt-1">{err('late_fee_mode')}</p>}
             <p className="text-xs text-gray-400 mt-1">
               Applied automatically to overdue unpaid challans when viewed.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service challans due in (days)</label>
+            <input type="number" min="1" max="90" step="1"
+              value={values.service_challan_due_days ?? '7'}
+              onChange={(e) => set('service_challan_due_days', e.target.value)}
+              className={inputCls('service_challan_due_days')} />
+            {err('service_challan_due_days') && <p className="text-xs text-red-600 mt-1">{err('service_challan_due_days')}</p>}
+            <p className="text-xs text-gray-400 mt-1">
+              Due date of a challan a student makes for a service, such as a transcript, counted from the day they make it.
             </p>
           </div>
 

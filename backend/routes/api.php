@@ -248,6 +248,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
 
     // Challans
     Route::get('challans/my', [ChallanController::class, 'myChallans']);
+    Route::get('challans/services', [ChallanController::class, 'services']);       // student: requestable services
+    Route::post('challans/request', [ChallanController::class, 'requestService']); // student: challan for a service
     Route::get('challans', [ChallanController::class, 'index']);
     Route::post('challans', [ChallanController::class, 'store']);
     Route::get('challans/{challan}', [ChallanController::class, 'show']);

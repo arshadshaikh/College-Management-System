@@ -58,6 +58,7 @@ class SettingController extends Controller
             'settings.late_fee_mode'         => 'nullable|in:off,flat,per_week,per_month',
             'settings.late_fee_amount'       => 'nullable|numeric|min:0',
             'settings.late_fee_partial'      => 'nullable|in:from_day_one,full_period',
+            'settings.service_challan_due_days' => 'nullable|integer|min:1|max:90',
             'settings.require_complete_profile'  => 'nullable|in:true,false',
             'settings.required_education_levels' => ['nullable', 'string', function ($attr, $value, $fail) {
                 $known = array_keys(config('admission.education_levels', []));

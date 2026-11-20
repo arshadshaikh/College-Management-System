@@ -157,6 +157,7 @@ class CollegeInitializationService
                 'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download', 'profile.documents.destroy',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
                 'challans.my-show', 'payments.slip',
+                'challans.services', 'challans.request',
                 'cms.pages.index', 'cms.pages.show',
                 'cms.announcements.index', 'cms.announcements.show',
                 'cms.menus.index', 'cms.menus.show',
@@ -227,6 +228,7 @@ class CollegeInitializationService
             ['key' => 'post_approval_editable_fields', 'value' => 'phone,email,present_address,emergency_contact', 'group' => 'admission'],
             ['key' => 'late_fee_amount',       'value' => '0',     'group' => 'fees'],
             ['key' => 'late_fee_partial',      'value' => 'from_day_one', 'group' => 'fees'],
+            ['key' => 'service_challan_due_days', 'value' => '7',     'group' => 'fees'],
             ['key' => 'timetable_days',        'value' => '1,2,3,4,5',   'group' => 'timetable'],
             ['key' => 'shifts',                'value' => 'morning',     'group' => 'timetable'],
         ];

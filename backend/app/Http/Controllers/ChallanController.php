@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Challan;
 use App\Models\ChallanItem;
+use App\Models\FeeType;
+use App\Models\Setting;
 use App\Models\Payment;
 use App\Models\Program;
 use App\Models\User;
@@ -72,6 +74,85 @@ class ChallanController extends Controller
             ->paginate(15);
 
         return response()->json($challans);
+    }
+
+    // ── Student: services they can request (Settings -> Fee Types with an amount) ──
+    // GET /api/challans/services
+    public function services(Request $request)
+    {
+        $pending = Challan::where('student_id', $request->user()->id)
+            ->where('status', 'unpaid')
+            ->pluck('id', 'challan_type');   // slug => id of an unpaid challan for it
+
+        $services = FeeType::where('is_active', true)->whereNotNull('service_amount')
+            ->orderBy('sort_order')->orderBy('name')->get()
+            ->map(fn ($t) => [
+                'slug'               => $t->slug,
+                'name'               => $t->name,
+                'amount'             => (float) $t->service_amount,
+                'unpaid_challan_id'  => $pending[$t->slug] ?? null,
+            ])->values();
+
+        return response()->json(['services' => $services]);
+    }
+
+    // ── Student: make a challan for one service ──────────────────
+    // POST /api/challans/request  { fee_type: "transcript" }
+    // An unpaid challan for the same service is returned instead of making a second one.
+    public function requestService(Request $request)
+    {
+        $student   = $request->user();
+        $collegeId = app('current_college')->id;
+
+        $request->validate([
+            'fee_type' => ['required', 'string', Rule::exists('fee_types', 'slug')
+                ->where('college_id', $collegeId)->where('is_active', true)->whereNotNull('service_amount')],
+        ], [
+            'fee_type.exists' => 'This service cannot be requested.',
+        ]);
+
+        $type = FeeType::where('slug', $request->fee_type)->firstOrFail();
+
+        $existing = Challan::where('student_id', $student->id)
+            ->where('challan_type', $type->slug)->where('status', 'unpaid')->first();
+        if ($existing) {
+            return response()->json([
+                'message' => "You already have an unpaid {$type->name} challan.",
+                'challan' => $existing,
+            ]);
+        }
+
+        // Print the student's program when they have an approved application (optional).
+        $programId = Application::where('student_id', $student->id)->where('status', 'approved')
+            ->latest()->value('program_id');
+
+        $days = (int) (Setting::where('key', 'service_challan_due_days')->value('value') ?: 7);
+
+        $challan = DB::transaction(function () use ($student, $type, $programId, $days) {
+            $challan = $this->challanService->generateForStudent(
+                student:     $student,
+                programId:   $programId,
+                feeTypes:    [],
+                semesterNo:  null,
+                dueDate:     Carbon::today()->addDays(max(1, $days)),
+                title:       $type->name . ' Fee',
+                extraItems:  [['label' => $type->name, 'amount' => (float) $type->service_amount]],
+                challanType: $type->slug,
+            );
+
+            AuditLog::record('challan.requested', $challan, [
+                'challan_no' => $challan->challan_no,
+                'service'    => $type->slug,
+                'amount'     => (float) $type->service_amount,
+            ]);
+
+            return $challan;
+        });
+
+        return response()->json([
+            'message' => 'Challan generated.',
+            'challan' => $challan,
+        ], 201);
     }
 
     // ── College admin: view single challan ────────────────────────
