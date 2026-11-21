@@ -13,10 +13,13 @@ use Illuminate\Validation\Rule;
  */
 class AffiliatedCollegeController extends Controller
 {
-    // GET /api/affiliated-colleges  (?search=, ?active=1, ?per_page=)
+    // GET /api/affiliated-colleges  (?search=, ?active=1, ?sort_by=, ?sort_dir=, ?per_page=)
     public function index(Request $request)
     {
-        $search = trim((string) $request->query('search', ''));
+        $search   = trim((string) $request->query('search', ''));
+        $sortable = ['code', 'name', 'city', 'is_active', 'created_at'];
+        $sortBy   = in_array($request->query('sort_by'), $sortable, true) ? $request->query('sort_by') : 'name';
+        $sortDir  = $request->query('sort_dir') === 'desc' ? 'desc' : 'asc';
 
         $query = AffiliatedCollege::query()
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
@@ -24,9 +27,11 @@ class AffiliatedCollegeController extends Controller
                 ->orWhere('name', 'like', "%{$search}%")
                 ->orWhere('city', 'like', "%{$search}%")))
             ->when($request->boolean('active'), fn ($q) => $q->where('is_active', true))
-            ->orderBy('name');
+            ->orderBy($sortBy, $sortDir)
+            ->orderBy('id');
 
-        $perPage = min(max((int) $request->query('per_page', 25), 1), 200);
+        // Up to 1000 so the DataTable CSV export gets every row.
+        $perPage = min(max((int) $request->query('per_page', 25), 1), 1000);
 
         return response()->json($query->paginate($perPage));
     }
