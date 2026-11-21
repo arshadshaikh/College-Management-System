@@ -517,10 +517,16 @@ class ChallanController extends Controller
         $logoSetting = \App\Models\Setting::where('college_id', $challan->college_id)
             ->where('key', 'logo')->value('value');
         if ($logoSetting) {
-            $path = str_replace('/storage/', '', parse_url($logoSetting, PHP_URL_PATH) ?? $logoSetting);
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            // The URL may sit under a sub-folder on the server (e.g. /cms/uos/storage/media/logo.png),
+            // so keep only what comes after the last "/storage/" to get the path on the public disk.
+            $urlPath = parse_url($logoSetting, PHP_URL_PATH) ?: $logoSetting;
+            $pos     = strrpos($urlPath, '/storage/');
+            $path    = ltrim($pos === false ? $urlPath : substr($urlPath, $pos + strlen('/storage/')), '/');
+            if ($path !== '' && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
                 $bytes = \Illuminate\Support\Facades\Storage::disk('public')->get($path);
-                $mime  = str_ends_with(strtolower($path), '.png') ? 'image/png' : 'image/jpeg';
+                $mime  = class_exists(\finfo::class)
+                    ? ((new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: 'image/png')
+                    : (str_ends_with(strtolower($path), '.png') ? 'image/png' : 'image/jpeg');
                 $logoData = 'data:' . $mime . ';base64,' . base64_encode($bytes);
             }
         }
