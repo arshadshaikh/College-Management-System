@@ -73,6 +73,9 @@ export default function MyChallanDetail() {
   );
 
   const payable = ['unpaid', 'overdue'].includes(challan.status);
+  // Lines live in challan_items; fee_breakdown is the old snapshot (fees only), kept as a fallback.
+  const lines = challan.items?.length ? challan.items : (challan.fee_breakdown ?? []);
+  const program = challan.program ?? challan.application?.program;
   const hasPendingSlip = challan.payments?.some((p) => !p.slip_verified);
   const inputCls = (e) => `w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${e ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-indigo-500'}`;
 
@@ -82,6 +85,7 @@ export default function MyChallanDetail() {
         <div>
           <Link to={`${PORTAL}/my-challans`} className="text-sm text-gray-500 hover:underline">← My Challans</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{challan.challan_no}</h1>
+          {challan.title && <p className="text-sm text-gray-500">{challan.title}</p>}
         </div>
         <div className="flex items-center gap-3">
           <button onClick={downloadPdf} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">⬇ PDF</button>
@@ -92,10 +96,18 @@ export default function MyChallanDetail() {
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Fee Breakdown</h2>
         <div className="space-y-2 text-sm">
-          {(challan.fee_breakdown ?? []).map((f, i) => (
-            <div key={i} className="flex justify-between">
-              <span className="text-gray-600">{f.label}</span>
-              <span className="text-gray-900">Rs. {Number(f.amount).toLocaleString()}</span>
+          {program && (
+            <div className="flex justify-between text-gray-500 pb-2 border-b border-gray-100">
+              <span>{program.name}</span>
+              {challan.semester_no != null && (
+                <span>{program.scheme === 'annual' ? 'Part' : 'Semester'} {challan.semester_no}</span>
+              )}
+            </div>
+          )}
+          {lines.map((f, i) => (
+            <div key={f.id ?? i} className="flex justify-between gap-4">
+              <span className={f.type === 'late_fee' ? 'text-red-600' : 'text-gray-600'}>{f.label}</span>
+              <span className={f.type === 'late_fee' ? 'text-red-600' : 'text-gray-900'}>Rs. {Number(f.amount).toLocaleString()}</span>
             </div>
           ))}
           <div className="flex justify-between border-t pt-2 font-semibold">

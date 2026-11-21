@@ -551,8 +551,11 @@ class ChallanController extends Controller
             return response()->json(['message' => 'Not found.'], 404);
         }
 
+        // Same as the admin view: refresh the late fee line first, then send the lines.
+        $this->challanService->applyLateFee($challan);
+
         return response()->json(
-            $challan->load(['application.program', 'program', 'payments'])
+            $challan->load(['items', 'application.program', 'program', 'payments'])
         );
     }
 
