@@ -182,7 +182,7 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
                 </select>
                 {errors.study_group && <p className="text-xs text-red-600 mt-1">{errors.study_group[0]}</p>}
               </div>
-            ) : field('degree_title', 'Degree / Group (e.g. Science, BS Computer Science)')}
+            ) : field('degree_title', 'Degree Title (e.g. BS Computer Science)')}
             {field('board_university', 'Board / University *')}
             {field('institution', 'School / College / Institute')}
             {field('roll_no', 'Roll Number')}

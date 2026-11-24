@@ -7,7 +7,14 @@
 return [
     'education_levels' => [
         'matric'       => ['label' => 'Matric / SSC',                    'document' => 'matric_certificate', 'result' => 'marks', 'min_age' => 13,
-                            'systems'      => ['ssc'   => ['label' => 'Matric (SSC)'], 'o_level' => ['label' => 'O Level', 'grades' => true]]],
+                            'systems'      => ['ssc'   => ['label' => 'Matric (SSC)'], 'o_level' => ['label' => 'O Level', 'grades' => true]],
+                            // Group studied (required; O Level: as on the IBCC equivalence). Stored in student_educations.study_group.
+                            'groups'       => [
+                                'science_biology'  => 'Science (Biology)',
+                                'science_computer' => 'Science (Computer Science)',
+                                'general'          => 'General / Arts',
+                                'technical'        => 'Technical',
+                            ]],
         'intermediate' => ['label' => 'Intermediate / HSSC',             'document' => 'inter_certificate',  'result' => 'marks', 'min_age' => 15,
                            'systems' => ['hssc' => ['label' => 'Intermediate (HSSC)'], 'a_level' => ['label' => 'A Level', 'grades' => true]],
                            // Group studied (required). Stored in student_educations.study_group.
