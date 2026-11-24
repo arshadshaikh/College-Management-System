@@ -24,7 +24,6 @@ use App\Http\Controllers\CmsBannerController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
-use App\Http\Controllers\AffiliatedCollegeController;
 use Illuminate\Support\Facades\Route;
 
 // No 'tenant' guard: on the main domain there is no college and the platform defaults are returned.
@@ -235,12 +234,6 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('students', [StudentController::class, 'store']);
     Route::get('students/{student}', [StudentController::class, 'show']);
     Route::put('students/{student}', [StudentController::class, 'update']);
-
-    // Affiliated colleges
-    Route::get('affiliated-colleges', [AffiliatedCollegeController::class, 'index']);
-    Route::post('affiliated-colleges', [AffiliatedCollegeController::class, 'store']);
-    Route::put('affiliated-colleges/{affiliatedCollege}', [AffiliatedCollegeController::class, 'update']);
-    Route::delete('affiliated-colleges/{affiliatedCollege}', [AffiliatedCollegeController::class, 'destroy']);
 
     // Documents
     Route::get('documents/{document}/download', [ApplicationController::class, 'downloadDocument'])

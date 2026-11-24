@@ -37,7 +37,6 @@ import StudentForm from './pages/college-admin/StudentForm';
 import StudentImport from './pages/college-admin/StudentImport';
 import StudentDetail from './pages/college-admin/StudentDetail';
 import StudentEditForm from './pages/college-admin/StudentEditForm';
-import AffiliatedColleges from './pages/college-admin/AffiliatedColleges';
 import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
@@ -153,7 +152,6 @@ export default function App() {
         <Route path="students/import" element={<PrivilegeRoute slug="students.import"><StudentImport /></PrivilegeRoute>} />
         <Route path="students/:id" element={<PrivilegeRoute slug="students.show"><StudentDetail /></PrivilegeRoute>} />
         <Route path="students/:id/edit" element={<PrivilegeRoute slug="students.update"><StudentEditForm /></PrivilegeRoute>} />
-        <Route path="affiliated-colleges" element={<PrivilegeRoute slug="affiliated-colleges.index"><AffiliatedColleges /></PrivilegeRoute>} />
 
         {/* Challans */}
         <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
