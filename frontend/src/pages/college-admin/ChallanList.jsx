@@ -90,6 +90,10 @@ export default function ChallanList() {
           <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectCls}>
             {STATUSES.map((s) => <option key={s} value={s}>{s === '' ? 'All statuses' : s}</option>)}
           </select>
+          {hasPrv('challans.bulk') && (
+            <Link to={`${PORTAL}/challans/bulk`}
+              className="px-4 py-2 border border-indigo-200 text-indigo-700 bg-indigo-50 rounded-lg text-sm font-medium hover:bg-indigo-100">Bill a Class</Link>
+          )}
           {hasPrv('challans.store') && (
             <Link to={`${PORTAL}/challans/create`}
               className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">+ New Challan</Link>

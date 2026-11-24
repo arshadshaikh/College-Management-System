@@ -125,6 +125,7 @@ class CollegeInitializationService
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
                 'challans.items.store', 'challans.items.update', 'challans.items.destroy',
                 'reports.defaulters',
+                'challans.bulk-preview', 'challans.bulk',
                 // CMS
                 'settings.index', 'settings.update',
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',

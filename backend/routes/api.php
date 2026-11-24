@@ -25,6 +25,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\BulkChallanController;
 use Illuminate\Support\Facades\Route;
 
 // No 'tenant' guard: on the main domain there is no college and the platform defaults are returned.
@@ -244,6 +245,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::get('challans/my', [ChallanController::class, 'myChallans']);
     Route::get('challans/services', [ChallanController::class, 'services']);       // student: requestable services
     Route::post('challans/request', [ChallanController::class, 'requestService']); // student: challan for a service
+    Route::post('challans/bulk/preview', [BulkChallanController::class, 'preview']); // admin: who/what a class bill covers
+    Route::post('challans/bulk', [BulkChallanController::class, 'store']);           // admin: bill the class
     Route::get('challans', [ChallanController::class, 'index']);
     Route::post('challans', [ChallanController::class, 'store']);
     Route::get('challans/{challan}', [ChallanController::class, 'show']);

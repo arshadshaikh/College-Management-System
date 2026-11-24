@@ -115,33 +115,9 @@ class ChallanService
         string $examType = 'regular',        // regular | failure
         ?string $challanType = null,         // default: the single fee type used, else 'other'
     ): Challan {
-        $fees = collect();
-        if ($programId && $feeTypes) {
-            $fees = $this->baseFeeQuery($programId, $candidateType, $examType)
-                ->whereIn('fee_type', $feeTypes)
-                ->where(function ($q) use ($semesterNo) {
-                    $q->whereNull('semester_no');
-                    if ($semesterNo) {
-                        $q->orWhere('semester_no', $semesterNo);
-                    }
-                })
-                ->orderByRaw('semester_no IS NULL')->orderBy('id')
-                ->get();
-        }
-
-        // Title and type come from the fee types that actually produced lines, not every chip tapped.
-        $used  = $fees->pluck('fee_type')->unique()->values()->all();
-        $names = FeeType::whereIn('slug', $used)->orderBy('sort_order')->pluck('name')->all();
-
-        $defaultTitle = $names ? implode(' + ', $names) . ' Fee' : 'Fee Challan';
-        if ($semesterNo && $programId) {
-            $defaultTitle .= ' (' . Program::find($programId)?->termLabel() . ' ' . $semesterNo . ')';
-        }
-        // Mark non-default candidates/exams in the title, e.g. "Exam Fee (Part 2) - Private, Failure".
-        $flags = array_filter([$candidateType === 'private' ? 'Private' : null, $examType === 'failure' ? 'Failure' : null]);
-        if ($flags) {
-            $defaultTitle .= ' - ' . implode(', ', $flags);
-        }
+        $fees         = $this->feeLinesFor($programId, $feeTypes, $semesterNo, $candidateType, $examType);
+        $used         = $fees->pluck('fee_type')->unique()->values()->all();
+        $defaultTitle = $this->titleFor($fees, $programId, $semesterNo, $candidateType, $examType);
 
         return $this->createChallan(
             owner:         [
@@ -162,6 +138,56 @@ class ChallanService
             fallbackLabel: $defaultTitle,
             extraItems:    $extraItems,
         );
+    }
+
+    /**
+     * Fee lines a student challan bills: the program's active lines of these fee types,
+     * for this Part/Semester plus lines with no Part (one-time fees).
+     * Public so the bulk preview shows exactly what will be billed.
+     */
+    public function feeLinesFor(?int $programId, array $feeTypes, ?int $semesterNo,
+                                string $candidateType = 'regular', string $examType = 'regular'): Collection
+    {
+        if (!$programId || !$feeTypes) {
+            return collect();
+        }
+        return $this->baseFeeQuery($programId, $candidateType, $examType)
+            ->whereIn('fee_type', $feeTypes)
+            ->where(function ($q) use ($semesterNo) {
+                $q->whereNull('semester_no');
+                if ($semesterNo) {
+                    $q->orWhere('semester_no', $semesterNo);
+                }
+            })
+            ->orderByRaw('semester_no IS NULL')->orderBy('id')
+            ->get();
+    }
+
+    // Default challan title, e.g. "Tuition + Exam Fee (Part 2)". Uses the fee types that
+    // actually produced lines, not every chip tapped.
+    public function titleFor(Collection $fees, ?int $programId, ?int $semesterNo,
+                             string $candidateType = 'regular', string $examType = 'regular'): string
+    {
+        $used  = $fees->pluck('fee_type')->unique()->values()->all();
+        $names = FeeType::whereIn('slug', $used)->orderBy('sort_order')->pluck('name')->all();
+
+        $title = $names ? implode(' + ', $names) . ' Fee' : 'Fee Challan';
+        if ($semesterNo && $programId) {
+            $title .= ' (' . Program::find($programId)?->termLabel() . ' ' . $semesterNo . ')';
+        }
+        // Mark non-default candidates/exams, e.g. "Exam Fee (Part 2) - Private, Failure".
+        $flags = array_filter([$candidateType === 'private' ? 'Private' : null, $examType === 'failure' ? 'Failure' : null]);
+        if ($flags) {
+            $title .= ' - ' . implode(', ', $flags);
+        }
+        return $title;
+    }
+
+    // challan_type the student challan gets: the one fee type used, else 'other'.
+    public function typeFor(Collection $fees): string
+    {
+        $used = $fees->pluck('fee_type')->unique()->values()->all();
+        return count($used) === 1 ? $used[0] : 'other';
     }
 
     private function ownerFromApplication(Application $application): array
