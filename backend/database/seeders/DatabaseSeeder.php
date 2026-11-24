@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             TimetablePrivilegeSeeder::class, // courses + class timetable
             ChallanPrivilegeSeeder::class,  // fee/challan privileges
             ServiceChallanPrivilegeSeeder::class, // students request service challans (transcript, ID card ...)
+            ReportPrivilegeSeeder::class,   // college reports (fee defaulters ...)
             StudentPrivilegeSeeder::class,  // student list/create/edit/import (college admin)
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student

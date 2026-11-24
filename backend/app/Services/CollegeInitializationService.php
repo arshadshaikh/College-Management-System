@@ -124,6 +124,7 @@ class CollegeInitializationService
                 'challans.index', 'challans.store', 'challans.show', 'challans.cancel',
                 'challans.mark-paid', 'challans.pdf', 'payments.verify-slip', 'payments.slip',
                 'challans.items.store', 'challans.items.update', 'challans.items.destroy',
+                'reports.defaulters',
                 // CMS
                 'settings.index', 'settings.update',
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',
@@ -142,7 +143,7 @@ class CollegeInitializationService
                 'applications.shift',
                 'timetable.copy',
                 // ── MENU (navigation) privileges — REQUIRED or the sidebar is empty ──
-                'menu.programs', 'menu.applications', 'menu.challans', 'menu.students',
+                'menu.programs', 'menu.applications', 'menu.challans', 'menu.defaulters', 'menu.students',
                 'menu.cms',
                 'menu.cms.pages', 'menu.cms.menus', 'menu.cms.banners',
                 'menu.cms.announcements', 'menu.cms.media', 'menu.cms.settings',

@@ -9,6 +9,7 @@ export default function DataTable({
   title, headerActions,
   showIndex = true,          // the "#" column
   csvName,                   // e.g. "programs" — omit to hide the CSV button
+  onData,                    // optional: gets the raw response after each load (e.g. for a summary)
 }) {
   const [rows, setRows]       = useState([]);
   const [meta, setMeta]       = useState({ current_page: 1, last_page: 1, total: 0 });
@@ -45,6 +46,7 @@ export default function DataTable({
     setLoading(true);
     try {
       const { data } = await api.get(endpoint, { params: buildParams() });
+      onData?.(data);
       if (Array.isArray(data)) {
         setRows(data);
         setMeta({ current_page: 1, last_page: 1, total: data.length });

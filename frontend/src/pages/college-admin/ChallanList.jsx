@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PORTAL } from '../../config/app';
 import DataTable from '../../components/DataTable';
 import api from '../../api';
@@ -19,6 +19,12 @@ export default function ChallanList() {
   const [type, setType]     = useState('');
   const [feeTypes, setFeeTypes] = useState([]);   // college fee types (Settings), for names + filter
   const { hasPrv } = useAuth();
+
+  // ?student=<id>&name=<name> comes from the Fee Defaulters page: show only that student's challans.
+  const [params, setParams] = useSearchParams();
+  const studentId   = params.get('student') || '';
+  const studentName = params.get('name') || 'this student';
+  const clearStudent = () => setParams({});
 
   useEffect(() => {
     api.get('/settings').then(({ data }) => setFeeTypes(data.fee_types ?? [])).catch(() => {});
@@ -68,9 +74,15 @@ export default function ChallanList() {
       csvName="challans"
       columns={columns}
       actions={actions}
-      filters={{ status: status || undefined, challan_type: type || undefined }}
+      filters={{ status: status || undefined, challan_type: type || undefined, student_id: studentId || undefined }}
       headerActions={
         <>
+          {studentId && (
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-sm">
+              Only {studentName}
+              <button onClick={clearStudent} className="text-indigo-500 hover:text-indigo-800" title="Show all students">✕</button>
+            </span>
+          )}
           <select value={type} onChange={(e) => setType(e.target.value)} className={selectCls}>
             <option value="">All types</option>
             {typeOptions.map((t) => <option key={t} value={t}>{typeName(t)}</option>)}

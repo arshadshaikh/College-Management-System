@@ -40,6 +40,7 @@ import StudentEditForm from './pages/college-admin/StudentEditForm';
 import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
+import Defaulters from './pages/college-admin/Defaulters';
 import ChallanDetail from './pages/college-admin/ChallanDetail';
 import ChallanCreate from './pages/college-admin/ChallanCreate';
 import Settings from './pages/college-admin/Settings';
@@ -157,6 +158,7 @@ export default function App() {
         <Route path="challans" element={<PrivilegeRoute slug="challans.index"><ChallanList /></PrivilegeRoute>} />
         <Route path="challans/create" element={<PrivilegeRoute slug="challans.store"><ChallanCreate /></PrivilegeRoute>} />
         <Route path="challans/:id" element={<PrivilegeRoute slug="challans.show"><ChallanDetail /></PrivilegeRoute>} />
+        <Route path="defaulters" element={<PrivilegeRoute slug="reports.defaulters"><Defaulters /></PrivilegeRoute>} />
 
         {/* College Settings */}
         <Route path="cms/settings" element={<PrivilegeRoute slug="settings.index"><Settings /></PrivilegeRoute>} />

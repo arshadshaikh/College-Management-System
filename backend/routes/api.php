@@ -24,6 +24,7 @@ use App\Http\Controllers\CmsBannerController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 // No 'tenant' guard: on the main domain there is no college and the platform defaults are returned.
@@ -253,6 +254,9 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('challans/{challan}/items',                [ChallanController::class, 'addItem']);
     Route::put('challans/{challan}/items/{item}',          [ChallanController::class, 'updateItem']);
     Route::delete('challans/{challan}/items/{item}',       [ChallanController::class, 'deleteItem']);
+
+    // Reports
+    Route::get('reports/defaulters', [ReportController::class, 'defaulters']);
 
     // Payments
     Route::post('payments/{payment}/verify-slip', [ChallanController::class, 'verifySlip']);
