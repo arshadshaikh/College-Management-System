@@ -141,9 +141,19 @@ class ProfileController extends Controller
                 \Illuminate\Validation\Rule::requiredIf(fn () => !empty($catalog[$request->input('level')]['systems'][$request->input('system')]['grades'] ?? false)),
                 'nullable', 'string', 'max:255',
             ],
+            // Group studied, for levels that list groups (Intermediate). Required there.
+            'study_group'      => [
+                \Illuminate\Validation\Rule::requiredIf(fn () => !empty($catalog[$request->input('level')]['groups'] ?? [])),
+                'nullable', 'string',
+                \Illuminate\Validation\Rule::in(array_keys($catalog[$request->input('level')]['groups'] ?? [])),
+            ],
             'cgpa'             => 'nullable|required_without:total_marks|numeric|min:0|lte:cgpa_scale',
             'cgpa_scale'       => 'nullable|required_with:cgpa|numeric|in:4,5',
         ]);
+
+        if (empty($catalog[$data['level'] ?? '']['groups'])) {
+            $data['study_group'] = null;
+        }
 
         // Grades only belong to grade-based systems (O / A Level).
         if (empty($catalog[$data['level'] ?? '']['systems'][$data['system'] ?? '']['grades'])) {

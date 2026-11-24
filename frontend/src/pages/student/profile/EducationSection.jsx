@@ -9,7 +9,7 @@ import DocumentCard from './DocumentCard';
 const EMPTY = {
   degree_title: '', board_university: '', institution: '', roll_no: '', passing_year: '',
   total_marks: '', obtained_marks: '', grade: '', cgpa: '', cgpa_scale: '4',
-  system: '', grades_summary: '',
+  system: '', grades_summary: '', study_group: '',
 };
 
 const inputCls = (error) =>
@@ -29,6 +29,9 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
   const currentSystem = form.system || systems[0]?.[0] || '';
   const isGrades = !!level.systems?.[currentSystem]?.grades;
   const rowSystem = row?.system || systems[0]?.[0];
+  // Groups studied at this level (Intermediate: Pre-Medical, Pre-Engineering ...). Required when listed.
+  const groups = Object.entries(level.groups ?? {});
+  const groupMissing = !locked && !!row && groups.length > 0 && !row.study_group;
 
   // Documents asked at this level (Pass, Marks ...), only those for the saved system.
   const levelDocs = (level.documents ?? [])
@@ -90,7 +93,8 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
   const summary = row
     ? [
         level.systems?.[row.system]?.label,
-        row.degree_title,
+        level.groups?.[row.study_group],
+        groups.length ? null : row.degree_title,
         row.board_university,
         row.passing_year,
         row.total_marks
@@ -123,6 +127,9 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
             {summary ?? 'Not added yet'}
             {row && levelDocs.length > 0 && ` · ${uploaded} of ${levelDocs.length} documents uploaded`}
           </p>
+          {groupMissing && (
+            <p className="text-xs text-amber-600 mt-0.5">Choose your group: click Edit, pick it and save.</p>
+          )}
         </div>
         
         {!locked && (
@@ -166,7 +173,16 @@ function LevelCard({ level, row, onSaved, docTypes, docs, locked }) {
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {field('degree_title', 'Degree / Group (e.g. Science, BS Computer Science)')}
+            {groups.length > 0 ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Group *</label>
+                <select value={form.study_group} onChange={set('study_group')} className={inputCls(errors.study_group)}>
+                  <option value="">Choose your group</option>
+                  {groups.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+                {errors.study_group && <p className="text-xs text-red-600 mt-1">{errors.study_group[0]}</p>}
+              </div>
+            ) : field('degree_title', 'Degree / Group (e.g. Science, BS Computer Science)')}
             {field('board_university', 'Board / University *')}
             {field('institution', 'School / College / Institute')}
             {field('roll_no', 'Roll Number')}

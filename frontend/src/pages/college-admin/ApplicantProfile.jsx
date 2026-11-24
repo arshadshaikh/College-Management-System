@@ -146,7 +146,7 @@ export default function ApplicantProfile({ app, onDownload }) {
                           <span className="block text-xs font-normal text-indigo-600">{levels[e.level].systems[e.system].label}</span>
                         )}
                       </td>
-                      <td className="py-2 pr-4">{e.degree_title || '—'}</td>
+                      <td className="py-2 pr-4">{levels[e.level]?.groups?.[e.study_group] || e.degree_title || '—'}</td>
                       <td className="py-2 pr-4">{e.board_university}</td>
                       <td className="py-2 pr-4">{e.institution || '—'}</td>
                       <td className="py-2 pr-4">{e.roll_no || '—'}</td>

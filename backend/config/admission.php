@@ -9,7 +9,17 @@ return [
         'matric'       => ['label' => 'Matric / SSC',                    'document' => 'matric_certificate', 'result' => 'marks', 'min_age' => 13,
                             'systems'      => ['ssc'   => ['label' => 'Matric (SSC)'], 'o_level' => ['label' => 'O Level', 'grades' => true]]],
         'intermediate' => ['label' => 'Intermediate / HSSC',             'document' => 'inter_certificate',  'result' => 'marks', 'min_age' => 15,
-                           'systems' => ['hssc' => ['label' => 'Intermediate (HSSC)'], 'a_level' => ['label' => 'A Level', 'grades' => true]]],
+                           'systems' => ['hssc' => ['label' => 'Intermediate (HSSC)'], 'a_level' => ['label' => 'A Level', 'grades' => true]],
+                           // Group studied (required). Stored in student_educations.study_group.
+                           'groups'  => [
+                               'pre_medical'      => 'Pre-Medical',
+                               'pre_engineering'  => 'Pre-Engineering',
+                               'computer_science' => 'Computer Science (ICS)',
+                               'commerce'         => 'Commerce (I.Com)',
+                               'humanities'       => 'Humanities / Arts',
+                               'general_science'  => 'General Science',
+                               'home_economics'   => 'Home Economics',
+                           ]],
         'bachelors'    => ['label' => "Bachelor's (14 / 16 years)",      'document' => 'bachelors_degree',   'result' => 'cgpa', 'min_age' => 17],
         'masters'      => ['label' => "Master's (16 years)",             'document' => 'masters_degree',     'result' => 'cgpa', 'min_age' => 19],
         'mphil'        => ['label' => 'M.Phil / MS (18 years)',          'document' => 'mphil_degree',       'result' => 'cgpa', 'min_age' => 21],

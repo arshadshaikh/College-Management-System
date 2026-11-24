@@ -138,7 +138,13 @@ class ApplicantProfileService
             if (blank($value)) $missing[] = ['section' => 'personal', 'key' => $field, 'label' => self::PERSONAL_LABELS[$field] ?? ucwords(str_replace('_', ' ', $field))];
         }
 
-        $haveLevels = $educations->pluck('level')->all();
+        // A level counts as done only when saved, and, for levels with groups (Intermediate), with its group chosen.
+        // A locked profile (application under review / approved) can't be edited, so a group missing
+        // from before the dropdown existed is not held against it.
+        $locked = $this->lockingApplication($user) !== null;
+        $haveLevels = $educations
+            ->filter(fn ($e) => $locked || empty(config("admission.education_levels.{$e->level}.groups")) || filled($e->study_group))
+            ->pluck('level')->all();
         foreach ($levels->where('required', true) as $level) {
             if (!in_array($level['key'], $haveLevels)) {
                 $missing[] = ['section' => 'education', 'key' => $level['key'], 'label' => $level['label']];

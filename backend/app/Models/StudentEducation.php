@@ -16,7 +16,7 @@ class StudentEducation extends Model
         'board_university', 'institution', 'roll_no', 'passing_year',
         'total_marks', 'obtained_marks', 'grade', 'cgpa', 'cgpa_scale',
         'document_id',
-        'system', 'grades_summary',
+        'system', 'grades_summary', 'study_group',
     ];
 
     protected $casts = [
