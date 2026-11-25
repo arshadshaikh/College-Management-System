@@ -18,7 +18,8 @@ const DEFAULT_START = { morning: '08:30', noon: '12:00', evening: '15:00' };
 let nextKey = 1;
 export const withKeys = (rows) => rows.map((r) => ({ ...r, _k: nextKey++ }));
 
-export default function TimetableSettings({ values, set, periods, setPeriods, terms, setTerms, shiftOptions, dayOptions, errors }) {
+// `embedded`: drawn inside another card (Settings → Academic & Timetable), so no card or heading of its own.
+export default function TimetableSettings({ values, set, periods, setPeriods, terms, setTerms, shiftOptions, dayOptions, errors, embedded = false }) {
   const shifts = toList(values.shifts || 'morning');
   const days = toList(values.timetable_days).map(Number);
   const [activeShift, setActiveShift] = useState(shifts[0] ?? 'morning');
@@ -68,8 +69,8 @@ export default function TimetableSettings({ values, set, periods, setPeriods, te
   const shiftLabel = (key) => shiftOptions.find((s) => s.key === key)?.label ?? key;
 
   return (
-    <section className="bg-white rounded-xl shadow-sm p-6 space-y-5">
-      <h2 className="font-semibold text-gray-900">Timetable</h2>
+    <section className={embedded ? 'space-y-6' : 'bg-white rounded-xl shadow-sm p-6 space-y-5'}>
+      {!embedded && <h2 className="font-semibold text-gray-900">Timetable</h2>}
 
       <AcademicTerms terms={terms} setTerms={setTerms} errors={errors} />
 

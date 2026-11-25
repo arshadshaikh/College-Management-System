@@ -24,6 +24,7 @@ class SettingController extends Controller
 
         return response()->json([
             'settings' => $settings->pluck('value', 'key'),   // { "primary_color": "#1e40af", ... }
+            'is_platform' => (bool) app('current_college')->is_platform,   // main site: only General applies
             'grouped'  => $settings->groupBy('group'),         // optional: organized by group
             // Level catalog for the "Required Education Levels" checkboxes.
             'education_levels' => collect(config('admission.education_levels', []))

@@ -172,7 +172,7 @@ export default function Timetable() {
       {terms.length === 0 && (
         <Notice>
           Add an academic term (for example "Fall 2026") in{' '}
-          <Link to={`${PORTAL}/cms/settings`} className="font-medium underline">Settings → Timetable</Link> to start building timetables.
+          <Link to={`${PORTAL}/settings?tab=academic`} className="font-medium underline">Settings → Timetable</Link> to start building timetables.
         </Notice>
       )}
 
@@ -231,7 +231,7 @@ export default function Timetable() {
           {grid.periods.length === 0 && (
             <Notice>
               The {shiftLabel?.toLowerCase()} shift has no periods yet. Add them in{' '}
-              <Link to={`${PORTAL}/cms/settings`} className="font-medium underline">Settings → Timetable</Link>.
+              <Link to={`${PORTAL}/settings?tab=academic`} className="font-medium underline">Settings → Timetable</Link>.
             </Notice>
           )}
           {grid.periods.length > 0 && grid.courses.length === 0 && (
@@ -241,7 +241,7 @@ export default function Timetable() {
             </Notice>
           )}
           {grid.periods.length > 0 && days.length === 0 && (
-            <Notice>No working days are set. Choose them in <Link to={`${PORTAL}/cms/settings`} className="font-medium underline">Settings → Timetable</Link>.</Notice>
+            <Notice>No working days are set. Choose them in <Link to={`${PORTAL}/settings?tab=academic`} className="font-medium underline">Settings → Timetable</Link>.</Notice>
           )}
 
           {grid.periods.length > 0 && days.length > 0 && (

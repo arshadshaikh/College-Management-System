@@ -23,6 +23,7 @@ class MenuSeeder extends Seeder
                 ['slug'=>'menu.users',      'name'=>'User Management',      'route'=>'/users',      'icon'=>'fa-users'],
                 ['slug'=>'menu.roles',      'name'=>'Role Management',      'route'=>'/roles',      'icon'=>'fa-shield'],
                 ['slug'=>'menu.privileges', 'name'=>'Privilege Management', 'route'=>'/privileges', 'icon'=>'fa-key'],
+                ['slug'=>'menu.site-settings', 'name'=>'Site Settings',     'route'=>'/settings',   'icon'=>'fa-cog'],
             ]],
             ['slug'=>'menu.doc-types', 'name'=>'Document Types', 'route'=>'/document-types', 'icon'=>'fa-file-alt', 'roles'=>['super_admin']],
 
@@ -35,13 +36,13 @@ class MenuSeeder extends Seeder
             ['slug'=>'menu.defaulters',   'name'=>'Fee Defaulters', 'route'=>'/defaulters',  'icon'=>'fa-file-invoice',   'roles'=>['college_admin']],
             ['slug'=>'menu.students',     'name'=>'Students',     'route'=>'/students',     'icon'=>'fa-user-graduate',  'roles'=>['college_admin']],
             ['slug'=>'menu.timetable',    'name'=>'Timetable',    'route'=>'/timetable',    'icon'=>'fa-calendar-alt',   'roles'=>['college_admin']],
+            ['slug'=>'menu.settings',     'name'=>'Settings',     'route'=>'/settings',     'icon'=>'fa-cog',            'roles'=>['college_admin']],
             ['slug'=>'menu.cms',          'name'=>'CMS',          'route'=>null,            'icon'=>'fa-globe',          'roles'=>['college_admin','super_admin'], 'children'=>[
                 ['slug'=>'menu.cms.pages',         'name'=>'Pages',         'route'=>'/cms/pages',         'icon'=>'fa-file'],
                 ['slug'=>'menu.cms.menus',         'name'=>'Menus',         'route'=>'/cms/menus',         'icon'=>'fa-bars'],
                 ['slug'=>'menu.cms.banners',       'name'=>'Banners',       'route'=>'/cms/banners',       'icon'=>'fa-image'],
                 ['slug'=>'menu.cms.announcements', 'name'=>'Announcements', 'route'=>'/cms/announcements', 'icon'=>'fa-bullhorn'],
                 ['slug'=>'menu.cms.media',         'name'=>'Media',         'route'=>'/cms/media',         'icon'=>'fa-photo-video'],
-                ['slug'=>'menu.cms.settings',      'name'=>'Site Settings', 'route'=>'/cms/settings',      'icon'=>'fa-sliders-h'],
             ]],
 
             // ── Student ──────────────────────────────────────────
@@ -68,6 +69,9 @@ class MenuSeeder extends Seeder
                 $this->grantToRoles($childId, $item['roles'], $now);
             }
         }
+
+        // Settings left CMS (it is not about the website). Remove the old CMS → Site Settings item.
+        $this->removeMenu('menu.cms.settings');
 
         // Super admin gets EVERY privilege — self-healing, so new privileges
         // are picked up automatically on the next run.
@@ -131,6 +135,15 @@ class MenuSeeder extends Seeder
                 }
             }
         }
+    }
+
+    // Drop a retired menu item and its role grants. Safe to run again.
+    private function removeMenu(string $slug): void
+    {
+        $id = DB::table('privileges')->where('slug', $slug)->whereNull('api_route')->value('id');
+        if (!$id) return;
+        DB::table('privilege_role')->where('privilege_id', $id)->delete();
+        DB::table('privileges')->where('id', $id)->delete();
     }
 
     private function grantAllToSuperAdmin(Carbon $now): void

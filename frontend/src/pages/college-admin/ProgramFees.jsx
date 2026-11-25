@@ -162,7 +162,7 @@ export default function ProgramFees() {
             </select>
             {errors.fee_type && <p className="text-xs text-red-600 mt-1">{errors.fee_type[0]}</p>}
             <p className="text-xs text-gray-400 mt-1">
-              Manage the list in <Link to={`${PORTAL}/cms/settings`} className="text-indigo-600 hover:underline">Settings → Fees &amp; Challans</Link>.
+              Manage the list in <Link to={`${PORTAL}/settings?tab=fees`} className="text-indigo-600 hover:underline">Settings → Fees &amp; Challans</Link>.
             </p>
           </div>
           <div>

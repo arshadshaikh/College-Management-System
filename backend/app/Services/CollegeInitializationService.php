@@ -148,7 +148,7 @@ class CollegeInitializationService
                 'menu.programs', 'menu.applications', 'menu.challans', 'menu.payment-slips', 'menu.collections', 'menu.defaulters', 'menu.students',
                 'menu.cms',
                 'menu.cms.pages', 'menu.cms.menus', 'menu.cms.banners',
-                'menu.cms.announcements', 'menu.cms.media', 'menu.cms.settings',
+                'menu.cms.announcements', 'menu.cms.media', 'menu.settings',
                 'menu.audit-logs',
             ],
             'student' => [

@@ -167,7 +167,9 @@ export default function App() {
         <Route path="defaulters" element={<PrivilegeRoute slug="reports.defaulters"><Defaulters /></PrivilegeRoute>} />
 
         {/* College Settings */}
-        <Route path="cms/settings" element={<PrivilegeRoute slug="settings.index"><Settings /></PrivilegeRoute>} />
+        <Route path="settings" element={<PrivilegeRoute slug="settings.index"><Settings /></PrivilegeRoute>} />
+        {/* Old address (Settings used to sit under CMS) */}
+        <Route path="cms/settings" element={<Navigate to="../settings" replace />} />
 
         {/* CMS Pages */}
         <Route path="cms/pages" element={<PrivilegeRoute slug="cms.pages.index"><CmsPageList /></PrivilegeRoute>} />
