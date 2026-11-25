@@ -54,7 +54,17 @@ class PaymentSlipPrivilegeSeeder extends Seeder
             $this->assignPrivileges($roleId, $ids, $now);
         }
 
-        $this->command->info('PaymentSlipPrivilegeSeeder done. ' . count($ids) . ' privilege(s), ' . $collegeAdminRoles->count() . ' college admin role(s).');
+        // Students may view the slips they uploaded themselves (the controller checks
+        // ownership). The college setup map already gives new colleges this grant.
+        $studentRoles = DB::table('roles')->where('slug', 'student')->whereNotNull('college_id')->pluck('id');
+        $slipId = DB::table('privileges')->where('slug', 'payments.slip')->value('id');
+        if ($slipId) {
+            foreach ($studentRoles as $roleId) {
+                $this->assignPrivileges($roleId, [$slipId], $now);
+            }
+        }
+
+        $this->command->info('PaymentSlipPrivilegeSeeder done. ' . count($ids) . ' privilege(s), ' . $collegeAdminRoles->count() . ' college admin role(s), ' . $studentRoles->count() . ' student role(s) can view their own slips.');
     }
 
     private function assignPrivileges(?int $roleId, array $privilegeIds, Carbon $now): void

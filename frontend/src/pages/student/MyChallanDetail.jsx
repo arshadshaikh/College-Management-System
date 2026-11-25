@@ -45,6 +45,21 @@ export default function MyChallanDetail() {
     } catch { toast.error('Could not download PDF.'); }
   };
 
+  // Open the student's own uploaded slip in a new tab (private file, fetched as a blob).
+  const viewSlip = async (p) => {
+    const tab = window.open('', '_blank');
+    try {
+      const res = await api.get(`/payments/${p.id}/slip`, { responseType: 'arraybuffer' });
+      const type = res.headers['content-type'] || 'application/octet-stream';
+      const url = window.URL.createObjectURL(new Blob([res.data], { type }));
+      if (tab) tab.location.href = url; else window.location.href = url;
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch {
+      if (tab) tab.close();
+      toast.error('Could not open the slip.');
+    }
+  };
+
   const submitSlip = async () => {
     if (!slip) { setErrors({ slip: ['Please attach your payment slip.'] }); return; }
     setBusy(true); setErrors({});
@@ -133,9 +148,15 @@ export default function MyChallanDetail() {
                 : p.slip_status === 'pending' || (!p.slip_status && !p.slip_verified)
                   ? <span className="text-amber-700">awaiting verification by the college</span>
                   : <span className="text-green-700 font-medium">verified</span>}
+              {p.has_slip && (
+                <button type="button" onClick={() => viewSlip(p)}
+                  className="ml-3 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline whitespace-nowrap">
+                  View slip
+                </button>
+              )}
               {p.slip_status === 'rejected' && (
                 <div className="mt-1 text-xs bg-red-50 border border-red-100 text-red-700 rounded-lg px-3 py-2">
-                  {p.slip_remarks ? <>Reason: “{p.slip_remarks}”. </> : null}Please upload a clear slip again below.
+                  {p.slip_remarks ? <>Reason: “{p.slip_remarks}”. </> : null}{payable ? 'Please upload a clear slip again below.' : challan.status === 'paid' ? 'This challan is now paid, so nothing more is needed.' : null}
                 </div>
               )}
             </div>

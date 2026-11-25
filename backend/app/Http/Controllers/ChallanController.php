@@ -512,8 +512,12 @@ class ChallanController extends Controller
 
     // ── Download slip ─────────────────────────────────────────────
     // GET /api/payments/{payment}/slip
-    public function downloadSlip(Payment $payment)
+    // Admins see any slip in their college; a student only their own.
+    public function downloadSlip(Request $request, Payment $payment)
     {
+        if ($request->user()->isStudent() && (int) $payment->student_id !== (int) $request->user()->id) {
+            return response()->json(['message' => 'Slip not found.'], 404);
+        }
         if (empty($payment->slip_path) || !Storage::disk('private')->exists($payment->slip_path)) {
             return response()->json(['message' => 'Slip not found.'], 404);
         }
@@ -523,8 +527,13 @@ class ChallanController extends Controller
 
         // ── Generate PDF challan ──────────────────────────────────────
     // GET /api/challans/{challan}/pdf
-    public function pdf(Challan $challan)
+    public function pdf(Request $request, Challan $challan)
     {
+        // A student may only download their own challan.
+        if ($request->user()->isStudent() && (int) $challan->student_id !== (int) $request->user()->id) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
         $challan->load(['items', 'student', 'application.program', 'program', 'college']);
 
         // Generate a verification QR as a base64 PNG data URI (DomPDF embeds it inline).
