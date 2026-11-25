@@ -163,9 +163,80 @@ class ChallanController extends Controller
         // Idempotent + self-healing — safe on every view.
         $this->challanService->applyLateFee($challan);
 
-        return response()->json(
-            $challan->load(['items', 'student', 'application.program', 'program', 'payments.recordedBy'])
-        );
+        $challan->load(['items', 'student', 'application.program', 'program', 'payments.recordedBy', 'parent:id,challan_no']);
+
+        return response()->json(array_merge($challan->toArray(), [
+            'installment_set'  => $challan->installmentSet(),
+            'max_installments' => $this->maxInstallments(),
+        ]));
+    }
+
+    // Most parts a challan may be split into (Settings -> Fees & Challans). 1 = installments off.
+    private function maxInstallments(): int
+    {
+        return max(1, min(12, (int) (Setting::where('key', 'max_installments')->value('value') ?? 3)));
+    }
+
+    // ── Split a challan into installments ─────────────────────────
+    // POST /api/challans/{challan}/split
+    // installments: [{ amount, due_date }, ...] in order, adding up to the total without the late fee.
+    public function split(Request $request, Challan $challan)
+    {
+        $max = $this->maxInstallments();
+        if ($max < 2) {
+            return response()->json(['message' => 'Installments are switched off. Turn them on in Settings -> Fees & Challans.'], 422);
+        }
+        if (!in_array($challan->status, ['unpaid', 'overdue'], true)) {
+            return response()->json(['message' => "Only an unpaid challan can be split. This one is {$challan->status}."], 422);
+        }
+        if ($challan->parent_challan_id) {
+            return response()->json(['message' => 'This challan is already an installment and cannot be split again.'], 422);
+        }
+        if ($challan->payments()->where('slip_status', 'pending')->exists()) {
+            return response()->json(['message' => 'A payment slip on this challan is waiting for review. Approve or reject it first.'], 422);
+        }
+
+        $base = (float) $challan->items()->where('type', '!=', 'late_fee')->sum('amount');
+        if ($base <= 0) {
+            return response()->json(['message' => 'This challan has no amount to split.'], 422);
+        }
+
+        $request->validate([
+            'installments'            => "required|array|min:2|max:{$max}",
+            'installments.*.amount'   => 'required|numeric|min:1',
+            'installments.*.due_date' => 'required|date|after_or_equal:today',
+        ], [
+            'installments.max' => "At most {$max} installments are allowed (Settings -> Fees & Challans).",
+        ]);
+
+        $parts = array_values($request->input('installments'));
+        $sum   = round(array_sum(array_map(fn ($p) => (float) $p['amount'], $parts)), 2);
+        if (abs($sum - $base) > 0.009) {
+            return response()->json(['message' => 'The installments add up to Rs. ' . number_format($sum, 2)
+                . ' but the challan is Rs. ' . number_format($base, 2) . '.',
+                'errors' => ['installments' => ['The amounts must add up to the challan total.']]], 422);
+        }
+        foreach ($parts as $i => $p) {
+            if ($i > 0 && Carbon::parse($p['due_date'])->lt(Carbon::parse($parts[$i - 1]['due_date']))) {
+                return response()->json(['message' => 'Each installment must be due on or after the one before it.',
+                    'errors' => ["installments.{$i}.due_date" => ['Must be on or after the previous due date.']]], 422);
+            }
+        }
+
+        $created = DB::transaction(function () use ($challan, $parts) {
+            $created = $this->challanService->splitIntoInstallments($challan, $parts);
+            AuditLog::record('challan.split', $challan, [
+                'challan_no'   => $challan->challan_no,
+                'installments' => $created->map(fn ($c) => ['challan_no' => $c->challan_no, 'amount' => (float) $c->total_amount,
+                                                            'due_date' => $c->due_date->toDateString()])->all(),
+            ]);
+            return $created;
+        });
+
+        return response()->json([
+            'message'      => 'Challan split into ' . $created->count() . ' installments.',
+            'installments' => $created->map(fn ($c) => $c->only(['id', 'challan_no', 'installment_no', 'total_amount', 'due_date']))->values(),
+        ], 201);
     }
 
     // ── College admin: manually generate a challan by scope ────
@@ -590,9 +661,11 @@ class ChallanController extends Controller
         // Same as the admin view: refresh the late fee line first, then send the lines.
         $this->challanService->applyLateFee($challan);
 
-        return response()->json(
-            $challan->load(['items', 'application.program', 'program', 'payments'])
-        );
+        $challan->load(['items', 'application.program', 'program', 'payments']);
+
+        return response()->json(array_merge($challan->toArray(), [
+            'installment_set' => $challan->installmentSet(),   // same student's parts only
+        ]));
     }
 
     // Swap a line with its neighbour. Lines are renumbered 1..n first so equal

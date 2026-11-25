@@ -253,6 +253,7 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::get('challans/{challan}', [ChallanController::class, 'show']);
     Route::post('challans/{challan}/cancel', [ChallanController::class, 'cancel']);
     Route::post('challans/{challan}/mark-paid', [ChallanController::class, 'markPaid']);
+    Route::post('challans/{challan}/split', [ChallanController::class, 'split']);
     Route::post('challans/{challan}/upload-slip', [ChallanController::class, 'uploadSlip']);
     Route::get('challans/{challan}/pdf', [ChallanController::class, 'pdf']);
     Route::post('challans/{challan}/items',                [ChallanController::class, 'addItem']);

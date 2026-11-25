@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
 import { useAuth } from '../../context/AuthContext';
+import InstallmentPlan from '../../components/InstallmentPlan';
+import SplitInstallments from './SplitInstallments';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',
@@ -21,6 +23,8 @@ const ITEM_TYPE_META = {
 export default function ChallanDetail() {
   const { id } = useParams();
   const { hasPrv } = useAuth();
+  const navigate = useNavigate();
+  const [showSplit, setShowSplit] = useState(false);
 
   const [challan, setChallan] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -177,6 +181,12 @@ export default function ChallanDetail() {
   const items = challan.items ?? [];
   const useItems = items.length > 0;
 
+  // Split into installments: an unpaid challan that is not itself an installment, with no slip waiting.
+  const canSplit = payable && hasPrv('challans.split') && !challan.parent_challan_id
+    && (challan.max_installments ?? 0) >= 2
+    && !(challan.payments ?? []).some((p) => p.slip_status === 'pending')
+    && items.filter((i) => i.type !== 'late_fee').reduce((s, i) => s + Number(i.amount), 0) > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -208,7 +218,9 @@ export default function ChallanDetail() {
             {challan.candidate_type && (
               <Row label="Candidate / Exam" value={[challan.candidate_type, challan.exam_type].map((v) => (v ? v[0].toUpperCase() + v.slice(1) : '')).join(' / ')} />
             )}
-            {challan.installment_no != null && <Row label="Installment" value={`#${challan.installment_no}`} />}
+            {challan.installment_no != null && (
+              <Row label="Installment" value={<span className="normal-case">{challan.installments_count ? `${challan.installment_no} of ${challan.installments_count}` : `#${challan.installment_no}`}</span>} />
+            )}
             <Row label="Issue Date" value={new Date(challan.issue_date).toLocaleDateString()} />
             <Row label="Due Date" value={new Date(challan.due_date).toLocaleDateString()} />
           </dl>
@@ -321,6 +333,8 @@ export default function ChallanDetail() {
         </div>
       </div>
 
+      <InstallmentPlan challan={challan} linkTo={(cid) => `${PORTAL}/challans/${cid}`} />
+
       {/* Payments */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Payments</h2>
@@ -375,6 +389,11 @@ export default function ChallanDetail() {
         ) : <p className="text-sm text-gray-400">No payments yet.</p>}
       </div>
 
+      {showSplit && (
+        <SplitInstallments challan={challan} onClose={() => setShowSplit(false)}
+          onDone={(parts) => { setShowSplit(false); if (parts[0]) navigate(`${PORTAL}/challans/${parts[0].id}`); else load(); }} />
+      )}
+
       {/* Actions */}
       {payable && (
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
@@ -383,6 +402,9 @@ export default function ChallanDetail() {
             <div className="flex gap-3">
               {hasPrv('challans.mark-paid') && (
                 <button onClick={() => setShowMarkPaid(true)} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Mark as Paid</button>
+              )}
+              {canSplit && (
+                <button onClick={() => setShowSplit(true)} className="px-4 py-2 border border-indigo-200 text-indigo-700 bg-indigo-50 rounded-lg text-sm font-medium hover:bg-indigo-100">Split into installments</button>
               )}
               {hasPrv('challans.cancel') && (
                 <button disabled={busy} onClick={cancel} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">Cancel Challan</button>

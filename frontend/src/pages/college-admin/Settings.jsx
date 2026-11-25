@@ -104,7 +104,7 @@ const TABS = [
   { key: 'fees', label: 'Fees & Challans', hint: 'Fee types, late fee',
     intro: 'The kinds of fees you charge, when challans are created, and how late fees work.',
     icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z',
-    settings: ['auto_generate_challan', 'late_fee_mode', 'late_fee_amount', 'late_fee_partial', 'service_challan_due_days'], lists: ['feeTypes', 'fee_types'] },
+    settings: ['auto_generate_challan', 'late_fee_mode', 'late_fee_amount', 'late_fee_partial', 'service_challan_due_days', 'max_installments'], lists: ['feeTypes', 'fee_types'] },
   { key: 'academic', label: 'Academic & Timetable', hint: 'Terms, shifts, periods',
     intro: 'Academic terms, the shifts and days you teach, and the periods of each shift.',
     icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
@@ -321,6 +321,7 @@ export default function Settings() {
           late_fee_amount: values.late_fee_amount ?? '0',
           late_fee_partial: values.late_fee_partial ?? 'from_day_one',
           service_challan_due_days: values.service_challan_due_days ?? '7',
+          max_installments: values.max_installments ?? '3',
           shifts: values.shifts || 'morning',
           timetable_days: values.timetable_days ?? '',
         },
@@ -590,6 +591,15 @@ export default function Settings() {
                       onChange={(e) => set('service_challan_due_days', e.target.value)} className={`${inputCls('service_challan_due_days')} max-w-[7rem]`} />
                     <span className="text-sm text-gray-500">days</span>
                   </div>
+                </Row>
+              </Card>
+
+              <Card title="Installments" description="Let staff split a challan into smaller challans with their own due dates, from the challan's page.">
+                <Row label="Allow splitting into" help="Each part keeps the same fee lines, shared out in proportion. Choose Off to hide the option." error={err('max_installments')}>
+                  <select value={values.max_installments ?? '3'} onChange={(e) => set('max_installments', e.target.value)} className={`${inputCls('max_installments')} max-w-[14rem]`}>
+                    <option value="1">Off</option>
+                    {[2, 3, 4, 5, 6].map((n) => <option key={n} value={String(n)}>Up to {n} installments</option>)}
+                  </select>
                 </Row>
               </Card>
 

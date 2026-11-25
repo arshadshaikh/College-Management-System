@@ -126,7 +126,7 @@ class CollegeInitializationService
                 'challans.items.store', 'challans.items.update', 'challans.items.destroy',
                 'reports.defaulters', 'reports.collections', 'reports.collections-pdf',
                 'challans.bulk-preview', 'challans.bulk',
-                'payments.slips',
+                'payments.slips', 'challans.split',
                 // CMS
                 'settings.index', 'settings.update',
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',
@@ -229,6 +229,7 @@ class CollegeInitializationService
             ['key' => 'late_fee_amount',       'value' => '0',     'group' => 'fees'],
             ['key' => 'late_fee_partial',      'value' => 'from_day_one', 'group' => 'fees'],
             ['key' => 'service_challan_due_days', 'value' => '7',     'group' => 'fees'],
+            ['key' => 'max_installments',      'value' => '3',     'group' => 'fees'],
             ['key' => 'timetable_days',        'value' => '1,2,3,4,5',   'group' => 'timetable'],
             ['key' => 'shifts',                'value' => 'morning',     'group' => 'timetable'],
         ];

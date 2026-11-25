@@ -19,6 +19,7 @@ class Challan extends Model
     protected $fillable = [
         'challan_no', 'college_id', 'application_id', 'program_id', 'student_id',
         'challan_type', 'title', 'semester_no', 'candidate_type', 'exam_type', 'installment_no', 'scope',
+        'parent_challan_id', 'installments_count',   // set when split into installments
         'total_amount', 'issue_date', 'due_date', 'status', 'fee_breakdown',
     ];
 
@@ -90,6 +91,33 @@ class Challan extends Model
     public function items()
     {
         return $this->hasMany(ChallanItem::class)->orderBy('sort_order');
+    }
+
+    // The challan this one was split from (installments only).
+    public function parent()
+    {
+        return $this->belongsTo(Challan::class, 'parent_challan_id');
+    }
+
+    // The installments a challan was split into.
+    public function installments()
+    {
+        return $this->hasMany(Challan::class, 'parent_challan_id')->orderBy('installment_no');
+    }
+
+    /**
+     * Every installment of the same split, for links between them: for an
+     * installment its siblings (itself included), for a split challan its parts.
+     */
+    public function installmentSet(): array
+    {
+        $parentId = $this->parent_challan_id ?: ($this->installments()->exists() ? $this->id : null);
+        if (!$parentId) {
+            return [];
+        }
+        return Challan::where('parent_challan_id', $parentId)->orderBy('installment_no')
+            ->get(['id', 'challan_no', 'installment_no', 'installments_count', 'total_amount', 'status', 'due_date'])
+            ->toArray();
     }
 
     public function isOverdue(): bool

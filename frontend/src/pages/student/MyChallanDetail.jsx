@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
+import InstallmentPlan from '../../components/InstallmentPlan';
 
 const STATUS_STYLES = {
   unpaid: 'bg-amber-50 text-amber-700', paid: 'bg-green-50 text-green-700',
@@ -137,6 +138,8 @@ export default function MyChallanDetail() {
       </div>
 
       {/* Existing payment status */}
+      <InstallmentPlan challan={challan} linkTo={(cid) => `${PORTAL}/my-challans/${cid}`} />
+
       {challan.payments?.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="font-semibold text-gray-900 mb-3">Payment Status</h2>

@@ -330,6 +330,99 @@ class ChallanService
 
 
     /**
+     * Split an unpaid challan into installments. $parts = [['amount' => .., 'due_date' => Y-m-d], ...]
+     * in order; the amounts must add up to the challan's total without its late fee.
+     *
+     * Every fee line is shared out in proportion to each part's amount (whole rupees),
+     * so each installment still shows Admission, Exam ... and reports by fee type stay
+     * right. The last part takes what is left of each line, so nothing is lost to rounding.
+     * The late fee is not carried over: each installment earns its own after its due date.
+     * The original challan is cancelled and linked as the parent. Caller checks eligibility.
+     */
+    public function splitIntoInstallments(Challan $challan, array $parts): Collection
+    {
+        $lines = $challan->items()->where('type', '!=', 'late_fee')->orderBy('sort_order')->get();
+        $base  = (float) $lines->sum('amount');
+        $count = count($parts);
+
+        return DB::transaction(function () use ($challan, $parts, $lines, $base, $count) {
+            $given   = array_fill(0, $lines->count(), 0.0);   // per line, shared out so far
+            $created = collect();
+
+            foreach (array_values($parts) as $k => $part) {
+                $amount = round((float) $part['amount'], 2);
+                $last   = $k === $count - 1;
+
+                // This part's share of each line.
+                $shares = [];
+                foreach ($lines->values() as $i => $line) {
+                    $shares[$i] = $last
+                        ? round((float) $line->amount - $given[$i], 2)
+                        : round((float) $line->amount * $amount / $base);
+                }
+                // Rounding leftovers go on the biggest line, so the part totals exactly $amount.
+                if (!$last) {
+                    $diff = round($amount - array_sum($shares), 2);
+                    if ($diff != 0.0 && $shares) {
+                        $big = $lines->values()->keys()->sortByDesc(fn ($i) => (float) $lines->values()[$i]->amount)->first();
+                        $shares[$big] = round($shares[$big] + $diff, 2);
+                    }
+                }
+
+                $n = $k + 1;
+                $title = mb_substr(($challan->title ?: 'Fee Challan') . " - Installment {$n} of {$count}", 0, 255);
+
+                $child = Challan::create([
+                    'college_id'         => $challan->college_id,
+                    'application_id'     => $challan->application_id,
+                    'program_id'         => $challan->program_id,
+                    'student_id'         => $challan->student_id,
+                    'candidate_type'     => $challan->candidate_type,
+                    'exam_type'          => $challan->exam_type,
+                    'challan_type'       => $challan->challan_type,
+                    'title'              => $title,
+                    'semester_no'        => $challan->semester_no,
+                    'installment_no'     => $n,
+                    'installments_count' => $count,
+                    'parent_challan_id'  => $challan->id,
+                    'scope'              => $challan->scope,
+                    'total_amount'       => 0,
+                    'issue_date'         => Carbon::today(),
+                    'due_date'           => Carbon::parse($part['due_date']),
+                    'status'             => 'unpaid',
+                    'fee_breakdown'      => [],
+                ]);
+
+                $breakdown = [];
+                foreach ($lines->values() as $i => $line) {
+                    $given[$i] = round($given[$i] + $shares[$i], 2);
+                    if (abs($shares[$i]) < 0.005) {
+                        continue;   // nothing of this line in this part
+                    }
+                    $child->items()->create([
+                        'label'            => $line->label,
+                        'amount'           => $shares[$i],
+                        'type'             => $line->type,
+                        'fee_structure_id' => $line->fee_structure_id,
+                        'sort_order'       => $line->sort_order,
+                    ]);
+                    $breakdown[] = ['label' => $line->label, 'amount' => $shares[$i]];
+                }
+                $child->fee_breakdown = $breakdown;
+                $child->recomputeTotal();
+                $created->push($child->fresh('items'));
+            }
+
+            // The original is replaced by its installments. Its late fee line goes with it.
+            $challan->items()->where('type', 'late_fee')->delete();
+            $challan->recomputeTotal();
+            $challan->update(['status' => 'cancelled']);
+
+            return $created;
+        });
+    }
+
+    /**
      * Apply (or refresh) the late fee on a challan, per the college's late-fee
      * policy. Fully configurable: mode (off/flat/per_week/per_month), amount,
      * and partial-period handling (from_day_one/full_period) are all settings.
