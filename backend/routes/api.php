@@ -261,6 +261,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
 
     // Reports
     Route::get('reports/defaulters', [ReportController::class, 'defaulters']);
+    Route::get('reports/collections', [ReportController::class, 'collections']);
+    Route::get('reports/collections/pdf', [ReportController::class, 'collectionsPdf']);
 
     // Payments
     Route::get('payments/slips', [PaymentSlipController::class, 'index']);   // admin: slip review queue

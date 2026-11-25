@@ -28,6 +28,8 @@ class ReportPrivilegeSeeder extends Seeder
 
         $privileges = [
             ['slug' => 'reports.defaulters', 'name' => 'Fee defaulters report', 'route' => '/api/reports/defaulters', 'method' => 'GET'],
+            ['slug' => 'reports.collections',     'name' => 'Fee collection report',     'route' => '/api/reports/collections',     'method' => 'GET'],
+            ['slug' => 'reports.collections-pdf', 'name' => 'Fee collection report PDF', 'route' => '/api/reports/collections/pdf', 'method' => 'GET'],
         ];
 
         $ids = [];

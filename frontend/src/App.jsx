@@ -41,6 +41,7 @@ import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
 import ChallanList from './pages/college-admin/ChallanList';
 import Defaulters from './pages/college-admin/Defaulters';
+import Collections from './pages/college-admin/Collections';
 import BulkChallan from './pages/college-admin/BulkChallan';
 import PaymentSlips from './pages/college-admin/PaymentSlips';
 import ChallanDetail from './pages/college-admin/ChallanDetail';
@@ -162,6 +163,7 @@ export default function App() {
         <Route path="challans/bulk" element={<PrivilegeRoute slug="challans.bulk"><BulkChallan /></PrivilegeRoute>} />
         <Route path="challans/:id" element={<PrivilegeRoute slug="challans.show"><ChallanDetail /></PrivilegeRoute>} />
         <Route path="payment-slips" element={<PrivilegeRoute slug="payments.slips"><PaymentSlips /></PrivilegeRoute>} />
+        <Route path="collections" element={<PrivilegeRoute slug="reports.collections"><Collections /></PrivilegeRoute>} />
         <Route path="defaulters" element={<PrivilegeRoute slug="reports.defaulters"><Defaulters /></PrivilegeRoute>} />
 
         {/* College Settings */}
