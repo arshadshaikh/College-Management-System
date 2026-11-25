@@ -438,6 +438,12 @@ class ChallanService
             return $challan;
         }
 
+        // A challan with no fee lines (e.g. an old one from before line items) never gets
+        // a late fee on its own: the late fee would become the whole challan.
+        if (!$challan->items()->where('type', '!=', 'late_fee')->exists()) {
+            return $challan;
+        }
+
         $today    = Carbon::today();
         $dueDate  = $challan->due_date->copy()->startOfDay();
         $existing = $challan->items()->where('type', 'late_fee')->first();
