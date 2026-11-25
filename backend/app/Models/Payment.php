@@ -15,6 +15,7 @@ class Payment extends Model
         'bank_name', 'paid_at', 'notes',
         'recorded_by', 'slip_path', 'slip_verified',
         'slip_verified_by', 'slip_verified_at',
+        'slip_status', 'slip_remarks',     // pending | approved | rejected, and the reject reason
     ];
 
     protected $casts = [
@@ -41,6 +42,11 @@ class Payment extends Model
     public function student()
     {
         return $this->belongsTo(User::class, 'student_id');
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'slip_verified_by');
     }
 
     public function recordedBy()

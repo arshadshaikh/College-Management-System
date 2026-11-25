@@ -27,6 +27,8 @@ export default function ChallanDetail() {
   const [busy, setBusy] = useState(false);
   const [showMarkPaid, setShowMarkPaid] = useState(false);
   const [slipFile, setSlipFile] = useState(null);
+  const [rejectFor, setRejectFor] = useState(null);   // payment id being rejected
+  const [rejectReason, setRejectReason] = useState('');
   const [payForm, setPayForm] = useState({ payment_method: 'cash', payment_reference: '', bank_name: '', paid_at: new Date().toISOString().slice(0, 10), notes: '' });
 
   // Add-item form state
@@ -85,11 +87,15 @@ export default function ChallanDetail() {
   };
 
   const verifySlip = async (paymentId, approved) => {
+    if (!approved && !rejectReason.trim()) { toast.error('Give the student a reason.'); return; }
     setBusy(true);
     try {
-      await api.post(`/payments/${paymentId}/verify-slip`, { approved });
-      toast.success(approved ? 'Slip verified — challan paid.' : 'Slip rejected.');
+      const { data } = await api.post(`/payments/${paymentId}/verify-slip`, { approved, remarks: approved ? null : rejectReason.trim() });
+      toast.success(data.message);
+      setRejectFor(null); setRejectReason('');
       await load();
+    } catch (err) {
+      if (err.response?.status === 422) toast.error(err.response.data.message);
     } finally { setBusy(false); }
   };
 
@@ -321,29 +327,48 @@ export default function ChallanDetail() {
         {challan.payments?.length ? (
           <div className="space-y-3">
             {challan.payments.map((p) => (
-              <div key={p.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3 text-sm">
+              <div key={p.id} className="border border-gray-200 rounded-lg px-4 py-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="font-medium text-gray-900 capitalize">
                     {p.payment_method.replace('_', ' ')} · Rs. {Number(p.amount_paid).toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-500">
                     Paid {new Date(p.paid_at).toLocaleDateString()}
-                    {p.slip_verified
-                      ? ` · verified${p.recorded_by ? ' (admin-recorded)' : ''}`
-                      : ' · awaiting verification'}
+                    {p.recorded_by ? ' · recorded by admin' : ''}
+                    {p.bank_name ? ` · ${p.bank_name}` : ''}{p.payment_reference ? ` · Ref ${p.payment_reference}` : ''}
                   </div>
+                  {p.slip_status === 'rejected' && p.slip_remarks && (
+                    <div className="text-xs text-red-600 mt-0.5">Rejected: “{p.slip_remarks}”</div>
+                  )}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
+                  {p.slip_status && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      { pending: 'bg-amber-50 text-amber-700', approved: 'bg-green-50 text-green-700', rejected: 'bg-red-50 text-red-700' }[p.slip_status] ?? 'bg-gray-100 text-gray-600'
+                    }`}>{{ pending: 'Awaiting review', approved: 'Approved', rejected: 'Rejected' }[p.slip_status] ?? p.slip_status}</span>
+                  )}
                   {p.has_slip && hasPrv('payments.slip') && (
                     <button onClick={() => downloadSlip(p)} className="text-indigo-600 hover:underline">Slip</button>
                   )}
-                  {!p.slip_verified && hasPrv('payments.verify-slip') && (
+                  {!p.slip_verified && hasPrv('payments.verify-slip') && rejectFor !== p.id && (
                     <>
                       <button disabled={busy} onClick={() => verifySlip(p.id, true)} className="text-green-600 hover:underline">Approve</button>
-                      <button disabled={busy} onClick={() => verifySlip(p.id, false)} className="text-red-600 hover:underline">Reject</button>
+                      <button disabled={busy} onClick={() => { setRejectFor(p.id); setRejectReason(''); }} className="text-red-600 hover:underline">Reject</button>
                     </>
                   )}
                 </div>
+              </div>
+              {rejectFor === p.id && (
+                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                  <input autoFocus value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} maxLength={500}
+                    placeholder="Reason for the student, e.g. Slip is not clear"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                  <button disabled={busy || !rejectReason.trim()} onClick={() => verifySlip(p.id, false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">Reject slip</button>
+                  <button disabled={busy} onClick={() => setRejectFor(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                </div>
+              )}
               </div>
             ))}
           </div>

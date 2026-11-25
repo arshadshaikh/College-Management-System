@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             ServiceChallanPrivilegeSeeder::class, // students request service challans (transcript, ID card ...)
             ReportPrivilegeSeeder::class,   // college reports (fee defaulters ...)
             BulkChallanPrivilegeSeeder::class, // bill a whole class at once
+            PaymentSlipPrivilegeSeeder::class, // payment slip review queue
             StudentPrivilegeSeeder::class,  // student list/create/edit/import (college admin)
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student

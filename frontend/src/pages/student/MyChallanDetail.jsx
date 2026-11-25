@@ -72,11 +72,13 @@ export default function MyChallanDetail() {
     </div>
   );
 
-  const payable = ['unpaid', 'overdue'].includes(challan.status);
+  // Nothing to pay on a Rs. 0 challan, so no upload button.
+  const payable = ['unpaid', 'overdue'].includes(challan.status) && Number(challan.total_amount) > 0;
   // Lines live in challan_items; fee_breakdown is the old snapshot (fees only), kept as a fallback.
   const lines = challan.items?.length ? challan.items : (challan.fee_breakdown ?? []);
   const program = challan.program ?? challan.application?.program;
-  const hasPendingSlip = challan.payments?.some((p) => !p.slip_verified);
+  // A slip is under review until the college approves or rejects it. Older rows have no slip_status.
+  const hasPendingSlip = challan.payments?.some((p) => (p.slip_status ? p.slip_status === 'pending' : !p.slip_verified));
   const inputCls = (e) => `w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 ${e ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-indigo-500'}`;
 
   return (
@@ -124,10 +126,18 @@ export default function MyChallanDetail() {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="font-semibold text-gray-900 mb-3">Payment Status</h2>
           {challan.payments.map((p) => (
-            <div key={p.id} className="text-sm text-gray-700">
-              Rs. {Number(p.amount_paid).toLocaleString()} · {p.slip_verified
-                ? <span className="text-green-700">verified</span>
-                : <span className="text-amber-700">awaiting verification by the college</span>}
+            <div key={p.id} className="text-sm text-gray-700 py-1">
+              Rs. {Number(p.amount_paid).toLocaleString()} · paid {new Date(p.paid_at).toLocaleDateString()} ·{' '}
+              {p.slip_status === 'rejected'
+                ? <span className="text-red-700 font-medium">slip rejected</span>
+                : p.slip_status === 'pending' || (!p.slip_status && !p.slip_verified)
+                  ? <span className="text-amber-700">awaiting verification by the college</span>
+                  : <span className="text-green-700 font-medium">verified</span>}
+              {p.slip_status === 'rejected' && (
+                <div className="mt-1 text-xs bg-red-50 border border-red-100 text-red-700 rounded-lg px-3 py-2">
+                  {p.slip_remarks ? <>Reason: “{p.slip_remarks}”. </> : null}Please upload a clear slip again below.
+                </div>
+              )}
             </div>
           ))}
         </div>

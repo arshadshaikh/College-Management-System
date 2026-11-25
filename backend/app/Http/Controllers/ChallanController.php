@@ -365,6 +365,7 @@ class ChallanController extends Controller
                 'slip_verified'     => true,
                 'slip_verified_by'  => $request->user()->id,
                 'slip_verified_at'  => now(),
+                'slip_status'       => $slipPath ? 'approved' : null,   // a slip the admin attached is approved
             ]);
 
             $challan->update(['status' => 'paid']);
@@ -402,11 +403,23 @@ class ChallanController extends Controller
             ], 422);
         }
 
+        if ((float) $challan->total_amount <= 0) {
+            return response()->json(['message' => 'This challan has no amount to pay.'], 422);
+        }
+
+        // One slip under review at a time. A rejected slip can be replaced by a new one.
+        if ($challan->payments()->where('slip_status', 'pending')->exists()) {
+            return response()->json([
+                'message' => 'Your slip for this challan is already awaiting verification.',
+            ], 422);
+        }
+
         $request->validate([
             'slip'              => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'payment_method'    => 'nullable|in:cash,bank_transfer,online',
             'payment_reference' => 'nullable|string|max:255',
             'bank_name'         => 'nullable|string|max:255',
-            'paid_at'           => 'required|date',
+            'paid_at'           => 'required|date|before_or_equal:today',
         ]);
 
         $college = app('current_college');
@@ -422,13 +435,16 @@ class ChallanController extends Controller
             'college_id'        => $challan->college_id,
             'student_id'        => $request->user()->id,
             'amount_paid'       => $challan->total_amount,
-            'payment_method'    => 'bank_transfer',
+            'payment_method'    => $request->input('payment_method') ?: 'bank_transfer',
             'payment_reference' => $request->payment_reference,
             'bank_name'         => $request->bank_name,
             'paid_at'           => $request->paid_at,
             'slip_path'         => $path,
             'slip_verified'     => false,
+            'slip_status'       => 'pending',
         ]);
+
+        AuditLog::record('payment.slip_uploaded', $payment, ['challan_no' => $challan->challan_no]);
 
         return response()->json([
             'message' => 'Payment slip uploaded. Awaiting admin verification.',
@@ -440,8 +456,8 @@ class ChallanController extends Controller
     // POST /api/payments/{payment}/verify-slip
     public function verifySlip(Request $request, Payment $payment)
     {
-        if ($payment->slip_verified) {
-            return response()->json(['message' => 'Slip already verified.'], 422);
+        if ($payment->slip_verified || ($payment->slip_status && $payment->slip_status !== 'pending')) {
+            return response()->json(['message' => 'This slip has already been reviewed.'], 422);
         }
 
         if (empty($payment->slip_path)) {
@@ -450,8 +466,16 @@ class ChallanController extends Controller
 
         $request->validate([
             'approved' => 'required|boolean',
+            'remarks'  => 'nullable|string|max:500',   // reason shown to the student when rejected
             'notes'    => 'nullable|string|max:500',
         ]);
+
+        $approved = $request->boolean('approved');
+        $challan  = $payment->challan;
+
+        if ($approved && in_array($challan->status, ['paid', 'cancelled'], true)) {
+            return response()->json(['message' => "This challan is already {$challan->status}."], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -459,16 +483,19 @@ class ChallanController extends Controller
                 'slip_verified'     => true,
                 'slip_verified_by'  => $request->user()->id,
                 'slip_verified_at'  => now(),
-                'notes'             => $request->notes,
+                'slip_status'       => $approved ? 'approved' : 'rejected',
+                'slip_remarks'      => $request->input('remarks'),
+                'notes'             => $request->input('notes', $payment->notes),
             ]);
 
-            if ($request->approved) {
-                $payment->challan->update(['status' => 'paid']);
+            if ($approved) {
+                $challan->update(['status' => 'paid']);
             }
 
             AuditLog::record('payment.slip_verified', $payment, [
-                'approved'   => $request->boolean('approved'),
-                'challan_no' => $payment->challan->challan_no,
+                'approved'   => $approved,
+                'challan_no' => $challan->challan_no,
+                'remarks'    => $request->input('remarks'),
             ]);
 
             DB::commit();
@@ -478,7 +505,7 @@ class ChallanController extends Controller
         }
 
         return response()->json([
-            'message' => $request->approved ? 'Slip verified. Challan marked as paid.' : 'Slip rejected.',
+            'message' => $approved ? 'Slip approved. Challan marked as paid.' : 'Slip rejected. The student can upload a new one.',
             'payment' => $payment->fresh(),
         ]);
     }

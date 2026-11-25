@@ -11,9 +11,34 @@ const STATUS_STYLES = {
   overdue: 'bg-red-50 text-red-700', cancelled: 'bg-gray-100 text-gray-600',
 };
 
-const actions = (row) => (
-  <Link to={`${PORTAL}/my-challans/${row.id}`} className="text-indigo-600 hover:underline">View</Link>
-);
+// Slip state of a challan, from its latest payment (like "uploaded / verified" on bank portals).
+const slipState = (r) => {
+  const p = [...(r.payments ?? [])].sort((a, b) => b.id - a.id)[0];
+  if (r.status === 'paid') return 'verified';
+  if (!p) return 'none';
+  if (p.slip_status) return { pending: 'pending', approved: 'verified', rejected: 'rejected' }[p.slip_status] ?? 'none';
+  return p.slip_verified ? 'verified' : 'pending';
+};
+const SLIP = {
+  none:     ['Not uploaded',           'bg-gray-100 text-gray-600'],
+  pending:  ['Awaiting verification',  'bg-amber-50 text-amber-700'],
+  verified: ['Verified',               'bg-green-50 text-green-700'],
+  rejected: ['Rejected, upload again', 'bg-red-50 text-red-700'],
+};
+const payable = (r) => ['unpaid', 'overdue'].includes(r.status) && Number(r.total_amount) > 0;
+
+const actions = (row) => {
+  const s = slipState(row);
+  const needsSlip = payable(row) && (s === 'none' || s === 'rejected');
+  return (
+    <Link to={`${PORTAL}/my-challans/${row.id}`}
+      className={needsSlip
+        ? 'inline-block whitespace-nowrap px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700'
+        : 'text-indigo-600 hover:underline'}>
+      {needsSlip ? 'Upload slip' : 'View'}
+    </Link>
+  );
+};
 
 // Services the college lets students request (Settings -> Fee Types with an amount).
 function RequestServicePanel({ onClose }) {
@@ -94,6 +119,12 @@ export default function MyChallans() {
       render: (r) => (
         <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[r.status]}`}>{r.status}</span>
       )},
+    { key: 'slip', label: 'Payment slip',
+      render: (r) => {
+        if (r.status === 'cancelled' || Number(r.total_amount) <= 0) return <span className="text-gray-400">—</span>;
+        const [label, cls] = SLIP[slipState(r)];
+        return <span className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${cls}`}>{label}</span>;
+      }},
   ];
 
   const headerActions = hasPrv('challans.request') && !open && (

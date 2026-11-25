@@ -26,6 +26,7 @@ use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BulkChallanController;
+use App\Http\Controllers\PaymentSlipController;
 use Illuminate\Support\Facades\Route;
 
 // No 'tenant' guard: on the main domain there is no college and the platform defaults are returned.
@@ -262,6 +263,7 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::get('reports/defaulters', [ReportController::class, 'defaulters']);
 
     // Payments
+    Route::get('payments/slips', [PaymentSlipController::class, 'index']);   // admin: slip review queue
     Route::post('payments/{payment}/verify-slip', [ChallanController::class, 'verifySlip']);
     Route::get('payments/{payment}/slip', [ChallanController::class, 'downloadSlip']);
 
