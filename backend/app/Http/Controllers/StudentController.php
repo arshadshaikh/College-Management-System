@@ -41,6 +41,15 @@ class StudentController extends Controller
     {
         $college = app('current_college');
 
+        // Say who already holds the CNIC instead of the bare "has already been taken".
+        if ($taken = $this->cnicTaken((string) $request->input('cnic_no'), $college->id)) {
+            return response()->json([
+                'message' => $taken['message'],
+                'errors'  => ['cnic_no' => [$taken['message']]],
+                'existing_student_id' => $taken['student_id'],
+            ], 422);
+        }
+
         $request->validate([
             'name'          => 'required|string|max:255',
             'cnic_no'       => 'required|string|size:13|unique:users,cnic_no',
@@ -198,6 +207,11 @@ class StudentController extends Controller
                 continue;
             }
 
+            if ($data['cnic_no'] !== '' && ($taken = $this->cnicTaken($data['cnic_no'], app('current_college')->id))) {
+                $errors[] = ['row' => $rowNum, 'message' => $taken['message']];
+                continue;
+            }
+
             $validator = Validator::make($data, [
                 'name'          => 'required|string|max:255',
                 'cnic_no'       => 'required|string|size:13|unique:users,cnic_no',
@@ -267,5 +281,29 @@ class StudentController extends Controller
         } catch (\Throwable $e) {
             return (string) $value; // let validation reject it
         }
+    }
+
+    /**
+     * Who already holds this CNIC, in words an admin can act on. A CNIC is one
+     * account across the whole platform, so it may belong to someone outside this
+     * college; the other college is never named. Null when the CNIC is free.
+     */
+    private function cnicTaken(string $cnic, int $collegeId): ?array
+    {
+        if (strlen($cnic) !== 13) {
+            return null;
+        }
+        $owner = User::withoutGlobalScopes()->where('cnic_no', $cnic)->first(['id', 'name', 'college_id', 'user_type']);
+        if (!$owner) {
+            return null;
+        }
+
+        if ((int) $owner->college_id === $collegeId && $owner->user_type === 'student') {
+            return ['message' => "This CNIC is already registered to {$owner->name}, a student of this college.", 'student_id' => $owner->id];
+        }
+        if ((int) $owner->college_id === $collegeId) {
+            return ['message' => 'This CNIC belongs to a staff account of this college.', 'student_id' => null];
+        }
+        return ['message' => 'This CNIC is already registered with another college on this platform, so it cannot be used again.', 'student_id' => null];
     }
 }

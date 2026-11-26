@@ -11,11 +11,13 @@ export default function StudentForm() {
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [existingId, setExistingId] = useState(null);
 
   const set = (key) => (e) => {
     const v = key === 'cnic_no' ? e.target.value.replace(/\D/g, '').slice(0, 13) : e.target.value;
     setForm((f) => ({ ...f, [key]: v }));
     setErrors((er) => ({ ...er, [key]: undefined }));
+    if (key === 'cnic_no') setExistingId(null);
   };
 
   const submit = async (e) => {
@@ -29,6 +31,7 @@ export default function StudentForm() {
     } catch (err) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors ?? {});
+        setExistingId(err.response.data.existing_student_id ?? null);
         toast.error('Please fix the highlighted fields.');
       }
     } finally { setSaving(false); }
@@ -48,7 +51,10 @@ export default function StudentForm() {
           <input value={form.name} onChange={set('name')} className={cls(errors.name)} />
         </F>
         <div className="grid grid-cols-2 gap-4">
-          <F label="CNIC (13 digits)" err={errors.cnic_no} req>
+          <F label="CNIC (13 digits)" err={errors.cnic_no} req
+            after={existingId && errors.cnic_no && (
+              <Link to={`${PORTAL}/students/${existingId}`} className="inline-block text-xs font-medium text-indigo-600 hover:underline mt-1">Open this student →</Link>
+            )}>
             <input value={form.cnic_no} onChange={set('cnic_no')} maxLength={13} placeholder="0000000000000" className={`${cls(errors.cnic_no)} font-mono tracking-widest`} />
           </F>
           <F label="Father Name" err={errors.father_name} req>
@@ -95,12 +101,13 @@ export default function StudentForm() {
   );
 }
 
-function F({ label, err, req, children }) {
+function F({ label, err, req, after, children }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label} {req && <span className="text-red-500">*</span>}</label>
       {children}
       {err && <p className="text-xs text-red-600 mt-1">{err[0]}</p>}
+      {after}
     </div>
   );
 }
