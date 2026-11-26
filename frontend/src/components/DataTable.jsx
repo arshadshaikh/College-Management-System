@@ -10,6 +10,7 @@ export default function DataTable({
   showIndex = true,          // the "#" column
   csvName,                   // e.g. "programs" — omit to hide the CSV button
   onData,                    // optional: gets the raw response after each load (e.g. for a summary)
+  children,                  // optional: shown between the title row and the search bar (e.g. stat tiles, filters)
 }) {
   const [rows, setRows]       = useState([]);
   const [meta, setMeta]       = useState({ current_page: 1, last_page: 1, total: 0 });
@@ -110,7 +111,9 @@ export default function DataTable({
     }
   };
 
-  const colSpan = columns.length + (showIndex ? 1 : 0) + (actions ? 1 : 0);
+  // A column with `hidden: true` goes into the CSV only, not the table.
+  const shown = columns.filter((c) => !c.hidden);
+  const colSpan = shown.length + (showIndex ? 1 : 0) + (actions ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -119,6 +122,8 @@ export default function DataTable({
         <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         <div className="flex items-center gap-3 flex-wrap">{headerActions}</div>
       </div>
+
+      {children}
 
       {/* Toolbar row: search + page size + CSV + count */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -150,16 +155,17 @@ export default function DataTable({
         </span>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      {/* overflow-x-auto: wide tables scroll sideways on phones instead of being cut off */}
+      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
-              {showIndex && <th className="px-6 py-4 text-left font-semibold w-12">#</th>}
-              {columns.map((col) => (
+              {showIndex && <th className="px-4 py-3.5 text-left font-semibold w-12">#</th>}
+              {shown.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => col.sortable && toggleSort(col.key)}
-                  className={`px-6 py-4 text-left font-semibold ${col.sortable ? 'cursor-pointer select-none hover:text-gray-900' : ''}`}
+                  className={`px-4 py-3.5 text-left font-semibold ${col.sortable ? 'cursor-pointer select-none hover:text-gray-900' : ''}`}
                 >
                   {col.label}
                   {sortBy === col.key && (
@@ -167,7 +173,7 @@ export default function DataTable({
                   )}
                 </th>
               ))}
-              {actions && <th className="px-6 py-4 text-right font-semibold">Actions</th>}
+              {actions && <th className="px-4 py-3.5 text-right font-semibold">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -179,16 +185,16 @@ export default function DataTable({
               rows.map((row, i) => (
                 <tr key={row.id} className="hover:bg-gray-50">
                   {showIndex && (
-                    <td className="px-6 py-4 text-gray-400">
+                    <td className="px-4 py-3.5 text-gray-400">
                       {(meta.current_page - 1) * perPage + i + 1}
                     </td>
                   )}
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-6 py-4">
+                  {shown.map((col) => (
+                    <td key={col.key} className="px-4 py-3.5">
                       {col.render ? col.render(row) : (row[col.key] ?? '—')}
                     </td>
                   ))}
-                  {actions && <td className="px-6 py-4 text-right space-x-3">{actions(row)}</td>}
+                  {actions && <td className="px-4 py-3.5 text-right space-x-3">{actions(row)}</td>}
                 </tr>
               ))
             )}

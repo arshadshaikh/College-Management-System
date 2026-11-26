@@ -14,26 +14,100 @@ use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
 {
-    // GET /api/students — list this college's students
+    // GET /api/students — list this college's students, with filters and counts.
+    // "Enrolled" = has an approved application; its program, batch (admission year)
+    // and shift are shown and filterable. Students created by hand or imported have
+    // none until an application is approved, and show as "Not enrolled".
     public function index(Request $request)
     {
         $college = app('current_college');
 
-        $query = User::where('college_id', $college->id)
-            ->where('user_type', 'student')
-            ->with('studentProfile')
-            ->orderByDesc('created_at');
+        // The student's latest approved application (one row per student).
+        $enrolment = fn (string $column) => DB::table('applications')
+            ->whereColumn('applications.student_id', 'users.id')
+            ->where('applications.status', 'approved')
+            ->whereNull('applications.deleted_at')
+            ->orderByDesc('applications.id')->limit(1)
+            ->select($column);
 
+        $base = User::where('users.college_id', $college->id)->where('users.user_type', 'student');
+
+        // Search and enrolment filters apply to the counts too; the status filter does not,
+        // so the Active / Inactive counts still show both sides.
         if ($request->filled('search')) {
             $s = str_replace(['%', '_'], ['\%', '\_'], $request->search);
-            $query->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('cnic_no', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
+            $base->where(function ($q) use ($s) {
+                $q->where('users.name', 'like', "%{$s}%")
+                  ->orWhere('users.cnic_no', 'like', "%{$s}%")
+                  ->orWhere('users.email', 'like', "%{$s}%");
             });
         }
+        $approved = fn ($q) => $q->select(DB::raw(1))->from('applications')
+            ->whereColumn('applications.student_id', 'users.id')
+            ->where('applications.status', 'approved')->whereNull('applications.deleted_at');
 
-        return response()->json($query->paginate(min((int) $request->input('per_page', 20), 100)));
+        if ($request->input('program_id') === 'none') {
+            $base->whereNotExists($approved);
+        } elseif ($request->filled('program_id')) {
+            $base->whereExists(fn ($q) => $approved($q)->where('applications.program_id', (int) $request->program_id));
+        }
+        if ($request->filled('batch')) {
+            $base->whereExists(fn ($q) => $approved($q)->where('applications.admission_year', (int) $request->batch));
+        }
+        if ($request->filled('shift')) {
+            $base->whereExists(fn ($q) => $approved($q)->where('applications.shift', $request->shift));
+        }
+
+        $summary = [
+            'total'    => (clone $base)->count(),
+            'active'   => (clone $base)->where('users.is_active', true)->count(),
+            'inactive' => (clone $base)->where('users.is_active', false)->count(),
+            'enrolled' => (clone $base)->whereExists($approved)->count(),
+        ];
+        $summary['not_enrolled'] = $summary['total'] - $summary['enrolled'];
+
+        $query = (clone $base)
+            ->select('users.*')
+            ->addSelect([
+                'program_name' => $enrolment('programs.name')->join('programs', 'programs.id', '=', 'applications.program_id'),
+                'batch'        => $enrolment('applications.admission_year'),
+                'shift'        => $enrolment('applications.shift'),
+            ])
+            ->with('studentProfile');
+
+        if ($request->input('status') === 'active') {
+            $query->where('users.is_active', true);
+        } elseif ($request->input('status') === 'inactive') {
+            $query->where('users.is_active', false);
+        }
+
+        $sortable = ['name' => 'users.name', 'cnic_no' => 'users.cnic_no', 'created_at' => 'users.created_at',
+                     'program_name' => 'program_name', 'batch' => 'batch'];
+        $sortBy = $sortable[$request->input('sort_by')] ?? null;
+        $dir = $request->input('sort_dir') === 'asc' ? 'asc' : 'desc';
+        $sortBy ? $query->orderBy($sortBy, $dir) : $query->orderByDesc('users.created_at');
+        $query->orderByDesc('users.id');
+
+        $page = $query->paginate(max(1, min((int) $request->input('per_page', 25), 1000)));
+
+        // Choices for the filter menus: only values that this college's students actually have.
+        $apps = DB::table('applications')
+            ->join('users', 'users.id', '=', 'applications.student_id')
+            ->where('applications.college_id', $college->id)
+            ->where('applications.status', 'approved')->whereNull('applications.deleted_at')
+            ->where('users.user_type', 'student');
+
+        return response()->json($page->toArray() + [
+            'summary' => $summary,
+            'options' => [
+                'programs' => DB::table('programs')->where('college_id', $college->id)->whereNull('deleted_at')
+                    ->orderBy('name')->get(['id', 'name']),
+                'batches'  => (clone $apps)->whereNotNull('applications.admission_year')->distinct()
+                    ->orderByDesc('applications.admission_year')->pluck('applications.admission_year'),
+                'shifts'   => (clone $apps)->whereNotNull('applications.shift')->distinct()
+                    ->orderBy('applications.shift')->pluck('applications.shift'),
+            ],
+        ]);
     }
 
     // POST /api/students — admin creates a student
