@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api';
 import DataTable from '../../components/DataTable';
@@ -17,7 +17,9 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 export default function StudentList() {
   const navigate = useNavigate();
   const { hasPrv } = useAuth();
-  const [f, setF] = useState(EMPTY);
+  const [params] = useSearchParams();
+  // Links from the dashboard can preselect a filter, e.g. ?program_id=3
+  const [f, setF] = useState(() => ({ ...EMPTY, ...Object.fromEntries(Object.keys(EMPTY).map((k) => [k, params.get(k) ?? ''])) }));
   const [summary, setSummary] = useState(null);
   const [options, setOptions] = useState({ programs: [], batches: [], shifts: [] });
   const [refreshKey, setRefreshKey] = useState(0);

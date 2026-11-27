@@ -25,6 +25,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BulkChallanController;
 use App\Http\Controllers\PaymentSlipController;
 use Illuminate\Support\Facades\Route;
@@ -259,6 +260,9 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::post('challans/{challan}/items',                [ChallanController::class, 'addItem']);
     Route::put('challans/{challan}/items/{item}',          [ChallanController::class, 'updateItem']);
     Route::delete('challans/{challan}/items/{item}',       [ChallanController::class, 'deleteItem']);
+
+    // Dashboard (college admin numbers)
+    Route::get('dashboard', [DashboardController::class, 'index']);
 
     // Reports
     Route::get('reports/defaulters', [ReportController::class, 'defaulters']);

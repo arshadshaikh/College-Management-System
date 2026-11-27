@@ -1,13 +1,19 @@
 import { useAuth } from '../../context/AuthContext';
 import StudentDashboard from '../student/StudentDashboard';
+import CollegeDashboard from '../college-admin/CollegeDashboard';
 
 export default function Dashboard() {
-  const { user, privileges } = useAuth();
+  const { user, privileges, hasPrv } = useAuth();
 
 // Applicants get a guided admission checklist instead of the admin summary.
 // Decided by privileges (configurable per role), not by a hard-coded role name.
 if (privileges.includes('profile.show') && privileges.includes('applications.my') && user?.user_type === 'student') {
   return <StudentDashboard />;
+}
+
+// College staff with the dashboard privilege get the college numbers.
+if (hasPrv('dashboard.stats') && user?.user_type !== 'super_admin') {
+  return <CollegeDashboard />;
 }
 
   return (
