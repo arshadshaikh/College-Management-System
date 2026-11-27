@@ -31,6 +31,7 @@ class SettingsBackfillSeeder extends Seeder
             'show_login_link'           => ['value' => 'true',        'group' => 'website'],
             'contact_email'             => ['value' => null,          'group' => 'contact'],
             'contact_phone'             => ['value' => null,          'group' => 'contact'],
+            'timezone'                  => ['value' => 'Asia/Karachi', 'group' => 'general'],
             'admission_open'            => ['value' => 'false',       'group' => 'admission'],
             'allow_multiple_admissions' => ['value' => 'false',       'group' => 'admissions'],
             'auto_generate_challan'     => ['value' => 'true',        'group' => 'fees'],

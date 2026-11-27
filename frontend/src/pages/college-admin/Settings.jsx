@@ -92,7 +92,7 @@ const TABS = [
   { key: 'general', label: 'General', hint: 'Branding and contact',
     intro: 'How your college looks on the website and the portal, and how people can reach you.',
     icon: 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01',
-    settings: ['primary_color', 'logo', 'favicon', 'show_login_link', 'contact_email', 'contact_phone'], lists: [] },
+    settings: ['primary_color', 'logo', 'favicon', 'show_login_link', 'contact_email', 'contact_phone', 'timezone'], lists: [] },
   { key: 'admissions', label: 'Admissions', hint: 'Who can apply and when',
     intro: 'Open or close admissions and decide what an applicant needs before they can apply.',
     icon: 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.42A12.08 12.08 0 0118.82 17 11.95 11.95 0 0012 20.06 11.95 11.95 0 005.18 17a12.08 12.08 0 01.66-6.42L12 14z',
@@ -311,6 +311,7 @@ export default function Settings() {
           show_login_link: values.show_login_link ?? 'true',
           contact_email: values.contact_email ?? '',
           contact_phone: values.contact_phone ?? '',
+          timezone: values.timezone || 'Asia/Karachi',
           admission_open: values.admission_open ?? 'false',
           allow_multiple_admissions: values.allow_multiple_admissions ?? 'false',
           require_complete_profile: values.require_complete_profile ?? 'true',
@@ -479,6 +480,12 @@ export default function Settings() {
                 <Row label="Phone" error={err('contact_phone')}>
                   <input type="text" value={values.contact_phone ?? ''} placeholder="022-1234567"
                     onChange={(e) => set('contact_phone', e.target.value)} className={inputCls('contact_phone')} />
+                </Row>
+              </Card>
+
+              <Card title="Time zone" description="Your college's local time. It decides when a day starts and ends for due dates, late fees and the daily fee totals.">
+                <Row label="Time zone" error={err('timezone')}>
+                  <TimezonePicker value={values.timezone || 'Asia/Karachi'} onChange={(v) => set('timezone', v)} className={inputCls('timezone')} />
                 </Row>
               </Card>
 
@@ -672,6 +679,27 @@ export default function Settings() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Every IANA zone the browser knows (the server checks it again). Shows the local time there.
+const ZONES = (() => {
+  try { return Intl.supportedValuesOf('timeZone'); } catch { return ['Asia/Karachi', 'Asia/Dubai', 'Asia/Riyadh', 'Asia/Kolkata', 'Europe/London', 'UTC']; }
+})();
+
+function TimezonePicker({ value, onChange, className }) {
+  const zones = ZONES.includes(value) ? ZONES : [value, ...ZONES];
+  let now = '';
+  try {
+    now = new Date().toLocaleString(undefined, { timeZone: value, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  } catch { /* unknown zone: the server will reject it */ }
+  return (
+    <div>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${className} max-w-xs`}>
+        {zones.map((z) => <option key={z} value={z}>{z.replace(/_/g, ' ')}</option>)}
+      </select>
+      {now && <p className="text-xs text-gray-500 mt-1.5">Local time there now: <span className="font-medium text-gray-700">{now}</span></p>}
     </div>
   );
 }

@@ -6,6 +6,7 @@ use App\Models\College;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ResolveTenant
 {
@@ -39,6 +40,7 @@ class ResolveTenant
 
             if ($platform) {
                 app()->instance('current_college', $platform);
+                $this->useTimezone($platform->id);
                 $request->merge(['_college_id' => $platform->id]);
                 view()->share('currentCollege', $platform);
             }
@@ -74,6 +76,7 @@ class ResolveTenant
 
         // Bind into the app container — accessible anywhere via app('current_college')
         app()->instance('current_college', $college);
+        $this->useTimezone($college->id);
 
         // Also stamp it on the request for convenience in controllers
         $request->merge(['_college_id' => $college->id]);
@@ -82,6 +85,22 @@ class ResolveTenant
         view()->share('currentCollege', $college);
 
         return $next($request);
+    }
+
+    /**
+     * Run this request in the college's own time zone (Settings > General), so
+     * "today", due dates, late fees and daily totals follow the college's clock,
+     * not the server's. Falls back to APP_TIMEZONE when the setting is empty or bad.
+     */
+    private function useTimezone(int $collegeId): void
+    {
+        $tz = Cache::remember("tenant_tz:{$collegeId}", 3600, fn () => (string) DB::table('settings')
+            ->where('college_id', $collegeId)->where('key', 'timezone')->value('value'));
+
+        if ($tz !== '' && in_array($tz, \DateTimeZone::listIdentifiers(\DateTimeZone::ALL), true)) {
+            config(['app.timezone' => $tz]);
+            date_default_timezone_set($tz);
+        }
     }
 
     private function extractSlug(string $host): ?string

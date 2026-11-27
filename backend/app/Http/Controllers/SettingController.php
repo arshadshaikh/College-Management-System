@@ -52,6 +52,8 @@ class SettingController extends Controller
             'settings.primary_color' => 'nullable|string|max:20',
             'settings.contact_email' => 'nullable|email|max:255',
             'settings.contact_phone' => 'nullable|string|max:50',
+            // The college's local time: decides what "today" is (due dates, late fees, daily totals).
+            'settings.timezone'      => 'nullable|timezone:all',
             'settings.admission_open'=> 'nullable|in:true,false',
             'settings.show_login_link' => 'nullable|in:true,false',
             'settings.allow_multiple_admissions' => 'nullable|in:true,false',
@@ -149,6 +151,11 @@ class SettingController extends Controller
                 $setting->update(['value' => $value]);
                 $updated[] = $key;
             }
+        }
+
+        // The time zone is cached per request by ResolveTenant; drop it so the change applies at once.
+        if (in_array('timezone', $updated, true)) {
+            \Illuminate\Support\Facades\Cache::forget('tenant_tz:' . app('current_college')->id);
         }
 
         // This college's applicant document choices (master list stays with super admin).
