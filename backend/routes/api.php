@@ -26,6 +26,7 @@ use App\Http\Controllers\RequiredDocumentTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StatementController;
 use App\Http\Controllers\BulkChallanController;
 use App\Http\Controllers\PaymentSlipController;
 use Illuminate\Support\Facades\Route;
@@ -237,6 +238,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
     Route::get('students', [StudentController::class, 'index']);
     Route::post('students', [StudentController::class, 'store']);
     Route::get('students/{student}', [StudentController::class, 'show']);
+    Route::get('students/{student}/statement', [StatementController::class, 'show']);      // admin: fee statement
+    Route::get('students/{student}/statement/pdf', [StatementController::class, 'pdf']);
     Route::put('students/{student}', [StudentController::class, 'update']);
 
     // Documents
@@ -315,4 +318,8 @@ Route::middleware(['auth:api', 'privilege', 'tenant', 'tenant.scope'])->group(fu
 
     // Student: view single challan
     Route::get('my-challans/{challan}', [ChallanController::class, 'myShow']);
+
+    // Student: own fee statement
+    Route::get('my-statement', [StatementController::class, 'mine']);
+    Route::get('my-statement/pdf', [StatementController::class, 'minePdf']);
 });

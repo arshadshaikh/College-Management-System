@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api';
 import { PORTAL } from '../../config/app';
+import { useAuth } from '../../context/AuthContext';
 
 export default function StudentDetail() {
   const { id } = useParams();
+  const { hasPrv } = useAuth();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +27,12 @@ export default function StudentDetail() {
           <Link to={`${PORTAL}/students`} className="text-sm text-gray-500 hover:underline">← Students</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{student.name}</h1>
         </div>
-        <Link to={`${PORTAL}/students/${student.id}/edit`} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Edit</Link>
+        <div className="flex gap-2">
+          {hasPrv('students.statement') && (
+            <Link to={`${PORTAL}/students/${student.id}/statement`} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white">Fee statement</Link>
+          )}
+          <Link to={`${PORTAL}/students/${student.id}/edit`} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Edit</Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6">

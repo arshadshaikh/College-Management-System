@@ -61,6 +61,8 @@ import MyTimetable from './pages/student/MyTimetable';
 import MyChallans from './pages/student/MyChallans';
 import ApplyForm from './pages/student/ApplyForm';
 import MyChallanDetail from './pages/student/MyChallanDetail';
+import MyStatement from './pages/student/MyStatement';
+import StudentStatement from './pages/college-admin/StudentStatement';
 import MyProfile from './pages/student/MyProfile';
 import StudentPrograms from './pages/student/StudentPrograms';
 import CollegeRegister from './pages/auth/CollegeRegister';
@@ -155,6 +157,7 @@ export default function App() {
         <Route path="students/create" element={<PrivilegeRoute slug="students.store"><StudentForm /></PrivilegeRoute>} />
         <Route path="students/import" element={<PrivilegeRoute slug="students.import"><StudentImport /></PrivilegeRoute>} />
         <Route path="students/:id" element={<PrivilegeRoute slug="students.show"><StudentDetail /></PrivilegeRoute>} />
+        <Route path="students/:id/statement" element={<PrivilegeRoute slug="students.statement"><StudentStatement /></PrivilegeRoute>} />
         <Route path="students/:id/edit" element={<PrivilegeRoute slug="students.update"><StudentEditForm /></PrivilegeRoute>} />
 
         {/* Challans */}
@@ -200,6 +203,7 @@ export default function App() {
         <Route path="my-timetable" element={<PrivilegeRoute slug="timetable.my"><MyTimetable /></PrivilegeRoute>} />
         <Route path="my-challans" element={<PrivilegeRoute slug="challans.my"><MyChallans /></PrivilegeRoute>} />
         <Route path="my-challans/:id" element={<PrivilegeRoute slug="challans.my"><MyChallanDetail /></PrivilegeRoute>} />
+        <Route path="my-statement" element={<PrivilegeRoute slug="statement.my"><MyStatement /></PrivilegeRoute>} />
         <Route path="apply" element={<PrivilegeRoute slug="applications.store"><ApplyForm /></PrivilegeRoute>} />
         
       </Route>

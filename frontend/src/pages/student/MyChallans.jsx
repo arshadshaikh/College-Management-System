@@ -127,11 +127,21 @@ export default function MyChallans() {
       }},
   ];
 
-  const headerActions = hasPrv('challans.request') && !open && (
-    <button type="button" onClick={() => setOpen(true)}
-      className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
-      + Request a service
-    </button>
+  const headerActions = (
+    <>
+      {hasPrv('statement.my') && (
+        <Link to={`${PORTAL}/my-statement`}
+          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 bg-white">
+          Fee statement
+        </Link>
+      )}
+      {hasPrv('challans.request') && !open && (
+        <button type="button" onClick={() => setOpen(true)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+          + Request a service
+        </button>
+      )}
+    </>
   );
 
   return (

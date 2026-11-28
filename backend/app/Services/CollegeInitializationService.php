@@ -127,6 +127,7 @@ class CollegeInitializationService
                 'reports.defaulters', 'reports.collections', 'reports.collections-pdf',
                 'challans.bulk-preview', 'challans.bulk',
                 'payments.slips', 'challans.split', 'dashboard.stats',
+                'students.statement', 'students.statement-pdf',
                 // CMS
                 'settings.index', 'settings.update',
                 'cms.pages.index', 'cms.pages.store', 'cms.pages.show',
@@ -157,6 +158,7 @@ class CollegeInitializationService
                 'profile.show', 'profile.update', 'profile.educations.save', 'profile.educations.destroy', 'profile.documents.upload', 'profile.documents.download', 'profile.documents.destroy',
                 'challans.my', 'challans.upload-slip', 'challans.pdf',
                 'challans.my-show', 'payments.slip',
+                'statement.my', 'statement.my-pdf',
                 'challans.services', 'challans.request',
                 'cms.pages.index', 'cms.pages.show',
                 'cms.announcements.index', 'cms.announcements.show',
