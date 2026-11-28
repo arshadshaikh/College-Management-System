@@ -190,11 +190,14 @@ class PlanController extends Controller
             'features'       => 'present|array',
             'features.*'     => ['string', Rule::in($keys)],
             'is_default'     => 'boolean',
+            'is_free'        => 'boolean',
             'is_active'      => 'boolean',
             'sort_order'     => 'nullable|integer|min:0|max:1000',
         ]);
         $data['features'] = array_values(array_unique($data['features']));
         $data['sort_order'] = $data['sort_order'] ?? 0;
+        $data['is_free'] = (bool) ($data['is_free'] ?? false);
+        if ($data['is_free']) $data['price'] = 0;   // a free plan never carries a price
         if (($data['is_default'] ?? false) && !($data['is_active'] ?? true)) {
             abort(response()->json(['message' => 'The default plan must be active.', 'errors' => ['is_default' => ['The default plan must be active.']]], 422));
         }

@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const money = (n) => `Rs. ${Math.round(Number(n || 0)).toLocaleString()}`;
 const EMPTY_ADDON = { name: '', description: '', kind: 'feature', feature: '', students_per_unit: '100', price: '0', is_active: true, sort_order: '' };
-const EMPTY = { name: '', description: '', price: '0', billing_period: 'monthly', max_students: '', features: [], is_default: false, is_active: true, sort_order: '' };
+const EMPTY = { name: '', description: '', price: '0', billing_period: 'monthly', max_students: '', features: [], is_free: false, is_default: false, is_active: true, sort_order: '' };
 
 /**
  * Super Admin: subscription plans. Each plan has a price, a student limit and a set
@@ -113,6 +113,8 @@ function PlanCard({ plan, features, trialDays, onEdit, onDelete }) {
             <span className="text-3xl font-bold text-gray-900 tabular-nums">{money(plan.price)}</span>
             <span className="text-sm text-gray-500">/ {plan.billing_period === 'monthly' ? 'month' : 'year'}</span>
           </>
+        ) : plan.is_free ? (
+          <span className="text-3xl font-bold text-green-700">Free</span>
         ) : (
           <span className="text-2xl font-bold text-gray-900 py-0.5">Custom price</span>
         )}
@@ -173,7 +175,7 @@ function PlanEditor({ plan, features, trialDays, onClose, onSaved }) {
   const save = async () => {
     setBusy(true); setErrors({});
     const body = {
-      name: f.name, description: f.description || null, price: f.price || 0, billing_period: f.billing_period,
+      name: f.name, description: f.description || null, price: f.is_free ? 0 : (f.price || 0), billing_period: f.billing_period, is_free: !!f.is_free,
       max_students: f.max_students === '' ? null : Number(f.max_students), features: f.features,
       is_default: !!f.is_default, is_active: !!f.is_active, sort_order: f.sort_order === '' ? null : Number(f.sort_order),
     };
@@ -212,17 +214,22 @@ function PlanEditor({ plan, features, trialDays, onClose, onSaved }) {
               <input value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} className={cls('description')} placeholder="Shown on the plan card" />
               <Err k="description" />
             </label>
-            <label className="block">
+            <div className="block">
               <span className="block text-sm font-medium text-gray-700 mb-1">Price (Rs.)</span>
               <div className="flex gap-2">
-                <input type="number" min="0" value={f.price} onChange={(e) => set('price', e.target.value)} className={cls('price')} />
-                <select value={f.billing_period} onChange={(e) => set('billing_period', e.target.value)} className={`${cls('billing_period')} w-32`}>
+                <input type="number" min="0" value={f.is_free ? '0' : f.price} disabled={f.is_free} onChange={(e) => set('price', e.target.value)} className={`${cls('price')} disabled:bg-gray-50 disabled:text-gray-400`} />
+                <select value={f.billing_period} disabled={f.is_free} onChange={(e) => set('billing_period', e.target.value)} className={`${cls('billing_period')} w-32 disabled:bg-gray-50 disabled:text-gray-400`}>
                   <option value="yearly">per year</option>
                   <option value="monthly">per month</option>
                 </select>
               </div>
-              {Number(f.price) === 0 ? <p className="text-xs text-gray-500 mt-1">0 shows as "Custom price", agreed per college.</p> : <Err k="price" />}
-            </label>
+              <label className="mt-2 flex items-center gap-2 text-sm text-gray-700 cursor-pointer w-fit">
+                <input type="checkbox" checked={!!f.is_free} onChange={(e) => set('is_free', e.target.checked)} className="w-4 h-4 accent-indigo-600" />
+                Free plan
+              </label>
+              {f.is_free ? <p className="text-xs text-gray-500 mt-1">Shown as "Free". Give it to a college only when you choose to.</p>
+                : Number(f.price) === 0 ? <p className="text-xs text-gray-500 mt-1">0 shows as "Custom price", agreed per college.</p> : <Err k="price" />}
+            </div>
             <label className="block">
               <span className="block text-sm font-medium text-gray-700 mb-1">Student limit</span>
               <input type="number" min="1" value={f.max_students} onChange={(e) => set('max_students', e.target.value)} className={cls('max_students')} placeholder="Empty = unlimited" />

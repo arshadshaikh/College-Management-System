@@ -360,7 +360,7 @@ function SubscriptionCard({ college, onSaved }) {
                 <option value="">No plan</option>
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} · {p.max_students ? `${Number(p.max_students).toLocaleString()} students` : 'unlimited'} · {Number(p.price) > 0 ? `${money(p.price)}/${p.billing_period === 'yearly' ? 'year' : 'month'}` : 'custom price'}{p.is_active ? '' : ' (inactive)'}
+                    {p.name} · {p.max_students ? `${Number(p.max_students).toLocaleString()} students` : 'unlimited'} · {Number(p.price) > 0 ? `${money(p.price)}/${p.billing_period === 'yearly' ? 'year' : 'month'}` : p.is_free ? 'free' : 'custom price'}{p.is_active ? '' : ' (inactive)'}
                   </option>
                 ))}
               </select>
@@ -415,7 +415,7 @@ function SubscriptionCard({ college, onSaved }) {
                 <>
                   <span className="text-gray-500">Monthly total </span>
                   <span className="font-semibold text-gray-900 tabular-nums">{money(total)}</span>
-                  {Number(plan.price) === 0 && <span className="text-xs text-gray-500"> + plan price agreed with the college</span>}
+                  {Number(plan.price) === 0 && !plan.is_free && <span className="text-xs text-gray-500"> + plan price agreed with the college</span>}
                   <span className="text-gray-500"> · Students </span>
                   <span className="font-semibold text-gray-900 tabular-nums">{baseLimit == null ? 'Unlimited' : (baseLimit + extra).toLocaleString()}</span>
                   {extra > 0 && <span className="text-xs text-gray-500"> ({Number(baseLimit).toLocaleString()} + {extra.toLocaleString()})</span>}

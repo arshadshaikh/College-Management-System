@@ -11,7 +11,7 @@ class Plan extends Model
 {
     protected $fillable = [
         'name', 'slug', 'description', 'price', 'billing_period',
-        'max_students', 'features', 'is_default', 'is_active', 'sort_order',
+        'max_students', 'features', 'is_default', 'is_active', 'sort_order', 'is_free',
     ];
 
     protected $casts = [
@@ -19,6 +19,7 @@ class Plan extends Model
         'price'        => 'decimal:2',
         'max_students' => 'integer',
         'is_default'   => 'boolean',
+        'is_free'      => 'boolean',
         'is_active'    => 'boolean',
     ];
 
