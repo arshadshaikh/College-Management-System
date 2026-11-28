@@ -87,6 +87,7 @@ class StatementController extends Controller
             ->join('challans as c', 'c.id', '=', 'pm.challan_id')
             ->where('pm.college_id', $collegeId)->where('pm.student_id', $student->id)
             ->whereNull('c.deleted_at')->where('c.status', '!=', 'cancelled')
+            ->where('c.total_amount', '!=', 0)->where('pm.amount_paid', '!=', 0)   // same rule as the challans above
             ->orderBy('pm.paid_at')->orderBy('pm.id')
             ->get(['pm.id', 'pm.amount_paid', 'pm.payment_method', 'pm.payment_reference', 'pm.paid_at', 'pm.slip_status',
                    'c.id as challan_id', 'c.challan_no']);
