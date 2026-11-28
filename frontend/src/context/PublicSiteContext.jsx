@@ -10,7 +10,7 @@ export function PublicSiteProvider({ children }) {
     let notFound = false;
     Promise.all([
       api.get('/public/settings').catch((err) => {
-        notFound = err.response?.data?.error === 'college_not_found';
+        notFound = ['college_not_found', 'college_suspended'].includes(err.response?.data?.error);
         return { data: {} };
       }),
       api.get('/public/menus').catch(() => ({ data: [] })),

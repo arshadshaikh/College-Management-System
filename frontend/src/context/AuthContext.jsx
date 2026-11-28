@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [menu, setMenu] = useState([]);
   const [privileges, setPrivileges] = useState([]);
+  const [plan, setPlan] = useState(null);   // subscription state for college users (null = unrestricted)
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
@@ -15,6 +16,7 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       setMenu(data.menu);
       setPrivileges(data.privileges);
+      setPlan(data.plan ?? null);
     } catch {
       localStorage.removeItem('token');
       setUser(null);
@@ -50,12 +52,13 @@ export function AuthProvider({ children }) {
     setUser(null);
     setMenu([]);
     setPrivileges([]);
+    setPlan(null);
   };
 
   const hasPrv = (slug) => privileges.includes(slug);
 
   return (
-    <AuthContext.Provider value={{ user, menu, privileges, loading, login, logout, hasPrv, fetchUser }}>
+    <AuthContext.Provider value={{ user, menu, privileges, plan, loading, login, logout, hasPrv, fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

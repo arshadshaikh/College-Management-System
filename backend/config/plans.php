@@ -8,9 +8,9 @@
 | here (admissions, students, challans, payments, settings, dashboard) is the
 | core every plan includes.
 |
-| 'privileges' / 'menus' name what the feature unlocks. Step 2 (enforcement)
-| hides these menus and refuses these API privileges for colleges whose plan
-| does not include the feature. Keys are stored in plans.features, so never
+| 'privileges' / 'privilege_prefixes' / 'menus' name what the feature unlocks.
+| App\Services\PlanGate hides these menus and refuses these API privileges for
+| colleges whose plan (plus add-ons) does not include the feature. Keys are stored in plans.features, so never
 | rename a key once plans use it.
 */
 
@@ -74,7 +74,8 @@ return [
         'website' => [
             'label'       => 'College website (CMS)',
             'description' => 'Public website pages, menus, banners, announcements and media.',
-            'privileges'  => [],   // public pages still read CMS; only editing is gated in step 2
+            'privileges'  => [],
+            'privilege_prefixes' => ['cms.'],   // every CMS admin privilege; the public site itself stays up
             'menus'       => ['menu.cms'],
         ],
         'fee_reminders' => [

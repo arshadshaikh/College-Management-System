@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PlanGate;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\StudentProfile;
@@ -115,6 +116,11 @@ class StudentController extends Controller
     {
         $college = app('current_college');
 
+        // Subscription: stop at the plan's student limit.
+        if ($limit = PlanGate::studentLimitMessage($college->id)) {
+            return response()->json(['message' => $limit, 'error' => 'student_limit'], 422);
+        }
+
         // Say who already holds the CNIC instead of the bare "has already been taken".
         if ($taken = $this->cnicTaken((string) $request->input('cnic_no'), $college->id)) {
             return response()->json([
@@ -204,6 +210,12 @@ class StudentController extends Controller
             'is_active'     => 'boolean',
             'password'      => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(8)->mixedCase()->numbers()],
         ]);
+
+        // Subscription: turning an inactive student back on counts against the limit.
+        if ($request->boolean('is_active') && !$student->is_active
+            && ($limit = PlanGate::studentLimitMessage($college->id))) {
+            return response()->json(['message' => $limit, 'error' => 'student_limit', 'errors' => ['is_active' => [$limit]]], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -299,6 +311,12 @@ class StudentController extends Controller
 
             if ($validator->fails()) {
                 $errors[] = ['row' => $rowNum, 'message' => implode(' ', $validator->errors()->all())];
+                continue;
+            }
+
+            // Subscription: rows past the plan's student limit are skipped, not created.
+            if ($limit = PlanGate::studentLimitMessage($college->id)) {
+                $errors[] = ['row' => $rowNum, 'message' => 'Not added: student limit reached. ' . $limit];
                 continue;
             }
 

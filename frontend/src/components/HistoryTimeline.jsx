@@ -12,7 +12,27 @@ const ACTION_LABELS = {
   'challan.marked_paid': { text: 'Marked Paid', color: 'bg-green-500' },
   'payment.slip_verified': { text: 'Slip Verified', color: 'bg-green-500' },
   'challan.cancelled':   { text: 'Cancelled',   color: 'bg-gray-400' },
+  'college.plan_changed':{ text: 'Subscription changed', color: 'bg-indigo-500' },
+  'college.updated':     { text: 'Details updated', color: 'bg-gray-400' },
 };
+
+// Fields that already have their own entry (status, subscription), so a generic
+// "<model>.updated" row that changed only these is left out.
+const COVERED = new Set(['status', 'rejection_reason', 'approved_at', 'approved_by', 'plan_id', 'plan_expires_at', 'on_trial', 'updated_at']);
+const isGenericUpdate = (r) => /\.updated$/.test(r.action);
+const changedKeys = (r) => Object.keys(r.new_values ?? {}).filter((k) => !COVERED.has(k));
+const humanKey = (k) => k.replace(/_id$/, '').replace(/_/g, ' ');
+const show = (v) => (v === null || v === undefined || v === '' ? '—' : typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v));
+
+// "Enterprise → Growth · until 31 Dec 2026 · trial · Add-ons: Website, Extra 100 students x2"
+function planLine(v) {
+  if (!v) return '';
+  const bits = [v.plan ?? (v.plan_id ? `Plan #${v.plan_id}` : 'No plan')];
+  if (v.plan_expires_at) bits.push(`until ${new Date(`${v.plan_expires_at}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`);
+  if (v.on_trial) bits.push('trial');
+  if (v.addons?.length) bits.push(`add-ons: ${v.addons.join(', ')}`);
+  return bits.join(' · ');
+}
 
 export default function HistoryTimeline({ auditableType, auditableId }) {
   const [rows, setRows] = useState([]);
@@ -29,12 +49,14 @@ export default function HistoryTimeline({ auditableType, auditableId }) {
     return () => { cancelled = true; };
   }, [auditableType, auditableId]);
 
+  const visible = rows.filter((r) => !isGenericUpdate(r) || changedKeys(r).length > 0);
+
   if (loading) return <div className="text-sm text-gray-400">Loading history…</div>;
-  if (!rows.length) return <div className="text-sm text-gray-400">No history recorded.</div>;
+  if (!visible.length) return <div className="text-sm text-gray-400">No history recorded.</div>;
 
   return (
     <div className="space-y-4">
-      {rows.map((r) => {
+      {visible.map((r) => {
         const meta = ACTION_LABELS[r.action] ?? { text: r.action, color: 'bg-indigo-500' };
         const ctx = r.new_values ?? {};
         const when = new Date(r.created_at);
@@ -48,6 +70,19 @@ export default function HistoryTimeline({ auditableType, auditableId }) {
               <div className="text-sm font-medium text-gray-900">{meta.text}</div>
               {ctx.reason && (
                 <div className="text-sm text-gray-600 mt-0.5">Reason: {ctx.reason}</div>
+              )}
+              {r.action === 'college.plan_changed' && (
+                <div className="text-sm text-gray-600 mt-0.5">
+                  {r.old_values?.plan || r.old_values?.plan_id ? <><span className="text-gray-400">{planLine(r.old_values)}</span><span className="mx-1.5 text-gray-400">→</span></> : null}
+                  {planLine(ctx)}
+                </div>
+              )}
+              {isGenericUpdate(r) && (
+                <ul className="text-xs text-gray-600 mt-0.5 space-y-0.5">
+                  {changedKeys(r).map((k) => (
+                    <li key={k}><span className="capitalize text-gray-500">{humanKey(k)}:</span> {show(r.old_values?.[k])} → {show(ctx[k])}</li>
+                  ))}
+                </ul>
               )}
               {(ctx.from || ctx.to) && (
                 <div className="text-xs text-gray-500 mt-0.5 capitalize">{ctx.from} → {ctx.to}</div>

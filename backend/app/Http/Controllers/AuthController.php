@@ -92,12 +92,46 @@ class AuthController extends Controller
         // $user->load('activeRole', 'activeRoles');
         $user->load('activeRole', 'activeRoles', 'college');
 
+        $menu       = $user->getMenuItems();
+        $privileges = $user->getAllPrivileges()->pluck('slug');
+        $plan       = null;
+
+        // Subscription: hide menus and buttons for features the college's plan doesn't include.
+        if ($user->college_id) {
+            $cid  = (int) $user->college_id;
+            $gate = \App\Services\PlanGate::for($cid);
+            if ($gate['restricted']) {
+                $privileges = $privileges->reject(fn ($slug) => \App\Services\PlanGate::isLocked($cid, $slug))->values();
+                $menu = $this->withoutLockedMenus($menu, $cid);
+                $plan = [
+                    'status'          => $gate['status'],
+                    'expires_at'      => $gate['expires_at'],
+                    'grace_ends_at'   => $gate['grace_ends_at'],
+                    'read_only'       => $gate['status'] === 'expired',
+                    'locked_features' => \App\Services\PlanGate::lockedFeatures($cid),
+                ];
+            }
+        }
+
         return response()->json([
             'user' => $user,
-            'menu' => $user->getMenuItems(),
-            'privileges' => $user->getAllPrivileges()->pluck('slug'),
+            'menu' => $menu,
+            'privileges' => $privileges,
             'college'    => $user->college,
+            'plan'       => $plan,
         ]);
+    }
+
+    // Menu rows (and their children) minus those a locked plan feature covers.
+    private function withoutLockedMenus($items, int $collegeId)
+    {
+        return $items->reject(fn ($m) => \App\Services\PlanGate::isLocked($collegeId, $m->slug))
+            ->map(function ($m) use ($collegeId) {
+                if ($m->relationLoaded('menuChildren')) {
+                    $m->setRelation('menuChildren', $this->withoutLockedMenus($m->menuChildren, $collegeId));
+                }
+                return $m;
+            })->values();
     }
 
     public function logout(Request $request)

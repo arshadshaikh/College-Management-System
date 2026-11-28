@@ -28,7 +28,7 @@ api.interceptors.response.use(
     const message = err.response?.data?.message;
 
     // Unknown college address: the public site shows a "College not found" page instead of toasts.
-    if (err.response?.data?.error === 'college_not_found') {
+    if (['college_not_found', 'college_suspended'].includes(err.response?.data?.error)) {
       return Promise.reject(err);
     }
 

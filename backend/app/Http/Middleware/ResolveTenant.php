@@ -68,6 +68,14 @@ class ResolveTenant
 
 
         if (!$college) {
+            // Say so plainly when the college exists but is suspended (not cached: it can be reinstated any time).
+            $other = College::where('slug', $slug)->first(['status']);
+            if ($other && $other->status === 'suspended') {
+                return response()->json([
+                    'message' => "This college's account is suspended. Please contact the platform administrator.",
+                    'error'   => 'college_suspended',
+                ], 403);
+            }
             return response()->json([
                 'message' => "College '{$slug}' not found or not yet approved.",
                 'error'   => 'college_not_found',   // the frontend shows a "College not found" page for this

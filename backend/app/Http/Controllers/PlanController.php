@@ -61,6 +61,7 @@ class PlanController extends Controller
             $old = $plan->only(['name', 'price', 'max_students', 'features', 'is_active']);
             $plan->update($data);
             $this->keepOneDefault($plan);
+            \App\Services\PlanGate::forgetAll();
             AuditLog::record('plan.updated', $plan, $plan->only(array_keys($old)), $old);
         });
         return response()->json(['message' => "Plan '{$plan->name}' saved.", 'plan' => $plan->fresh()]);
@@ -117,8 +118,10 @@ class PlanController extends Controller
         }
 
         $names = Addon::pluck('name', 'id');
-        DB::transaction(function () use ($college, $data, $sync, $current, $names) {
+        $planNames = Plan::pluck('name', 'id');
+        DB::transaction(function () use ($college, $data, $sync, $current, $names, $planNames) {
             $snap = fn ($c, $addons) => [
+                'plan' => $c->plan_id ? ($planNames[$c->plan_id] ?? null) : null,
                 'plan_id' => $c->plan_id, 'plan_expires_at' => optional($c->plan_expires_at)->toDateString(), 'on_trial' => (bool) $c->on_trial,
                 'addons'  => collect($addons)->map(fn ($v, $id) => ($names[$id] ?? "#{$id}") . ($v > 1 ? " x{$v}" : ''))->values()->all(),
             ];
@@ -133,6 +136,7 @@ class PlanController extends Controller
                 $snap($college, collect($sync)->map(fn ($v) => $v['quantity'])->all()), $old, null, $college->id);
         });
         \Illuminate\Support\Facades\Cache::forget("tenant:{$college->slug}");
+        \App\Services\PlanGate::forget($college->id);
 
         $college = $college->fresh(['plan', 'addons']);
         return response()->json([

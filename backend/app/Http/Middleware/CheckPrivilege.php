@@ -68,6 +68,25 @@ class CheckPrivilege
             return response()->json(['message' => 'You do not have permission to access this resource'], 403);
         }
 
+        // ── Subscription plan ───────────────────────────────────────
+        if ($user->college_id) {
+            // A feature the college's plan (and add-ons) does not include.
+            if ($feature = \App\Services\PlanGate::lockedFeatureFor((int) $user->college_id, $privilege->slug)) {
+                return response()->json([
+                    'message' => "{$feature['label']} is not included in your plan. Contact the platform administrator to add it.",
+                    'error'   => 'feature_locked',
+                    'feature' => $feature['key'],
+                ], 403);
+            }
+            // Plan ended and the grace period is over: look, but don't change anything.
+            if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && \App\Services\PlanGate::readOnly((int) $user->college_id)) {
+                return response()->json([
+                    'message' => 'Your subscription has ended, so the portal is read-only. Contact the platform administrator to renew.',
+                    'error'   => 'plan_expired',
+                ], 403);
+            }
+        }
+
         return $next($request);
     }
 }

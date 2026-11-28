@@ -37,6 +37,7 @@ class AddonController extends Controller
         DB::transaction(function () use ($addon, $data) {
             $old = $addon->only(['name', 'price', 'students_per_unit', 'is_active']);
             $addon->update($data);
+            \App\Services\PlanGate::forgetAll();
             AuditLog::record('addon.updated', $addon, $addon->only(array_keys($old)), $old);
         });
         return response()->json(['message' => "Add-on '{$addon->name}' saved.", 'addon' => $addon->fresh()]);
