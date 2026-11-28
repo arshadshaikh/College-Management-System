@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             InstallmentPrivilegeSeeder::class, // split a challan into installments
             DashboardPrivilegeSeeder::class, // college admin dashboard numbers
             StatementPrivilegeSeeder::class, // student fee statement (admin + student)
+            PlanSeeder::class,              // subscription plans + privileges; existing colleges get a plan
             StudentPrivilegeSeeder::class,  // student list/create/edit/import (college admin)
             CmsPrivilegeSeeder::class,      // CMS privileges
             MenuSeeder::class,              // menu items for super_admin + college_admin + student

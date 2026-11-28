@@ -148,7 +148,8 @@ class CollegeController extends Controller
     public function show(College $college)
     {
         // return response()->json($college->load('users'));
-        return response()->json($college->load('documents', 'users'));
+        $college->load('documents', 'users', 'plan', 'addons');
+        return response()->json($college->setAttribute('subscription', $college->subscription())->setAttribute('monthly_total', $college->monthlyTotal()));
     }
 
     // ── Super admin: approve a college ────────────────────────────
@@ -172,6 +173,17 @@ class CollegeController extends Controller
 
             // Auto-initialize CMS, roles, and settings
             $this->initializer->initialize($college);
+
+            // Start on the default subscription plan unless the super admin already chose one,
+            // as a free trial of plans.trial_days days (0 = no trial, no end date).
+            if (!$college->plan_id && ($default = \App\Models\Plan::where('is_default', true)->where('is_active', true)->value('id'))) {
+                $trialDays = (int) config('plans.trial_days', 0);
+                $college->update([
+                    'plan_id'         => $default,
+                    'on_trial'        => $trialDays > 0,
+                    'plan_expires_at' => $trialDays > 0 ? now()->addDays($trialDays)->toDateString() : null,
+                ]);
+            }
 
             //AuditLog::record('college.approved', $college, ['slug' => $college->slug]);
             AuditLog::record('college.approved', $college, ['from' => $from, 'to' => 'approved', 'slug' => $college->slug]);

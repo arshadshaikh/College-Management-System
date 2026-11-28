@@ -126,7 +126,7 @@ class CollegeInitializationService
                 'challans.items.store', 'challans.items.update', 'challans.items.destroy',
                 'reports.defaulters', 'reports.collections', 'reports.collections-pdf',
                 'challans.bulk-preview', 'challans.bulk',
-                'payments.slips', 'challans.split', 'dashboard.stats',
+                'payments.slips', 'challans.split', 'dashboard.stats', 'plan.my',
                 'students.statement', 'students.statement-pdf',
                 // CMS
                 'settings.index', 'settings.update',

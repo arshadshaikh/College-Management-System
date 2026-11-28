@@ -44,6 +44,7 @@ class CollegePrivilegeSeeder extends Seeder
             ['slug' => 'colleges.approve', 'name' => 'Approve college',  'route' => '/api/colleges/{id}/approve',       'method' => 'POST'],
             ['slug' => 'colleges.reject',  'name' => 'Reject college',   'route' => '/api/colleges/{id}/reject',        'method' => 'POST'],
             ['slug' => 'colleges.suspend', 'name' => 'Suspend college',  'route' => '/api/colleges/{id}/suspend',       'method' => 'POST'],
+            ['slug' => 'colleges.reinstate', 'name' => 'Reinstate college', 'route' => '/api/colleges/{id}/reinstate',  'method' => 'POST'],
         ];
 
         foreach ($privileges as $priv) {

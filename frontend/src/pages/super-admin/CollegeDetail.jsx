@@ -130,6 +130,10 @@ export default function CollegeDetail() {
         </div>
       </div>
 
+      {!college.is_platform && hasPrv('colleges.plan') && (
+        <SubscriptionCard college={college} onSaved={(c) => setCollege((prev) => ({ ...prev, plan_id: c.plan_id, plan_expires_at: c.plan_expires_at, on_trial: c.on_trial, plan: c.plan, addons: c.addons, subscription: c.subscription, monthly_total: c.monthly_total }))} />
+      )}
+
       {/* Rejection / suspension reason, if any */}
       {college.rejection_reason && (
         <div className="bg-red-50 border border-red-100 rounded-xl p-4">
@@ -249,6 +253,182 @@ export default function CollegeDetail() {
         <HistoryTimeline auditableType="App\Models\College" auditableId={college.id} />
       </div>
 
+    </div>
+  );
+}
+
+const money = (n) => `Rs. ${Math.round(Number(n || 0)).toLocaleString()}`;
+
+const SUB_BADGE = {
+  trial:   ['bg-indigo-50 text-indigo-700', 'Free trial'],
+  active:  ['bg-green-50 text-green-700', 'Active'],
+  grace:   ['bg-amber-50 text-amber-700', 'Grace period'],
+  expired: ['bg-red-50 text-red-700', 'Expired'],
+  none:    ['bg-gray-100 text-gray-600', 'No plan'],
+};
+const perMonth = (p) => (p ? Number(p.price) / (p.billing_period === 'yearly' ? 12 : 1) : 0);
+const fmtDay = (s) => new Date(`${String(s).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+// Super admin: the college's plan, end date, trial and add-ons, with the monthly total.
+function SubscriptionCard({ college, onSaved }) {
+  const [cat, setCat] = useState(null);   // { plans, addons, features, grace_days }
+  const initial = () => ({
+    planId: college.plan_id ?? '',
+    expires: college.plan_expires_at ? String(college.plan_expires_at).slice(0, 10) : '',
+    trial: !!college.on_trial,
+    picked: Object.fromEntries((college.addons ?? []).map((a) => [a.id, a.pivot?.quantity ?? 1])),
+  });
+  const [form, setForm] = useState(initial);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get('/plans').then(({ data }) => setCat(data)).catch(() => setCat({ plans: [], addons: [], features: [] }));
+  }, []);
+  useEffect(() => { setForm(initial()); }, [college]);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const held = Object.fromEntries((college.addons ?? []).map((a) => [a.id, a]));
+  const plans = (cat?.plans ?? []).filter((p) => p.is_active || p.id === college.plan_id);
+  const plan = plans.find((p) => String(p.id) === String(form.planId)) ?? null;
+
+  // Add-ons that make sense on the chosen plan.
+  const addons = (cat?.addons ?? []).filter((a) => (a.is_active || held[a.id])
+    && (a.kind === 'students' ? plan?.max_students != null : !(plan?.features ?? []).includes(a.feature)));
+  const picked = Object.entries(form.picked).filter(([id]) => addons.some((a) => String(a.id) === id));
+  const unitPrice = (a) => Number(held[a.id]?.pivot?.price ?? a.price);
+  const total = perMonth(plan) + picked.reduce((sum, [id, q]) => sum + unitPrice(addons.find((a) => String(a.id) === id)) * q, 0);
+  const extra = picked.reduce((sum, [id, q]) => { const a = addons.find((x) => String(x.id) === id); return sum + (a.kind === 'students' ? a.students_per_unit * q : 0); }, 0);
+
+  const toggle = (a) => setForm((f) => {
+    const next = { ...f.picked };
+    if (next[a.id]) delete next[a.id]; else next[a.id] = 1;
+    return { ...f, picked: next };
+  });
+  const qty = (a, q) => setForm((f) => ({ ...f, picked: { ...f.picked, [a.id]: Math.max(1, Math.min(1000, Number(q) || 1)) } }));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const { data } = await api.put(`/colleges/${college.id}/plan`, {
+        plan_id: form.planId === '' ? null : Number(form.planId),
+        plan_expires_at: form.expires || null,
+        on_trial: form.planId !== '' && form.trial,
+        addons: form.planId === '' ? [] : picked.map(([id, q]) => ({ addon_id: Number(id), quantity: q })),
+      });
+      toast.success(data.message);
+      onSaved(data.college);
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? 'Could not save the subscription.');
+    } finally { setSaving(false); }
+  };
+
+  const sub = college.subscription ?? { status: college.plan_id ? 'active' : 'none' };
+  const [badgeCls, badgeText] = SUB_BADGE[sub.status] ?? SUB_BADGE.none;
+  const baseLimit = plan?.max_students ?? null;
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm">
+      <div className="px-6 pt-6 pb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-gray-900">Subscription</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {college.plan ? <>On <span className="font-medium text-gray-800">{college.plan.name}</span>
+              {college.monthly_total > 0 && <> · {money(college.monthly_total)} a month</>}</> : 'No plan assigned.'}
+          </p>
+        </div>
+        <div className="text-right">
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${badgeCls}`}>{badgeText}</span>
+          {sub.expires_at && (
+            <div className="text-xs text-gray-500 mt-1">
+              {sub.status === 'grace' ? `Ended ${fmtDay(sub.expires_at)}, read-only after ${fmtDay(sub.grace_ends_at)}`
+                : sub.status === 'expired' ? `Ended ${fmtDay(sub.expires_at)}`
+                : `Until ${fmtDay(sub.expires_at)} · ${sub.days_left} day${sub.days_left === 1 ? '' : 's'} left`}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {cat === null ? (
+        <p className="px-6 pb-6 text-sm text-gray-400">Loading plans…</p>
+      ) : (
+        <>
+          <div className="px-6 pb-5 grid grid-cols-1 sm:grid-cols-[1fr_12rem] gap-3">
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Plan</span>
+              <select value={form.planId} onChange={(e) => set('planId', e.target.value)}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">No plan</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · {p.max_students ? `${Number(p.max_students).toLocaleString()} students` : 'unlimited'} · {Number(p.price) > 0 ? `${money(p.price)}/${p.billing_period === 'yearly' ? 'year' : 'month'}` : 'custom price'}{p.is_active ? '' : ' (inactive)'}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Valid until <span className="text-gray-400">(empty = no end)</span></span>
+              <input type="date" value={form.expires} onChange={(e) => set('expires', e.target.value)}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </label>
+            {plan && (
+              <label className="sm:col-span-2 flex items-center gap-2 text-sm text-gray-700 cursor-pointer w-fit">
+                <input type="checkbox" checked={form.trial} onChange={(e) => set('trial', e.target.checked)} className="w-4 h-4 accent-indigo-600" />
+                This period is a free trial
+              </label>
+            )}
+          </div>
+
+          {plan && (
+            <div className="border-t border-gray-100 px-6 py-5">
+              <div className="flex items-baseline justify-between gap-3 mb-3">
+                <span className="text-sm font-medium text-gray-900">Add-ons</span>
+                <Link to={`${PORTAL}/plans`} className="text-xs text-indigo-600 hover:underline">Manage plans and add-ons</Link>
+              </div>
+              {addons.length === 0 ? (
+                <p className="text-sm text-gray-400">No add-ons apply to this plan.</p>
+              ) : (
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {addons.map((a) => {
+                    const on = !!form.picked[a.id];
+                    return (
+                      <li key={a.id} className={`rounded-xl border p-3 flex items-center gap-3 ${on ? 'border-indigo-300 bg-indigo-50/60' : 'border-gray-200'}`}>
+                        <input type="checkbox" checked={on} onChange={() => toggle(a)} className="w-4 h-4 accent-indigo-600 shrink-0" aria-label={a.name} />
+                        <button type="button" onClick={() => toggle(a)} className="min-w-0 flex-1 text-left">
+                          <span className="block text-sm font-medium text-gray-900">{a.name}{!a.is_active && <span className="text-xs text-gray-500 font-normal"> (inactive)</span>}</span>
+                          <span className="block text-xs text-gray-500">{money(unitPrice(a))} / month{a.kind === 'students' ? ` per ${a.students_per_unit} students` : ''}</span>
+                        </button>
+                        {on && a.kind === 'students' && (
+                          <input type="number" min="1" max="1000" value={form.picked[a.id]} onChange={(e) => qty(a, e.target.value)}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-right bg-white" aria-label="Units" />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/60 rounded-b-xl flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm">
+              {plan ? (
+                <>
+                  <span className="text-gray-500">Monthly total </span>
+                  <span className="font-semibold text-gray-900 tabular-nums">{money(total)}</span>
+                  {Number(plan.price) === 0 && <span className="text-xs text-gray-500"> + plan price agreed with the college</span>}
+                  <span className="text-gray-500"> · Students </span>
+                  <span className="font-semibold text-gray-900 tabular-nums">{baseLimit == null ? 'Unlimited' : (baseLimit + extra).toLocaleString()}</span>
+                  {extra > 0 && <span className="text-xs text-gray-500"> ({Number(baseLimit).toLocaleString()} + {extra.toLocaleString()})</span>}
+                </>
+              ) : <span className="text-gray-500">Choose a plan to see the total.</span>}
+            </div>
+            <button type="button" onClick={save} disabled={saving}
+              className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save subscription'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

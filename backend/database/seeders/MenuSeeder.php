@@ -18,6 +18,7 @@ class MenuSeeder extends Seeder
         $menus = [
             // ── Super admin ──────────────────────────────────────
             ['slug'=>'menu.colleges',       'name'=>'Colleges',       'route'=>'/colleges',       'icon'=>'fa-building',  'roles'=>['super_admin']],
+            ['slug'=>'menu.plans',          'name'=>'Plans',          'route'=>'/plans',          'icon'=>'fa-layer-group','roles'=>['super_admin']],
             ['slug'=>'menu.college-admins', 'name'=>'College Admins', 'route'=>'/college-admins', 'icon'=>'fa-user-shield','roles'=>['super_admin']],
             ['slug'=>'menu.settings-group', 'name'=>'Settings',       'route'=>null,              'icon'=>'fa-cog',       'roles'=>['super_admin'], 'children'=>[
                 ['slug'=>'menu.users',      'name'=>'User Management',      'route'=>'/users',      'icon'=>'fa-users'],

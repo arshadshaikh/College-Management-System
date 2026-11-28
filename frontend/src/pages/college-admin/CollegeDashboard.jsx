@@ -140,9 +140,119 @@ export default function CollegeDashboard() {
               )}
             </Card>
           </div>
+
+          {hasPrv('plan.my') && <PlanCard />}
         </>
       )}
     </div>
+  );
+}
+
+// The college's subscription: plan, add-ons, student usage against the limit, and features.
+function PlanCard() {
+  const [p, setP] = useState(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { api.get('/my-plan').then(({ data }) => setP(data)).catch(() => setFailed(true)); }, []);
+  if (failed) return null;
+  if (!p) return <div className="bg-white rounded-xl shadow-sm h-40 animate-pulse" />;
+
+  const plan = p.plan;
+  const sub = p.subscription ?? {};
+  const max = p.student_limit;
+  const pct = max ? Math.min(100, Math.round((p.students / max) * 100)) : null;
+  const bar = pct == null ? '' : pct >= 100 ? '#dc2626' : pct >= 85 ? '#d97706' : '#4f46e5';
+  const included = p.features.filter((f) => f.included);
+  const missing = p.features.filter((f) => !f.included);
+  const long = (s) => dayLabel(s, { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const notice = {
+    trial:   ['bg-indigo-50 border-indigo-100 text-indigo-800', `Free trial${sub.days_left != null ? `: ${sub.days_left} day${sub.days_left === 1 ? '' : 's'} left (until ${long(sub.expires_at)})` : ''}. Contact the platform administrator to subscribe.`],
+    grace:   ['bg-amber-50 border-amber-200 text-amber-800', `Your plan ended on ${long(sub.expires_at)}. Renew by ${long(sub.grace_ends_at)} to keep adding students and challans.`],
+    expired: ['bg-red-50 border-red-200 text-red-800', `Your plan ended on ${long(sub.expires_at)}. Contact the platform administrator to renew.`],
+  }[sub.status] ?? (sub.status === 'active' && sub.days_left != null && sub.days_left <= 15
+    ? ['bg-amber-50 border-amber-200 text-amber-800', `Your plan renews on ${long(sub.expires_at)} (${sub.days_left} day${sub.days_left === 1 ? '' : 's'} left).`] : null);
+
+  return (
+    <Card title="Plan & usage" action={plan && (
+      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">{plan.name}{sub.status === 'trial' ? ' · trial' : ''}</span>
+    )}>
+      {!plan ? (
+        <p className="text-sm text-gray-500">No subscription plan is assigned to this college yet. Contact the platform administrator.</p>
+      ) : (
+        <div className="space-y-5">
+          {notice && <div className={`rounded-lg border px-4 py-2.5 text-sm ${notice[0]}`}>{notice[1]}</div>}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Active students</span>
+                  <span className="text-sm tabular-nums text-gray-900">
+                    <span className="font-semibold">{p.students.toLocaleString()}</span>
+                    <span className="text-gray-500"> {max ? `of ${max.toLocaleString()}` : '· no limit'}</span>
+                  </span>
+                </div>
+                {max && (
+                  <>
+                    <div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.max(pct, 2)}%`, background: bar }} />
+                    </div>
+                    <div className={`text-xs mt-1.5 ${pct >= 100 ? 'text-red-600 font-medium' : pct >= 85 ? 'text-amber-700' : 'text-gray-500'}`}>
+                      {pct >= 100 ? 'Student limit reached. Ask for extra students or a bigger plan.'
+                        : `${(max - p.students).toLocaleString()} more student${max - p.students === 1 ? '' : 's'} can be added`}
+                      {p.extra_students > 0 && <span className="text-gray-500"> · includes {p.extra_students.toLocaleString()} extra</span>}
+                    </div>
+                  </>
+                )}
+              </div>
+              {sub.expires_at && sub.status === 'active' && !notice && (
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Valid until</span>
+                  <span className="text-gray-900">{long(sub.expires_at)}</span>
+                </div>
+              )}
+              {p.addons.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1.5">Add-ons</div>
+                  <ul className="space-y-1 text-sm">
+                    {p.addons.map((a) => (
+                      <li key={a.id} className="flex items-center justify-between gap-3">
+                        <span className="text-gray-800">{a.name}{a.kind === 'students' && a.quantity > 1 ? ` × ${a.quantity}` : ''}</span>
+                        {a.students != null && <span className="text-xs text-gray-500 tabular-nums">+{a.students.toLocaleString()} students</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {p.monthly_total > 0 && (
+                <div className="flex items-baseline justify-between gap-3 text-sm pt-3 border-t border-gray-100">
+                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Per month</span>
+                  <span className="font-semibold text-gray-900 tabular-nums">{money(p.monthly_total)}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Features</div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                {included.map((f) => (
+                  <li key={f.key} className="flex items-center gap-2 text-gray-800">
+                    <span className="w-4 h-4 shrink-0 rounded-full bg-green-100 text-green-700 grid place-items-center text-[10px] font-bold">✓</span>
+                    {f.label}
+                    {f.source === 'addon' && <span className="px-1.5 py-px rounded text-[10px] font-medium bg-indigo-50 text-indigo-700">Add-on</span>}
+                  </li>
+                ))}
+                {missing.map((f) => (
+                  <li key={f.key} className="flex items-center gap-2 text-gray-400" title="Not in your plan">
+                    <span className="w-4 h-4 shrink-0 rounded-full bg-gray-100 grid place-items-center text-[10px]">–</span>
+                    {f.label}{f.coming_soon ? ' (coming soon)' : ''}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 

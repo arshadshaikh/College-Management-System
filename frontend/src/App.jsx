@@ -39,6 +39,7 @@ import StudentDetail from './pages/college-admin/StudentDetail';
 import StudentEditForm from './pages/college-admin/StudentEditForm';
 import CollegeList from './pages/super-admin/CollegeList';
 import CollegeDetail from './pages/super-admin/CollegeDetail';
+import PlanList from './pages/super-admin/PlanList';
 import ChallanList from './pages/college-admin/ChallanList';
 import Defaulters from './pages/college-admin/Defaulters';
 import Collections from './pages/college-admin/Collections';
@@ -122,6 +123,7 @@ export default function App() {
         {/* Colleges (super admin) */}
         <Route path="colleges" element={<PrivilegeRoute slug="colleges.index"><CollegeList /></PrivilegeRoute>} />
         <Route path="colleges/:id" element={<PrivilegeRoute slug="colleges.show"><CollegeDetail /></PrivilegeRoute>} />
+        <Route path="plans" element={<PrivilegeRoute slug="plans.index"><PlanList /></PrivilegeRoute>} />
 
         {/* College Admins */}
         <Route path="college-admins" element={<PrivilegeRoute slug="college-admins.index"><CollegeAdminList /></PrivilegeRoute>} />

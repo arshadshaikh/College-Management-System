@@ -27,6 +27,8 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StatementController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\AddonController;
 use App\Http\Controllers\BulkChallanController;
 use App\Http\Controllers\PaymentSlipController;
 use Illuminate\Support\Facades\Route;
@@ -174,6 +176,18 @@ Route::middleware(['auth:api', 'privilege'])->group(function () {
     Route::post('colleges/{college}/reject', [CollegeController::class, 'reject']);
     Route::post('colleges/{college}/suspend', [CollegeController::class, 'suspend']);
     Route::post('colleges/{college}/reinstate', [CollegeController::class, 'reinstate']);
+    Route::put('colleges/{college}/plan', [PlanController::class, 'assign']);     // super admin: put a college on a plan
+
+    // Subscription plans (super admin)
+    Route::get('plans', [PlanController::class, 'index']);
+    Route::post('plans', [PlanController::class, 'store']);
+    Route::get('plans/{plan}', [PlanController::class, 'show']);
+    Route::put('plans/{plan}', [PlanController::class, 'update']);
+    Route::delete('plans/{plan}', [PlanController::class, 'destroy']);
+    Route::post('addons', [AddonController::class, 'store']);
+    Route::put('addons/{addon}', [AddonController::class, 'update']);
+    Route::delete('addons/{addon}', [AddonController::class, 'destroy']);
+    Route::get('my-plan', [PlanController::class, 'mine']);                       // college admin: own plan + usage
 
     // Required Document Types
     Route::get('required-document-types',    [RequiredDocumentTypeController::class, 'index']);
